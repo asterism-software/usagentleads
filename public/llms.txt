@@ -4,7 +4,7 @@
 
 USAgentLeads is a B2B data provider specializing in real estate agent contact information. The database is compiled from public sources including state licensing records, MLS listings, Zillow, Realtor.com, and major brokerage sites, then verified for accuracy. The dataset is refreshed on a regular cycle (current dataset: July 2026). It serves coaches, SaaS/PropTech companies, mortgage lenders, marketing agencies, brokerages, lead generation companies, home services businesses, insurance agencies, real estate photographers, and moving companies that need to reach licensed real estate professionals.
 
-Key facts: 1,000,000+ contacts across all 50 states; fields are full name, email, phone, and state; 90%+ email deliverability; phone numbers on roughly 40% of records; delivered as CSV (download) or JSON (API); 30-day money-back guarantee; not affiliated with NAR or any MLS. Support: support@beelodev.com.
+Key facts: 1,000,000+ contacts across all 50 states; fields are full name, email, phone, and state; 90%+ email deliverability; phone numbers on roughly 40% of records; delivered as CSV (download) or JSON (API); 30-day money-back guarantee; not affiliated with NAR or any MLS. Support: support@usagentleads.com.
 
 ## Products & Pricing
 

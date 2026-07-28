@@ -89,7 +89,7 @@ export default function PrivacyPage() {
 
             <h2>Contact</h2>
             <p>
-              For privacy questions, contact us through the <Link href="/contact">contact page</Link> or email support@beelodev.com.
+              For privacy questions, contact us through the <Link href="/contact">contact page</Link> or email support@usagentleads.com.
             </p>
           </div>
         </div>

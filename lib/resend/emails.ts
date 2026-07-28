@@ -6,7 +6,7 @@ import { getAgentCount, formatAgentCountLabel } from "@/lib/utils/agent-count"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const SUPPORT_EMAIL = "support@beelodev.com"
+const SUPPORT_EMAIL = "support@usagentleads.com"
 const FROM_EMAIL = `USAgentLeads <${SUPPORT_EMAIL}>`
 
 // ── Shared email layout ──────────────────────────────────────────────
@@ -37,7 +37,7 @@ function emailLayout(body: string): string {
   <!-- Footer -->
   <div style="padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
     <p style="margin: 0 0 6px 0; color: #64748b; font-size: 13px;">
-      USAgentLeads &mdash; A product by <a href="https://beelodev.com" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 500;">BeeloDev</a>
+      USAgentLeads
     </p>
     <p style="margin: 0; color: #94a3b8; font-size: 12px;">
       Questions? Reply to this email or contact us at ${SUPPORT_EMAIL}

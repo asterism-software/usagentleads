@@ -91,7 +91,7 @@ export default function TermsPage() {
 
             <h2>Contact</h2>
             <p>
-              Questions about these terms can be sent through the <Link href="/contact">contact page</Link> or to support@beelodev.com.
+              Questions about these terms can be sent through the <Link href="/contact">contact page</Link> or to support@usagentleads.com.
             </p>
           </div>
         </div>

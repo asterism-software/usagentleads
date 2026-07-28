@@ -30,7 +30,7 @@ import { loadEnv } from "./ingest/lib.mjs"
 
 const TEST_RECIPIENT = "nabeelsharafat@gmail.com"
 const SITE_URL = "https://www.usagentleads.com"
-const SUPPORT_EMAIL = "support@beelodev.com"
+const SUPPORT_EMAIL = "support@usagentleads.com"
 const FROM = `Nabeel from USAgentLeads <${SUPPORT_EMAIL}>`
 const SUBJECT = "We just crossed 1,000,000 real estate agent contacts"
 

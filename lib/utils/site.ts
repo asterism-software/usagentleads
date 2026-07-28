@@ -1,5 +1,5 @@
 export const SITE_URL = "https://www.usagentleads.com"
-export const SUPPORT_EMAIL = "support@beelodev.com"
+export const SUPPORT_EMAIL = "support@usagentleads.com"
 
 // Data freshness label — always reflects the current month/year (e.g. "July 2026")
 // so buyers see an up-to-date "as of" date. Evaluated server-side at build /

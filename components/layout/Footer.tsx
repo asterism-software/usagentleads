@@ -158,17 +158,6 @@ export function Footer() {
           <p className="text-[13px] text-gray-400">
             &copy; {new Date().getFullYear()} USAgentLeads. Not affiliated with NAR or any MLS.
           </p>
-          <p className="text-[13px] text-gray-400">
-            Built by{" "}
-            <a
-              href="https://beelodev.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-300 hover:text-white transition-colors font-medium"
-            >
-              BeeloDev
-            </a>
-          </p>
         </div>
       </div>
     </footer>

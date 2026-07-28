@@ -48,7 +48,7 @@ export default function ContactPage() {
             {
               icon: Mail,
               title: "Email Us",
-              detail: "support@beelodev.com",
+              detail: "support@usagentleads.com",
               sub: "We reply within 24 hours",
             },
             {
