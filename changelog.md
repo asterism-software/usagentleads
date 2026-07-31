@@ -2,7 +2,8 @@
 
 ## 2026-07-31
 - [x] refactor app pages
-- [ ] local dev sign-in flow
+- [x] local dev sign-in flow
 - [ ] local dev checkout
 - [ ] change to Stripe checkout
+- [ ] add Google Oauth
 - [ ] refacor github actions

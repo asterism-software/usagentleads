@@ -165,7 +165,7 @@ export function Navbar() {
                         className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[14px] text-body transition-colors hover:bg-subtle hover:text-ink"
                       >
                         <CreditCard className="h-4 w-4" />
-                        Manage Subscription
+                        Subscription
                       </a>
                       <div className="my-1 h-px bg-border" />
                       <button
@@ -211,7 +211,7 @@ export function Navbar() {
 
       {/* Mobile full-screen overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-white lg:hidden animate-fade-in">
+        <div className="fixed inset-0 z-60 flex flex-col bg-white lg:hidden animate-fade-in">
           {/* Mobile header */}
           <div className="flex h-16 shrink-0 items-center justify-between px-4 sm:px-6 border-b border-border">
             <Link href="/" className="flex items-center gap-2 text-[19px] font-semibold tracking-tight" onClick={() => setMobileOpen(false)}>
