@@ -2,6 +2,7 @@
 
 import { Loader2, ArrowRight } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { track } from "@/lib/utils/analytics"
 
@@ -27,7 +28,7 @@ export function SubscribeButton({
 
       if (!user) {
         // Carry the chosen plan through login so checkout auto-resumes
-        // straight to Lemon Squeezy after the magic link — no re-clicking.
+        // straight to Stripe Checkout after the magic link — no re-clicking.
         const next = encodeURIComponent(`/checkout/resume?plan=${purchaseType}`)
         window.location.href = `/login?next=${next}`
         return
@@ -44,8 +45,12 @@ export function SubscribeButton({
       if (data.url) {
         track("checkout_started", { product: purchaseType })
         window.location.href = data.url
+        return
       }
+      toast.error(data.error || "Unable to start checkout. Please try again.")
+      setLoading(false)
     } catch {
+      toast.error("Unable to start checkout. Please try again.")
       setLoading(false)
     }
   }

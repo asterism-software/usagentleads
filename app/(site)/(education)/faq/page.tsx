@@ -93,7 +93,7 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
         {
           question: "What payment methods do you accept?",
           answer:
-            "All major credit cards (Visa, Mastercard, Amex) and PayPal, processed by Lemon Squeezy over SSL. You'll receive a receipt by email from Lemon Squeezy for your records.",
+            "We accept major credit and debit cards, including Visa, Mastercard, and American Express, securely processed by Stripe. You'll receive a receipt by email for your records.",
         },
         {
           question: "I didn't receive my download email — what now?",
@@ -124,7 +124,7 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
         {
           question: "How do I cancel a Pro subscription?",
           answer:
-            "From your Lemon Squeezy customer portal, anytime, with no penalties. Access continues through the end of the paid period.",
+            "From the Stripe billing portal, anytime, with no penalties. Access continues through the end of the paid period.",
         },
         {
           question: "What does the data cost per contact?",

@@ -1,19 +1,30 @@
 import { NextResponse } from "next/server"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
+import { getStripe } from "@/lib/stripe/client"
 import { rateLimit } from "@/lib/utils/rateLimit"
 
 const db = () => createServiceClient().schema("usagentleads")
 
-// GET — return current user's subscription
-export async function GET(request: Request) {
+async function authenticatedUser() {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  return user
+}
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+function normalizedStatus(status: string) {
+  if (status === "active") return "active"
+  if (status === "trialing") return "on_trial"
+  if (status === "canceled") return "cancelled"
+  if (status === "incomplete_expired") return "expired"
+  return "paused"
+}
+
+// GET — return the current user's normalized subscription.
+export async function GET() {
+  const user = await authenticatedUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const { success } = await rateLimit(`sub-get:${user.id}`, 30)
   if (!success) {
@@ -23,7 +34,7 @@ export async function GET(request: Request) {
   const { data: subscription } = await db()
     .from("subscriptions")
     .select(
-      "status, plan, current_period_start, current_period_end, trial_ends_at, cancel_at_period_end, cancelled_at, created_at"
+      "billing_provider, status, plan, current_period_start, current_period_end, trial_ends_at, cancel_at_period_end, cancelled_at, created_at"
     )
     .eq("user_id", user.id)
     .single()
@@ -31,165 +42,136 @@ export async function GET(request: Request) {
   return NextResponse.json({ subscription })
 }
 
-// DELETE — cancel subscription (sets cancel_at_period_end via LemonSqueezy API)
-export async function DELETE(request: Request) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
-  const { success } = await rateLimit(`sub-cancel:${ip}`, 5)
+// DELETE — schedule cancellation at the end of the current billing period.
+export async function DELETE() {
+  const user = await authenticatedUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const { success } = await rateLimit(`sub-cancel:${user.id}`, 5)
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 })
   }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
   const { data: subscription } = await db()
     .from("subscriptions")
-    .select("lemon_squeezy_subscription_id, status, cancel_at_period_end")
+    .select("billing_provider, stripe_subscription_id, status, cancel_at_period_end, updated_at")
     .eq("user_id", user.id)
     .single()
 
   if (!subscription) {
     return NextResponse.json({ error: "No subscription found" }, { status: 404 })
   }
-
+  if (subscription.billing_provider !== "stripe" || !subscription.stripe_subscription_id) {
+    return NextResponse.json(
+      { error: "This subscription requires a billing migration. Please contact support." },
+      { status: 409 }
+    )
+  }
   if (subscription.cancel_at_period_end) {
     return NextResponse.json({ error: "Already scheduled for cancellation" }, { status: 400 })
   }
-
   if (!["active", "on_trial"].includes(subscription.status)) {
     return NextResponse.json({ error: "Subscription is not active" }, { status: 400 })
   }
 
-  // Cancel via LemonSqueezy API (cancel at period end, not immediately)
-  const response = await fetch(
-    `https://api.lemonsqueezy.com/v1/subscriptions/${subscription.lemon_squeezy_subscription_id}`,
-    {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${process.env.LEMONSQUEEZY_API_KEY}`,
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-      },
-      body: JSON.stringify({
-        data: {
-          type: "subscriptions",
-          id: subscription.lemon_squeezy_subscription_id,
-          attributes: {
-            cancelled: true,
-          },
-        },
-      }),
-    }
-  )
-
-  if (!response.ok) {
-    const errBody = await response.text()
-    console.error("LemonSqueezy cancel error:", errBody)
-    return NextResponse.json(
-      { error: "Failed to cancel subscription" },
-      { status: 500 }
+  let updated
+  try {
+    updated = await getStripe().subscriptions.update(
+      subscription.stripe_subscription_id,
+      { cancel_at_period_end: true },
+      { idempotencyKey: `cancel:${subscription.stripe_subscription_id}:${subscription.updated_at}` }
     )
+  } catch (error) {
+    console.error("Stripe subscription cancellation error:", error)
+    return NextResponse.json({ error: "Failed to cancel subscription" }, { status: 500 })
   }
 
-  // Update local record immediately (webhook will also update, but this gives instant feedback)
-  await db()
+  const { error: updateError } = await db()
     .from("subscriptions")
     .update({
-      cancel_at_period_end: true,
-      cancelled_at: new Date().toISOString(),
+      provider_status: updated.status,
+      status: normalizedStatus(updated.status),
+      cancel_at_period_end: updated.cancel_at_period_end,
+      cancelled_at: updated.canceled_at
+        ? new Date(updated.canceled_at * 1_000).toISOString()
+        : null,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id)
 
+  if (updateError) {
+    console.error("Local subscription cancellation sync error:", updateError)
+    return NextResponse.json(
+      { message: "Cancellation was accepted by Stripe and is still syncing.", syncing: true },
+      { status: 202 }
+    )
+  }
+
   return NextResponse.json({ message: "Subscription will cancel at end of billing period" })
 }
 
-// PATCH — resume a cancelled subscription (un-cancel before period ends)
-export async function PATCH(request: Request) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
-  const { success } = await rateLimit(`sub-resume:${ip}`, 5)
+// PATCH — stop a scheduled cancellation before the billing period ends.
+export async function PATCH() {
+  const user = await authenticatedUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const { success } = await rateLimit(`sub-resume:${user.id}`, 5)
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 })
   }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
   const { data: subscription } = await db()
     .from("subscriptions")
-    .select("lemon_squeezy_subscription_id, status, cancel_at_period_end, trial_ends_at")
+    .select("billing_provider, stripe_subscription_id, cancel_at_period_end, updated_at")
     .eq("user_id", user.id)
     .single()
 
   if (!subscription) {
     return NextResponse.json({ error: "No subscription found" }, { status: 404 })
   }
-
-  if (!subscription.cancel_at_period_end) {
-    return NextResponse.json({ error: "Subscription is not scheduled for cancellation" }, { status: 400 })
-  }
-
-  // Resume via LemonSqueezy API (un-cancel)
-  const response = await fetch(
-    `https://api.lemonsqueezy.com/v1/subscriptions/${subscription.lemon_squeezy_subscription_id}`,
-    {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${process.env.LEMONSQUEEZY_API_KEY}`,
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-      },
-      body: JSON.stringify({
-        data: {
-          type: "subscriptions",
-          id: subscription.lemon_squeezy_subscription_id,
-          attributes: {
-            cancelled: false,
-          },
-        },
-      }),
-    }
-  )
-
-  if (!response.ok) {
-    const errBody = await response.text()
-    console.error("LemonSqueezy resume error:", errBody)
+  if (subscription.billing_provider !== "stripe" || !subscription.stripe_subscription_id) {
     return NextResponse.json(
-      { error: "Failed to resume subscription" },
-      { status: 500 }
+      { error: "This subscription requires a billing migration. Please contact support." },
+      { status: 409 }
+    )
+  }
+  if (!subscription.cancel_at_period_end) {
+    return NextResponse.json(
+      { error: "Subscription is not scheduled for cancellation" },
+      { status: 400 }
     )
   }
 
-  // Determine correct status: if trial hasn't ended, it's on_trial, otherwise active
-  const resumedStatus = subscription.trial_ends_at &&
-    new Date(subscription.trial_ends_at) > new Date()
-    ? "on_trial"
-    : "active"
+  let updated
+  try {
+    updated = await getStripe().subscriptions.update(
+      subscription.stripe_subscription_id,
+      { cancel_at_period_end: false },
+      { idempotencyKey: `resume:${subscription.stripe_subscription_id}:${subscription.updated_at}` }
+    )
+  } catch (error) {
+    console.error("Stripe subscription resume error:", error)
+    return NextResponse.json({ error: "Failed to resume subscription" }, { status: 500 })
+  }
 
-  // Update local record immediately
-  await db()
+  const { error: updateError } = await db()
     .from("subscriptions")
     .update({
-      status: resumedStatus,
+      status: normalizedStatus(updated.status),
+      provider_status: updated.status,
       cancel_at_period_end: false,
       cancelled_at: null,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id)
+
+  if (updateError) {
+    console.error("Local subscription resume sync error:", updateError)
+    return NextResponse.json(
+      { message: "Resume was accepted by Stripe and is still syncing.", syncing: true },
+      { status: 202 }
+    )
+  }
 
   return NextResponse.json({ message: "Subscription resumed successfully" })
 }

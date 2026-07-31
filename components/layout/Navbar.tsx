@@ -158,9 +158,7 @@ export function Navbar() {
                         Dashboard
                       </Link>
                       <a
-                        href="https://app.lemonsqueezy.com/my-orders"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href="/api/billing-portal"
                         role="menuitem"
                         className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[14px] text-body transition-colors hover:bg-subtle hover:text-ink"
                       >
@@ -282,9 +280,7 @@ export function Navbar() {
                     Dashboard
                   </Link>
                   <a
-                    href="https://app.lemonsqueezy.com/my-orders"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/api/billing-portal"
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-2 text-[16px] font-medium text-body transition-colors hover:text-ink"
                   >

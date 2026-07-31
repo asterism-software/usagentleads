@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server"
 import crypto from "crypto"
-import { createClient } from "@/lib/supabase/server"
-import { createCheckout } from "@/lib/lemonsqueezy/client"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
+import {
+  createCheckout,
+  expireCheckoutSession,
+  getCheckoutSessionSummary,
+  type CheckoutMetadata,
+} from "@/lib/stripe/client"
 import { isValidStateCode } from "@/lib/utils/security"
 import { rateLimit } from "@/lib/utils/rateLimit"
 import { z } from "zod"
@@ -10,6 +15,175 @@ const checkoutSchema = z.object({
   purchaseType: z.enum(["state", "full_database", "subscription", "subscription_api"]),
   stateCode: z.string().optional(),
 })
+
+type SubscriptionPurchaseType = "subscription" | "subscription_api"
+
+interface SubscriptionCheckoutAttempt {
+  user_id: string
+  purchase_type: SubscriptionPurchaseType
+  attempt_id: string
+  stripe_checkout_session_id: string | null
+  expires_at: string
+}
+
+type SubscriptionCheckoutClaim =
+  | { kind: "create"; attemptId: string; expiresAt: string }
+  | { kind: "reuse"; attemptId: string; sessionId: string; url: string }
+  | { kind: "blocked"; message: string }
+
+const serviceDb = () => createServiceClient().schema("usagentleads")
+
+interface ExistingSubscription {
+  billing_provider: string
+  stripe_subscription_id: string | null
+  stripe_customer_id: string | null
+  status: string
+  current_period_end: string | null
+  trial_ends_at: string | null
+  cancel_at_period_end: boolean
+}
+
+async function loadSubscription(userId: string): Promise<ExistingSubscription | null> {
+  const { data, error } = await serviceDb()
+    .from("subscriptions")
+    .select(
+      "billing_provider, stripe_subscription_id, stripe_customer_id, status, current_period_end, trial_ends_at, cancel_at_period_end"
+    )
+    .eq("user_id", userId)
+    .maybeSingle()
+  if (error) throw new Error(`Unable to check existing subscription: ${error.message}`)
+  return data as ExistingSubscription | null
+}
+
+function hasManagedSubscription(subscription: ExistingSubscription | null): boolean {
+  const accessEnds = [subscription?.current_period_end, subscription?.trial_ends_at]
+    .filter((value): value is string => Boolean(value))
+  const accessStillValid =
+    accessEnds.length === 0 || accessEnds.some((value) => new Date(value).getTime() > Date.now())
+  const hasOpenStripeSubscription = Boolean(
+    subscription?.billing_provider === "stripe" &&
+      subscription.stripe_subscription_id &&
+      !["cancelled", "expired"].includes(subscription.status)
+  )
+  const hasLiveEntitlement = Boolean(
+    subscription &&
+      accessStillValid &&
+      (["active", "on_trial", "paused"].includes(subscription.status) ||
+        subscription.cancel_at_period_end)
+  )
+  return hasOpenStripeSubscription || hasLiveEntitlement
+}
+
+async function deleteCheckoutAttempt(userId: string, attemptId: string) {
+  const { error } = await serviceDb()
+    .from("stripe_checkout_attempts")
+    .delete()
+    .eq("user_id", userId)
+    .eq("attempt_id", attemptId)
+  if (error) throw new Error(`Unable to release subscription checkout: ${error.message}`)
+}
+
+async function claimSubscriptionCheckout(
+  userId: string,
+  purchaseType: SubscriptionPurchaseType
+): Promise<SubscriptionCheckoutClaim> {
+  // The primary key on user_id is the cross-instance lock. Only one plan can
+  // own an open Checkout Session for an account at a time.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const attemptId = crypto.randomUUID()
+    // A one-hour absolute expiry leaves a 30-minute recovery window while
+    // still satisfying Stripe's minimum Session lifetime on an uncached retry.
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1_000).toISOString()
+    const { error: insertError } = await serviceDb()
+      .from("stripe_checkout_attempts")
+      .insert({
+        user_id: userId,
+        purchase_type: purchaseType,
+        attempt_id: attemptId,
+        expires_at: expiresAt,
+      })
+
+    if (!insertError) return { kind: "create", attemptId, expiresAt }
+    if (insertError.code !== "23505") {
+      throw new Error(`Unable to reserve subscription checkout: ${insertError.message}`)
+    }
+
+    const { data, error: selectError } = await serviceDb()
+      .from("stripe_checkout_attempts")
+      .select("user_id, purchase_type, attempt_id, stripe_checkout_session_id, expires_at")
+      .eq("user_id", userId)
+      .maybeSingle()
+    if (selectError) {
+      throw new Error(`Unable to read subscription checkout: ${selectError.message}`)
+    }
+    const existing = data as SubscriptionCheckoutAttempt | null
+    // A conflicting row can disappear between INSERT and SELECT. Retry the
+    // atomic claim instead of treating that harmless race as an error.
+    if (!existing) continue
+
+    if (!existing.stripe_checkout_session_id) {
+      if (new Date(existing.expires_at).getTime() <= Date.now()) {
+        await deleteCheckoutAttempt(userId, existing.attempt_id)
+        continue
+      }
+      // A previous process may have stopped after Stripe accepted the request
+      // but before the Session ID was persisted. Retrying the same plan with
+      // the same idempotency key safely recovers that Session.
+      if (existing.purchase_type === purchaseType) {
+        return {
+          kind: "create",
+          attemptId: existing.attempt_id,
+          expiresAt: existing.expires_at,
+        }
+      }
+      return {
+        kind: "blocked",
+        message: "Your subscription checkout is being prepared. Please retry in a moment.",
+      }
+    }
+
+    const session = await getCheckoutSessionSummary(existing.stripe_checkout_session_id)
+    if (session.status === "complete") {
+      return {
+        kind: "blocked",
+        message: "Your completed subscription is still being activated. Please retry shortly.",
+      }
+    }
+
+    const locallyExpired = new Date(existing.expires_at).getTime() <= Date.now()
+    if (session.status === "expired" || locallyExpired) {
+      if (session.status === "open") {
+        await expireCheckoutSession(existing.stripe_checkout_session_id)
+      }
+      await deleteCheckoutAttempt(userId, existing.attempt_id)
+      continue
+    }
+
+    if (existing.purchase_type === purchaseType && session.status === "open" && session.url) {
+      return {
+        kind: "reuse",
+        attemptId: existing.attempt_id,
+        sessionId: existing.stripe_checkout_session_id,
+        url: session.url,
+      }
+    }
+
+    if (existing.purchase_type !== purchaseType && session.status === "open") {
+      // Switching plans explicitly expires the previous hosted page before the
+      // unique user claim is rotated, so both plans can never remain payable.
+      await expireCheckoutSession(existing.stripe_checkout_session_id)
+      await deleteCheckoutAttempt(userId, existing.attempt_id)
+      continue
+    }
+
+    return {
+      kind: "blocked",
+      message: "Your subscription checkout is unavailable. Please retry shortly.",
+    }
+  }
+
+  throw new Error("Unable to reserve subscription checkout after concurrent updates")
+}
 
 export async function POST(request: Request) {
   try {
@@ -27,31 +201,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 })
     }
 
-    const { purchaseType, stateCode } = parsed.data
+    const { purchaseType } = parsed.data
+    const stateCode = parsed.data.stateCode?.toUpperCase()
 
     if (purchaseType === "state" && (!stateCode || !isValidStateCode(stateCode))) {
       return NextResponse.json({ error: "Invalid state code" }, { status: 400 })
     }
 
-    let variantId: string
-    const customData: Record<string, string> = { purchase_type: purchaseType }
+    const metadata: CheckoutMetadata = {
+      purchase_type: purchaseType,
+      checkout_attempt_id: crypto.randomUUID(),
+    }
+    let customerEmail: string | undefined
+    let stripeCustomerId: string | undefined
+    let successPageToken: string | undefined
+    let pendingPurchaseId: string | undefined
+    let subscriptionAttemptId: string | undefined
+    let subscriptionAttemptExpiresAt: string | undefined
+    let subscriptionUserId: string | undefined
 
-    // Generate a page_token for secure purchase-success page lookup
-    // Only the person who completes checkout will have this token in the redirect URL
+    // Create the pending purchase before Checkout. Stripe receives only its
+    // internal row ID as metadata; the opaque page token remains dedicated to
+    // the existing purchase-success polling workflow.
     if (purchaseType !== "subscription" && purchaseType !== "subscription_api") {
-      customData.page_token = crypto.randomUUID()
+      successPageToken = crypto.randomUUID()
+      pendingPurchaseId = crypto.randomUUID()
+      metadata.purchase_id = pendingPurchaseId
+
+      const { error: purchaseError } = await serviceDb()
+        .from("purchases")
+        .insert({
+          id: pendingPurchaseId,
+          purchase_type: purchaseType,
+          state_code: purchaseType === "state" ? stateCode : null,
+          amount_paid: 0,
+          status: "pending",
+          page_token: successPageToken,
+          billing_provider: "stripe",
+        })
+
+      if (purchaseError) throw new Error(`Unable to initialize purchase: ${purchaseError.message}`)
     }
 
     if (purchaseType === "state") {
-      variantId = process.env.NEXT_PUBLIC_LS_STATE_VARIANT_ID!
-      customData.state_code = stateCode!
-    } else if (purchaseType === "full_database") {
-      variantId = process.env.NEXT_PUBLIC_LS_FULL_DB_VARIANT_ID!
-    } else {
-      // subscription or subscription_api
-      variantId = purchaseType === "subscription_api"
-        ? process.env.NEXT_PUBLIC_LS_API_SUBSCRIPTION_VARIANT_ID!
-        : process.env.NEXT_PUBLIC_LS_SUBSCRIPTION_VARIANT_ID!
+      metadata.state_code = stateCode!
+    } else if (purchaseType === "subscription" || purchaseType === "subscription_api") {
       const supabase = await createClient()
       const {
         data: { user },
@@ -62,12 +256,106 @@ export async function POST(request: Request) {
           { status: 401 }
         )
       }
-      customData.user_id = user.id
+      metadata.user_id = user.id
+      customerEmail = user.email
+
+      // Reuse a Stripe Customer on a later checkout so payment history and the
+      // customer portal remain attached to one billing identity.
+      const existingSubscription = await loadSubscription(user.id)
+
+      // One account maps to one recurring entitlement. Existing subscribers
+      // manage billing in the portal instead of creating a second charge whose
+      // webhook would overwrite their single subscription row.
+      if (hasManagedSubscription(existingSubscription)) {
+        return NextResponse.json(
+          {
+            error: "An existing subscription is already attached to this account.",
+            url: "/api/billing-portal",
+          },
+          { status: 409 }
+        )
+      }
+
+      if (
+        existingSubscription?.billing_provider === "stripe" &&
+        existingSubscription.stripe_customer_id
+      ) {
+        stripeCustomerId = existingSubscription.stripe_customer_id
+      }
+
+      const claim = await claimSubscriptionCheckout(user.id, purchaseType)
+      if (claim.kind === "blocked") {
+        return NextResponse.json({ error: claim.message }, { status: 409 })
+      }
+
+      // The completion webhook upserts entitlement before releasing its claim.
+      // Re-reading after our claim therefore closes the checkout/webhook race.
+      const refreshedSubscription = await loadSubscription(user.id)
+      if (hasManagedSubscription(refreshedSubscription)) {
+        if (claim.kind === "reuse") await expireCheckoutSession(claim.sessionId)
+        await deleteCheckoutAttempt(user.id, claim.attemptId)
+        return NextResponse.json(
+          {
+            error: "An existing subscription is already attached to this account.",
+            url: "/api/billing-portal",
+          },
+          { status: 409 }
+        )
+      }
+
+      if (claim.kind === "reuse") return NextResponse.json({ url: claim.url })
+      subscriptionAttemptId = claim.attemptId
+      subscriptionAttemptExpiresAt = claim.expiresAt
+      subscriptionUserId = user.id
+      metadata.checkout_attempt_id = claim.attemptId
+      if (
+        refreshedSubscription?.billing_provider === "stripe" &&
+        refreshedSubscription.stripe_customer_id
+      ) {
+        stripeCustomerId = refreshedSubscription.stripe_customer_id
+      }
     }
 
-    const url = await createCheckout({ variantId, customData })
+    let checkout: Awaited<ReturnType<typeof createCheckout>> | undefined
+    try {
+      checkout = await createCheckout({
+        purchaseType,
+        metadata,
+        customerEmail,
+        stripeCustomerId,
+        successPageToken,
+        subscriptionExpiresAt: subscriptionAttemptExpiresAt,
+      })
+      if (subscriptionAttemptId && subscriptionUserId) {
+        const { data: savedAttempt, error: attemptUpdateError } = await serviceDb()
+          .from("stripe_checkout_attempts")
+          .update({
+            stripe_checkout_session_id: checkout.id,
+            ...(checkout.expiresAt ? { expires_at: checkout.expiresAt } : {}),
+          })
+          .eq("user_id", subscriptionUserId)
+          .eq("attempt_id", subscriptionAttemptId)
+          .select("attempt_id")
+          .maybeSingle()
+        if (attemptUpdateError) {
+          throw new Error(`Unable to persist subscription checkout: ${attemptUpdateError.message}`)
+        }
+        if (!savedAttempt) {
+          await expireCheckoutSession(checkout.id)
+          throw new Error("Subscription checkout claim expired before it could be persisted")
+        }
+      }
+    } catch (error) {
+      if (pendingPurchaseId) {
+        await serviceDb().from("purchases").delete().eq("id", pendingPurchaseId)
+      }
+      // Keep a subscription claim after an ambiguous Stripe/DB failure. A
+      // same-plan retry reuses its idempotency key and can recover the Session;
+      // the one-hour expiry rotates truly failed attempts safely.
+      throw error
+    }
 
-    return NextResponse.json({ url })
+    return NextResponse.json({ url: checkout.url })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("Checkout error:", message)

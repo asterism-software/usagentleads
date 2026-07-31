@@ -191,7 +191,7 @@ const pricingFAQs = [
   {
     question: "What payment methods do you accept?",
     answer:
-      "We accept all major credit cards (Visa, Mastercard, Amex) and PayPal through our payment processor, Lemon Squeezy. All transactions are SSL-encrypted.",
+      "We accept major credit and debit cards, including Visa, Mastercard, and American Express, through Stripe. All transactions are securely encrypted.",
   },
   {
     question: "Can I get a refund?",
@@ -231,7 +231,7 @@ const pricingFAQs = [
   {
     question: "Will I get an invoice or receipt?",
     answer:
-      "Yes. Our payment processor, Lemon Squeezy, emails a receipt for every purchase, and subscription invoices are available anytime from your Lemon Squeezy customer portal.",
+      "Yes. Stripe emails a receipt for each purchase, and subscription invoices are available anytime from the Stripe billing portal.",
   },
 ]
 

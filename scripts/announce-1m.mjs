@@ -43,7 +43,11 @@ const SENT_LOG = path.join(
 // ── Unsubscribe links — must mirror lib/utils/unsubscribe.ts exactly ──
 
 function unsubSecret() {
-  return process.env.CRON_SECRET || process.env.LEMONSQUEEZY_API_KEY || "usagentleads-unsub"
+  const secret = process.env.UNSUBSCRIBE_SECRET || process.env.CRON_SECRET
+  if (!secret) {
+    throw new Error("UNSUBSCRIBE_SECRET or CRON_SECRET must be configured")
+  }
+  return secret
 }
 
 function unsubscribeUrl(email) {

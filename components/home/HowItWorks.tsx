@@ -13,7 +13,7 @@ const steps = [
     icon: CreditCard,
     number: "02",
     title: "Secure Checkout",
-    description: "Pay securely via Lemon Squeezy. No account needed for one-time purchases.",
+    description: "Pay securely with Stripe. No account needed for one-time purchases.",
   },
   {
     icon: Download,

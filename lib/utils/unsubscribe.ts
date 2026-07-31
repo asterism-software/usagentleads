@@ -14,14 +14,14 @@ import { timingSafeCompare } from "@/lib/utils/security"
  * address and mass-unsubscribe the entire lead list.
  */
 function getSecret(): string | null {
-  return process.env.CRON_SECRET || process.env.LEMONSQUEEZY_API_KEY || null
+  return process.env.UNSUBSCRIBE_SECRET || process.env.CRON_SECRET || null
 }
 
 export function makeUnsubToken(email: string): string {
   const secret = getSecret()
   if (!secret) {
     throw new Error(
-      "Cannot mint unsubscribe token: CRON_SECRET / LEMONSQUEEZY_API_KEY are unset"
+      "Cannot mint unsubscribe token: UNSUBSCRIBE_SECRET / CRON_SECRET are unset"
     )
   }
   return crypto

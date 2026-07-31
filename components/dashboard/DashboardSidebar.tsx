@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 
 interface Subscription {
+  billing_provider: string
   status: string
   plan: string
   current_period_start: string | null
@@ -52,6 +53,7 @@ export function DashboardSidebar({
   const [showResumeConfirm, setShowResumeConfirm] = useState(false)
   const [showBilling, setShowBilling] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
+  const isLegacyBilling = sub?.billing_provider !== "stripe"
 
   useEffect(() => {
     // On a fresh post-checkout load the subscription_created webhook may still
@@ -136,7 +138,9 @@ export function DashboardSidebar({
     }
   }
 
-  const statusLabel = sub?.cancel_at_period_end
+  const statusLabel = isLegacyBilling
+    ? "Migration needed"
+    : sub?.cancel_at_period_end
     ? "Cancels Soon"
     : sub?.status === "on_trial"
       ? "Trial"
@@ -144,7 +148,9 @@ export function DashboardSidebar({
         ? "Active"
         : sub?.status || "—"
 
-  const statusColor = sub?.cancel_at_period_end
+  const statusColor = isLegacyBilling
+    ? "warning"
+    : sub?.cancel_at_period_end
     ? "warning"
     : sub?.status === "on_trial"
       ? "accent"
@@ -310,7 +316,9 @@ export function DashboardSidebar({
                       {sub.plan === "pro_api" ? "Pro API" : "Pro Monthly"}
                     </p>
                     <p className="text-[13px] text-tertiary mt-0.5 truncate">
-                      {sub.status === "on_trial" && trialEnd
+                      {isLegacyBilling && periodEnd
+                        ? `Access preserved until ${periodEnd}`
+                        : sub.status === "on_trial" && trialEnd
                         ? `Trial ends ${trialEnd}`
                         : sub.cancel_at_period_end && periodEnd
                           ? `Access until ${periodEnd}`
@@ -321,7 +329,7 @@ export function DashboardSidebar({
                   </div>
                   <span
                     className={`inline-flex shrink-0 items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${
-                      sub.cancel_at_period_end
+                      isLegacyBilling || sub.cancel_at_period_end
                         ? "bg-amber-50 text-amber-600 border border-amber-200"
                         : sub.status === "on_trial"
                           ? "bg-accent-light text-accent border border-accent/20"
@@ -330,7 +338,7 @@ export function DashboardSidebar({
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        sub.cancel_at_period_end
+                        isLegacyBilling || sub.cancel_at_period_end
                           ? "bg-warning"
                           : sub.status === "on_trial"
                             ? "bg-accent"
@@ -341,8 +349,20 @@ export function DashboardSidebar({
                   </span>
                 </div>
 
-                {/* Cancel / Resume button */}
-                {sub.cancel_at_period_end ? (
+                {/* Billing actions */}
+                {isLegacyBilling ? (
+                  <div className="px-3.5 py-3 border-t border-border">
+                    <p className="mb-2 text-[12px] leading-relaxed text-tertiary">
+                      Your existing access is preserved. Contact support to move billing to Stripe.
+                    </p>
+                    <Link
+                      href="/contact?subject=Billing%20migration"
+                      className="w-full inline-flex items-center justify-center rounded-lg border border-border text-[13px] font-medium text-tertiary py-2 px-3 hover:border-accent/30 hover:bg-accent-light hover:text-accent transition-all"
+                    >
+                      Contact support
+                    </Link>
+                  </div>
+                ) : sub.cancel_at_period_end ? (
                   <div className="px-3.5 py-3 border-t border-border">
                     <button
                       onClick={handleResume}

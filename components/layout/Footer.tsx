@@ -104,7 +104,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="https://app.lemonsqueezy.com/my-orders" target="_blank" rel="noopener noreferrer nofollow" className="text-[15px] text-gray-300 hover:text-white transition-colors">
+                <a href="https://billing.stripe.com/p/login/bJeeVe00f94z4lM14N9EI00" target="_blank" rel="noopener noreferrer nofollow" className="text-[15px] text-gray-300 hover:text-white transition-colors">
                   Manage Subscription
                 </a>
               </li>

@@ -20,12 +20,12 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://app.lemonsqueezy.com https://www.googletagmanager.com https://www.google-analytics.com https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net`,
+      `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://www.google-analytics.com https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https: https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com",
-      "connect-src 'self' https://*.supabase.co https://api.lemonsqueezy.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net https://www.facebook.com",
-      "frame-src https://app.lemonsqueezy.com https://www.facebook.com",
+      "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net https://www.facebook.com",
+      "frame-src https://www.facebook.com",
       // Hardening: block plugins, lock down <base>, disallow framing & off-site
       // form posts. Scripts still need 'unsafe-inline' (inline gtag/fbq/JSON-LD),
       // so this isn't a nonce-strict policy, but it closes the cheap XSS vectors.

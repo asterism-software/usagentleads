@@ -2,6 +2,7 @@
 
 import { Loader2, ArrowRight } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 import { track } from "@/lib/utils/analytics"
 
 export function BuyFullDBButton({ className }: { className?: string }) {
@@ -22,8 +23,12 @@ export function BuyFullDBButton({ className }: { className?: string }) {
       if (data.url) {
         track("checkout_started", { product: "full_database", price: 199 })
         window.location.href = data.url
+        return
       }
+      toast.error(data.error || "Unable to start checkout. Please try again.")
+      setLoading(false)
     } catch {
+      toast.error("Unable to start checkout. Please try again.")
       setLoading(false)
     }
   }

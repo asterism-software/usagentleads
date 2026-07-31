@@ -1,9 +1,42 @@
 import Link from "next/link"
-import Image from "next/image"
 import { Check, X, ArrowRight, ShieldCheck, Download, RefreshCw } from "lucide-react"
 import { BuyFullDBButton } from "@/components/checkout/BuyFullDBButton"
 import { SubscribeButton } from "@/components/checkout/SubscribeButton"
 import { formatAgentCount } from "@/lib/utils/states"
+
+// Stripe Price IDs are intentionally colocated with the plans customers see.
+// They are public identifiers (not secrets) and are also the server-side
+// allowlist used when creating Checkout Sessions.
+export const STRIPE_PLANS = {
+  state: {
+    productId: "prod_UzEVR2GPxiByS3",
+    priceId: "price_1TzG2WItJWsYAnxnoeufOAnM",
+    amount: 4_900,
+    mode: "payment",
+  },
+  full_database: {
+    productId: "prod_UzEVFqSZvkyUKx",
+    priceId: "price_1TzG2fItJWsYAnxnC2ZYm6AP",
+    amount: 19_900,
+    mode: "payment",
+  },
+  subscription: {
+    productId: "prod_UzEVT9L76iny23",
+    priceId: "price_1TzG2tItJWsYAnxnlVVNJgPc",
+    amount: 4_900,
+    mode: "subscription",
+  },
+  subscription_api: {
+    productId: "prod_UzEWCJlZqPprFS",
+    priceId: "price_1TzG32ItJWsYAnxnBI0j2xQn",
+    amount: 7_900,
+    mode: "subscription",
+  },
+} as const
+
+export type PurchaseType = keyof typeof STRIPE_PLANS
+
+export const STRIPE_STATE_NURTURE_COUPON_ID = "tOWjxMmz"
 
 type GroupId = "onetime" | "subscription"
 
@@ -276,7 +309,9 @@ export function PlanGroups({
         </div>
         <div className="flex items-center gap-2.5">
           <span className="text-[13px] text-tertiary">Secure payments by</span>
-          <Image src="/lemon-squeezy-logo.svg" alt="Lemon Squeezy" width={212} height={28} unoptimized className="h-5 w-auto" />
+          <span className="text-[19px] font-semibold tracking-[-0.04em] text-[#635BFF]" aria-label="Stripe">
+            stripe
+          </span>
         </div>
         <p className="text-[13px] text-muted">SSL encrypted &middot; Instant delivery</p>
       </div>

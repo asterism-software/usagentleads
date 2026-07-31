@@ -1,82 +1,157 @@
-USAgentLeads Operator Documentation
+# USAgentLeads Operator Documentation
 
+## Business and hosting
 
-Core Business Logic:
+USAgentLeads sells realtor contact data (name, state, email, and phone) as
+one-time CSV downloads, a searchable subscriber dashboard, and a REST API.
 
-USAgentLeads sells realtor email lists (name, state, email, phone). Also offers dashboard access where users can view the lists or via API as well.
+- **Web app:** Next.js on Vercel
+- **Repository:** <https://github.com/asterism-software/usagentleads>
+- **Auth, application data, and CSV storage:** Supabase project `apisafe`, schema
+  `usagentleads`, private Storage bucket `agent-csvs`
+- **Leads dataset:** `usagentleads.leads` in the `leads-postgres` service on the
+  Hetzner VPS, exposed to the app through PostgREST
 
+Only the large `leads` table lives on Hetzner. Purchases, subscriptions, download
+logs, API keys, usage logs, state counts, and sample leads live in Supabase.
 
-Services/Repos and Hosting:
+## Stripe billing
 
-USAgentLeads Web app is hosted on Vercel
-Deployed Repo: https://github.com/asterism-software/usagentleads
+The pricing catalog is intentionally defined in
+`components/pricing/PlanGroups.tsx`. Its public Stripe Price IDs are committed with
+the plan copy and act as the checkout allowlist; do not move them into environment
+variables.
 
-USAgentLeads Leads table (1M+ records) is hosted on Hetzner VPS
-Project: usagentleads
-Service: leads-postgres
+| Plan | Price | Stripe Price ID | Access |
+|---|---:|---|---|
+| State Pack | $49 one-time | `price_1TzG2WItJWsYAnxnoeufOAnM` | One state CSV |
+| Full Database | $199 one-time | `price_1TzG2fItJWsYAnxnC2ZYm6AP` | All-state CSV archive |
+| Pro Dashboard | $49/month | `price_1TzG2tItJWsYAnxnlVVNJgPc` | Searchable dashboard |
+| Pro API | $79/month | `price_1TzG32ItJWsYAnxnBI0j2xQn` | Dashboard plus API, 10,000 requests/month |
 
-Ingestion scripts used to extract data exist in repo scripts/ingest dir which upsert data to leads-postgres db on Hetzner VPS
+The Stripe secret key must belong to the account and mode containing those four
+Prices. Price IDs are public identifiers; `STRIPE_SECRET_KEY` and
+`STRIPE_WEBHOOK_SECRET` are secrets and must remain in Vercel.
 
-Scheduled Jobs:
+### Checkout and fulfillment
 
+`POST /api/checkout` validates the requested plan and creates a new Stripe-hosted
+Checkout Session from the allowlist. The app does not store static checkout links.
+Session creation is idempotent and carries only the metadata needed to connect the
+Stripe object to the application's pending record.
 
-Scheduled jobs related to UAL are github actions/workflow which run periodically. Please see actions tab of repo “usagentleads”.
-See them here: https://github.com/asterism-software/usagentleads/actions
+For State Pack and Full Database purchases, the route first creates a pending
+purchase and opaque `page_token`, preserving the existing
+`/purchase-success?pt=...` polling flow. Stripe redirects the buyer there after
+Checkout. Fulfillment occurs only after the signed webhook confirms payment:
 
-update-state-counts.yml — Mondays 02:00 UTC. Single call to /api/cron/update-state-counts so Supabase's state_count catches up with whatever new rows landed in leads.
+1. `/api/webhooks/stripe` retrieves and validates the completed Checkout Session.
+2. It verifies the Price ID, USD total, purchase ID, and customer email.
+3. It marks the purchase completed and asks Resend to email the download link.
+4. The link contains a separate, single-use `download_token`; it expires after 48
+   hours and resolves to a five-minute signed Storage URL.
 
-generate-csvs.yml — Mondays 03:00 UTC, deliberately an hour after the counts job. The only non-trivial one: it implements the full 3-step flow — bare call to get the state-code worklist, then a ?state=XX call per state in a loop (tallying failures and exiting non-zero if any), then ?combine=true to rebuild the full-database CSV. This is the reference implementation for the "bare call only lists states" gotcha.
+Subscriptions require a signed-in Supabase user. Checkout copies the user's ID to
+Stripe Session and subscription metadata, and reuses an existing Stripe Customer
+when available. `stripe_checkout_attempts` holds one short-lived, user-scoped claim
+across both plans: same-plan retries recover the idempotent Session, and switching
+plans expires the previous hosted page before creating another. Successful
+subscriptions redirect to the relevant dashboard.
 
-indexnow.yml — daily 07:00 UTC. Pings /api/cron/indexnow to submit URLs to IndexNow for search-engine discovery; 10-minute curl timeout since the submission is slow.
+### Webhook, subscriptions, and portal
 
-All three also have workflow_dispatch, so you can trigger any of them manually — which is what you'd use after a mid-week ingest.
+The production Stripe endpoint is:
 
+```text
+https://www.usagentleads.com/api/webhooks/stripe
+```
 
-DB Layer:
+Configure it for `checkout.session.completed`,
+`checkout.session.async_payment_succeeded`,
+`checkout.session.async_payment_failed`, `checkout.session.expired`,
+`charge.refunded`, `customer.subscription.created`,
+`customer.subscription.updated`, `customer.subscription.deleted`,
+`customer.subscription.paused`, `customer.subscription.resumed`, `invoice.paid`,
+and `invoice.payment_failed`. Store that endpoint's signing secret as
+`STRIPE_WEBHOOK_SECRET`.
 
-Auth, DB layer is handled by Supabase only leads table exists in Hetzner VPS. In Supabase project “apisafe” look for schema “usagentleads”, this contains all the db layer for UAL. Supabase storage buckets contains CSVs for each state and also the full database csv which are served to users after payment success.
+The handler verifies the raw body and `Stripe-Signature` with Stripe's SDK. Its
+effects use deterministic updates and email idempotency keys, and it records each
+event ID in `stripe_webhook_events` only after processing succeeds. Completed
+duplicates return success without running fulfillment again; failed deliveries
+remain unrecorded so Stripe can retry them.
 
-Data Flow:
+Subscription webhooks keep the Supabase subscription row synchronized and drive
+welcome, renewal, failed-payment, and cancellation emails. Signed-in subscribers
+can use `/api/billing-portal` to open a short-lived Stripe Customer Portal session.
+The app's subscription API also supports scheduling cancellation at period end and
+resuming before that date.
 
-Ingestion scripts to leads table -> Github Workflows generate state csvs and full database csv from leads table and host it into Supabase Storage Bucket + Frontend queries leads table and display data in dashboard or serve through API
+### Nurture discount
 
-Third-party services:
+The last free-sample nurture email creates a unique Stripe promotion code for $10
+off a State Pack. Each code has one redemption and expires after 72 hours. Its
+underlying Stripe coupon is scoped to the State Pack product, so it cannot discount
+Full Database or either subscription.
 
-Resend for Emails
-IndexNow key for submitting URLs to search engines
-Lemon Squeezy for payments
-Posthog/Bing/GSC for Analytics
-Upstash for Redis
+## Data refresh and scheduled jobs
 
+Ingestion adapters in `scripts/ingest/` clean and upsert data into the Hetzner
+`leads` table. After an ingest, regenerate the derived data in this order:
 
-Deployment Flow:
+1. Call `/api/cron/update-state-counts`.
+2. Call `/api/cron/generate-csvs` once for the state worklist, once per state with
+   `?state=XX`, and finally with `?combine=true`.
+3. Run `node scripts/sync-state-counts.mjs` and commit the regenerated constants.
 
-App: This is a next.js app, push commits to repo “usagentleads” to trigger deploys on Vercel
+The GitHub Actions workflows run on these schedules:
 
-Regular maintenance tasks:
+| Workflow | Schedule | Purpose |
+|---|---|---|
+| `update-state-counts.yml` | Monday 02:00 UTC | Refresh Supabase `state_count` from the leads database |
+| `generate-csvs.yml` | Monday 03:00 UTC | Rebuild state CSVs and the combined database archive |
+| `indexnow.yml` | Daily 07:00 UTC | Submit site URLs to IndexNow |
 
-There is no regular maintenance in particular except for answering to user emails or queries and refreshing the data after some weeks or months using ingest scripts or finding new data sources.
+All three support `workflow_dispatch` for an operator-triggered run after a
+mid-week ingest.
 
+## Other managed services
 
-Common Failures and Recovery:
+- **Resend:** transactional, download, subscription, and nurture emails
+- **IndexNow:** search-engine URL submission
+- **PostHog, Bing Webmaster Tools, Google Search Console:** analytics and search
+- **Upstash Redis:** public-route rate limiting
 
-Not anything in particular but sometimes github workflows generating CSVs time out or fail, but happens rarely
+## Deployment and payment smoke test
 
+Apply `supabase/migrations/20260731130718_stripe_payments.sql` before pushing the
+Stripe-enabled app to production. Then push the production branch to trigger the
+Vercel deployment.
+Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in every Vercel environment that
+must accept payments. Configure Stripe Customer Portal access and the production
+webhook separately in the Stripe Dashboard. Never place secret values in this
+document or in `PlanGroups.tsx`.
 
-Further messages from the seller:
-I already mentioned it in the doc, that i use ingest scripts found in scripts/ingest dir in repo.
+After a billing change, verify:
 
-Those repos extract the leads, cleans and upserts them to leads db hosted on hetzner.
+1. `POST /api/checkout` returns a Stripe-hosted URL for each plan.
+2. A State Pack test purchase reaches `/purchase-success`, completes the purchase
+   row, and sends a working download email exactly once.
+3. Pro Dashboard and Pro API checkouts attach to the signed-in user and update the
+   subscription after the webhook arrives.
+4. `/api/billing-portal` opens for a Stripe subscriber.
+5. A generated nurture promotion code discounts only State Pack and cannot be
+   redeemed twice.
 
-So whenever you feel like, you need to update the db or refresh it to find new leads, then run those scripts.
+Use Stripe's webhook delivery log first when fulfillment or subscription state is
+stale. Signature failures return HTTP 400; processing failures return HTTP 500 so
+Stripe retries. CSV workflow timeouts are separate from payment processing and can
+usually be recovered by rerunning the failed workflow.
 
-Now as I had stated this earlier that I didn't have any pipeline system in place for this. I had one-time scripts, I developed gradually and kept stacking the leads and refreshing them occasionally.
+## Historical ingestion notes
 
-You can reuse the same scripts and also find new sources as well if you want to increase the total leads.
-
-Initially I had like 500k+ and the. I increased them to 1M+.
-
-
-Also you can use residential.com and keller williams (kw) as sources.
-
-I had scripts for these, but lost them on a VPS where it was deploed and don't have access to the vps
+The original dataset was assembled incrementally with one-time adapters rather
+than a single permanent pipeline. Reuse the checked-in ingestion scripts and add
+new sources when the data needs refreshing. Residential.com and Keller Williams
+were previously identified as possible sources, but the earlier scripts for them
+were lost with an inaccessible VPS and are not part of this repository.

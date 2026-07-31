@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { isAuthorizedCron } from "@/lib/utils/cronAuth"
 import { createServiceClient } from "@/lib/supabase/server"
 import { sendNurtureImport, sendNurtureQuality, sendNurtureFinal, type NurtureCoupon } from "@/lib/resend/emails"
-import { createStateDiscount } from "@/lib/lemonsqueezy/client"
+import { createStateDiscount } from "@/lib/stripe/client"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
           last_emailed_at: new Date().toISOString(),
         }
         // Final stage: mint a unique, single-use discount for this lead. If it
-        // fails (LS down), still send the email without a coupon rather than
+        // fails, still send the email without a coupon rather than
         // block the lead — and record the code on the row if minted.
         let coupon: NurtureCoupon | undefined
         if (gate.withCoupon) {

@@ -12,12 +12,17 @@ export interface Purchase {
   guest_email: string | null
   purchase_type: "state" | "full_database" | "subscription"
   state_code: string | null
-  lemon_squeezy_order_id: string | null
-  lemon_squeezy_customer_id: string | null
+  billing_provider: "legacy" | "stripe"
+  stripe_checkout_session_id: string | null
+  stripe_payment_intent_id: string | null
+  stripe_customer_id: string | null
   amount_paid: number
+  amount_refunded: number
+  currency: string
   status: "pending" | "completed" | "failed" | "refunded"
   download_token: string
   token_used: boolean
+  fulfillment_email_sent_at: string | null
   expires_at: string | null
   created_at: string
 }
@@ -25,10 +30,18 @@ export interface Purchase {
 export interface Subscription {
   id: string
   user_id: string
-  lemon_squeezy_subscription_id: string
-  lemon_squeezy_customer_id: string | null
+  billing_provider: "legacy" | "stripe"
+  stripe_subscription_id: string | null
+  stripe_customer_id: string | null
+  stripe_price_id: string | null
+  provider_status: string | null
+  plan: "pro_monthly" | "pro_api"
   status: "active" | "paused" | "cancelled" | "expired" | "on_trial"
+  current_period_start: string | null
   current_period_end: string | null
+  trial_ends_at: string | null
+  cancel_at_period_end: boolean
+  cancelled_at: string | null
   created_at: string
   updated_at: string
 }

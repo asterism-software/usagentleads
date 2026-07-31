@@ -2,17 +2,18 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import { makeUnsubToken, verifyUnsubToken } from "@/lib/utils/unsubscribe"
 
 const ORIGINAL_CRON = process.env.CRON_SECRET
-const ORIGINAL_LS = process.env.LEMONSQUEEZY_API_KEY
+const ORIGINAL_UNSUBSCRIBE = process.env.UNSUBSCRIBE_SECRET
 
 beforeEach(() => {
+  delete process.env.UNSUBSCRIBE_SECRET
   process.env.CRON_SECRET = "unsubscribe-test-secret"
 })
 
 afterEach(() => {
   if (ORIGINAL_CRON === undefined) delete process.env.CRON_SECRET
   else process.env.CRON_SECRET = ORIGINAL_CRON
-  if (ORIGINAL_LS === undefined) delete process.env.LEMONSQUEEZY_API_KEY
-  else process.env.LEMONSQUEEZY_API_KEY = ORIGINAL_LS
+  if (ORIGINAL_UNSUBSCRIBE === undefined) delete process.env.UNSUBSCRIBE_SECRET
+  else process.env.UNSUBSCRIBE_SECRET = ORIGINAL_UNSUBSCRIBE
 })
 
 describe("unsubscribe tokens", () => {
@@ -46,12 +47,20 @@ describe("unsubscribe tokens", () => {
     expect(verifyUnsubToken("person@example.com", token)).toBe(false)
   })
 
+  it("prefers a dedicated unsubscribe secret over the cron secret", () => {
+    process.env.UNSUBSCRIBE_SECRET = "dedicated-secret"
+    const token = makeUnsubToken("person@example.com")
+
+    delete process.env.UNSUBSCRIBE_SECRET
+    expect(verifyUnsubToken("person@example.com", token)).toBe(false)
+  })
+
   // Regression: the module used to fall back to a hardcoded literal secret,
   // so anyone could derive a valid opt-out token for any address on a deploy
   // that was missing both env vars.
   it("fails closed when no secret is configured", () => {
+    delete process.env.UNSUBSCRIBE_SECRET
     delete process.env.CRON_SECRET
-    delete process.env.LEMONSQUEEZY_API_KEY
     expect(verifyUnsubToken("person@example.com", "0".repeat(32))).toBe(false)
     expect(() => makeUnsubToken("person@example.com")).toThrow()
   })

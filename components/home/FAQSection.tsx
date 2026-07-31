@@ -37,7 +37,7 @@ function getFaqs(totalCount: number) {
     {
       question: "Can I cancel my subscription anytime?",
       answer:
-        "Yes. You can cancel from your Lemon Squeezy customer portal at any time with no penalties or questions.",
+        "Yes. You can cancel from the Stripe billing portal at any time with no penalties or questions.",
     },
     {
       question: "Is the data compliant for outreach?",

@@ -4,7 +4,21 @@ import { unsubscribeUrl } from "@/lib/utils/unsubscribe"
 import { SITE_URL } from "@/lib/utils/site"
 import { getAgentCount, formatAgentCountLabel } from "@/lib/utils/agent-count"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resendClient = new Resend(process.env.RESEND_API_KEY)
+
+// Resend reports API failures in a resolved `{ error }` result. Normalize that
+// into a rejection so callers (especially Stripe webhooks) can retry safely.
+const resend = {
+  emails: {
+    async send(...args: Parameters<typeof resendClient.emails.send>) {
+      const result = await resendClient.emails.send(...args)
+      if (result.error) {
+        throw new Error(`Resend email delivery failed: ${result.error.message}`)
+      }
+      return result
+    },
+  },
+}
 
 const SUPPORT_EMAIL = "support@usagentleads.com"
 const FROM_EMAIL = `USAgentLeads <${SUPPORT_EMAIL}>`
@@ -61,6 +75,10 @@ function infoBox(content: string): string {
   return `<div style="background-color: #EEF2FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 16px 20px; margin: 20px 0;">
     ${content}
   </div>`
+}
+
+interface IdempotentEmailParams {
+  idempotencyKey?: string
 }
 
 // ── Magic link email (auth) ──────────────────────────────────────────
@@ -147,7 +165,7 @@ export async function sendConfirmSignup({
 
 // ── Download email (state pack or full database purchase) ────────────
 
-interface SendDownloadEmailParams {
+interface SendDownloadEmailParams extends IdempotentEmailParams {
   to: string
   downloadUrl: string
   productName: string
@@ -159,6 +177,7 @@ export async function sendDownloadEmail({
   downloadUrl,
   productName,
   purchaseType,
+  idempotencyKey,
 }: SendDownloadEmailParams) {
   const fileFormat = "CSV"
   const subject = `Your ${productName} Real Estate Agent Data is Ready`
@@ -190,24 +209,31 @@ export async function sendDownloadEmail({
       File format: ${escapeHtml(fileFormat)} (opens in Excel, Google Sheets, or any CRM)
     </p>`
 
-  await resend.emails.send({ from: FROM_EMAIL, to, subject, html: emailLayout(body) })
+  await resend.emails.send(
+    { from: FROM_EMAIL, to, subject, html: emailLayout(body) },
+    idempotencyKey ? { idempotencyKey } : undefined
+  )
 }
 
 // ── Subscription welcome email ───────────────────────────────────────
 
-interface SendSubscriptionWelcomeParams {
+interface SendSubscriptionWelcomeParams extends IdempotentEmailParams {
   to: string
+  planName?: "Pro Dashboard" | "Pro API"
 }
 
 export async function sendSubscriptionWelcome({
   to,
+  planName = "Pro Dashboard",
+  idempotencyKey,
 }: SendSubscriptionWelcomeParams) {
   const countLabel = formatAgentCountLabel(await getAgentCount())
+  const isApiPlan = planName === "Pro API"
   const body = `
     <p style="margin: 0 0 16px 0; font-size: 15px;">Hi there,</p>
 
     <p style="margin: 0 0 16px 0; font-size: 15px;">
-      Welcome to <strong>USAgentLeads Pro Dashboard</strong>! Your subscription is now active.
+      Welcome to <strong>USAgentLeads ${escapeHtml(planName)}</strong>! Your subscription is now active.
     </p>
 
     ${infoBox(`
@@ -215,28 +241,32 @@ export async function sendSubscriptionWelcome({
       <table style="width: 100%; font-size: 14px; color: #334155;">
         <tr><td style="padding: 3px 0;">Browse ${countLabel} verified agents in-app</td></tr>
         <tr><td style="padding: 3px 0;">Search & filter by state</td></tr>
+        ${isApiPlan ? '<tr><td style="padding: 3px 0;">10,000 REST API requests per month</td></tr>' : ""}
         <tr><td style="padding: 3px 0;">Real-time updated data</td></tr>
         <tr><td style="padding: 3px 0;">Cancel anytime</td></tr>
       </table>
     `)}
 
-    ${primaryButton("https://www.usagentleads.com/dashboard", "Go to Dashboard")}
+    ${primaryButton(isApiPlan ? "https://www.usagentleads.com/dashboard/api-keys" : "https://www.usagentleads.com/dashboard", isApiPlan ? "Manage API Keys" : "Go to Dashboard")}
 
     <p style="color: #64748b; font-size: 13px; margin: 0;">
       Manage your subscription anytime from the dashboard sidebar.
     </p>`
 
-  await resend.emails.send({
-    from: FROM_EMAIL,
-    to,
-    subject: "Welcome to USAgentLeads Pro Dashboard",
-    html: emailLayout(body),
-  })
+  await resend.emails.send(
+    {
+      from: FROM_EMAIL,
+      to,
+      subject: `Welcome to USAgentLeads ${planName}`,
+      html: emailLayout(body),
+    },
+    idempotencyKey ? { idempotencyKey } : undefined
+  )
 }
 
 // ── Subscription cancelled email ─────────────────────────────────────
 
-interface SendSubscriptionCancelledParams {
+interface SendSubscriptionCancelledParams extends IdempotentEmailParams {
   to: string
   accessUntil: string | null
 }
@@ -244,6 +274,7 @@ interface SendSubscriptionCancelledParams {
 export async function sendSubscriptionCancelled({
   to,
   accessUntil,
+  idempotencyKey,
 }: SendSubscriptionCancelledParams) {
   const accessNote = accessUntil
     ? `You'll continue to have full access until <strong>${new Date(accessUntil).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</strong>.`
@@ -269,17 +300,20 @@ export async function sendSubscriptionCancelled({
       If you have feedback on how we can improve, we'd love to hear from you &mdash; just reply to this email.
     </p>`
 
-  await resend.emails.send({
-    from: FROM_EMAIL,
-    to,
-    subject: "Your USAgentLeads Subscription Has Been Cancelled",
-    html: emailLayout(body),
-  })
+  await resend.emails.send(
+    {
+      from: FROM_EMAIL,
+      to,
+      subject: "Your USAgentLeads Subscription Has Been Cancelled",
+      html: emailLayout(body),
+    },
+    idempotencyKey ? { idempotencyKey } : undefined
+  )
 }
 
 // ── Subscription renewed email ───────────────────────────────────────
 
-interface SendSubscriptionRenewedParams {
+interface SendSubscriptionRenewedParams extends IdempotentEmailParams {
   to: string
   nextRenewal: string | null
 }
@@ -287,6 +321,7 @@ interface SendSubscriptionRenewedParams {
 export async function sendSubscriptionRenewed({
   to,
   nextRenewal,
+  idempotencyKey,
 }: SendSubscriptionRenewedParams) {
   const renewalNote = nextRenewal
     ? `Your next renewal is on <strong>${new Date(nextRenewal).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</strong>.`
@@ -305,12 +340,15 @@ export async function sendSubscriptionRenewed({
       Thanks for being a Pro member!
     </p>`
 
-  await resend.emails.send({
-    from: FROM_EMAIL,
-    to,
-    subject: "Your USAgentLeads Subscription Has Been Renewed",
-    html: emailLayout(body),
-  })
+  await resend.emails.send(
+    {
+      from: FROM_EMAIL,
+      to,
+      subject: "Your USAgentLeads Subscription Has Been Renewed",
+      html: emailLayout(body),
+    },
+    idempotencyKey ? { idempotencyKey } : undefined
+  )
 }
 
 // ── Contact form email ──────────────────────────────────────────────
@@ -359,8 +397,9 @@ export async function sendContactEmail({
 
 // ── Payment failed email ─────────────────────────────────────────────
 
-interface SendPaymentFailedParams {
+interface SendPaymentFailedParams extends IdempotentEmailParams {
   to: string
+  planName?: "Pro Dashboard" | "Pro API"
 }
 
 // ── Free sample download email ────────────────────────────────────────
@@ -557,19 +596,23 @@ export async function sendNurtureFinal({ to, coupon }: { to: string; coupon?: Nu
 
 // ── Payment failed email ─────────────────────────────────────────────
 
-export async function sendPaymentFailed({ to }: SendPaymentFailedParams) {
+export async function sendPaymentFailed({
+  to,
+  planName = "Pro Dashboard",
+  idempotencyKey,
+}: SendPaymentFailedParams) {
   const body = `
     <p style="margin: 0 0 16px 0; font-size: 15px;">Hi there,</p>
 
     <p style="margin: 0 0 16px 0; font-size: 15px;">
-      We were unable to process your latest payment for the USAgentLeads Pro Dashboard subscription.
+      We were unable to process your latest payment for the USAgentLeads ${escapeHtml(planName)} subscription.
     </p>
 
     <p style="margin: 0 0 16px 0; font-size: 15px;">
       Please update your payment method to avoid losing access to your dashboard.
     </p>
 
-    ${primaryButton("https://app.lemonsqueezy.com/my-orders", "Update Payment Method")}
+    ${primaryButton("https://billing.stripe.com/p/login/bJeeVe00f94z4lM14N9EI00", "Update Payment Method")}
 
     ${infoBox(`
       <p style="margin: 0; font-size: 14px; color: #92400e;">
@@ -581,10 +624,13 @@ export async function sendPaymentFailed({ to }: SendPaymentFailedParams) {
       If you believe this is an error, reply to this email and we'll help sort it out.
     </p>`
 
-  await resend.emails.send({
-    from: FROM_EMAIL,
-    to,
-    subject: "Action Required: Payment Failed for USAgentLeads",
-    html: emailLayout(body),
-  })
+  await resend.emails.send(
+    {
+      from: FROM_EMAIL,
+      to,
+      subject: "Action Required: Payment Failed for USAgentLeads",
+      html: emailLayout(body),
+    },
+    idempotencyKey ? { idempotencyKey } : undefined
+  )
 }

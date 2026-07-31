@@ -13,9 +13,9 @@ delivered separately through the secure channel, not in this file.
 - **Proxy/TLS:** **Traefik v3.6** (`coolify-proxy`) terminates 80/443 and routes by
   hostname to each container
 
-Everything the products depend on beyond this box (Supabase, Upstash, Lemon
-Squeezy, Resend, PostHog, xAI, Google) is an external managed service reached over
-HTTPS. See the table further down.
+Everything the products depend on beyond this box (Supabase, Upstash, Stripe,
+Resend, PostHog, xAI, Google) is an external managed service reached over HTTPS.
+See the table further down.
 
 ```
   foreclosuredatahub.com          api.foreclosuredatahub.com     postgrest-*.sslip.io
@@ -44,10 +44,37 @@ HTTPS. See the table further down.
 - **Domains:** `api.foreclosuredatahub.com` (plus a Coolify `*.sslip.io` fallback)
 - **Role:** the application and data API. Route groups: dashboard search, county
   directory, license, subscription, checkout, auth, cron, admin, public `/api/v1`,
-  Lemon Squeezy webhooks, AI analysis, unsubscribe.
+  billing webhooks, AI analysis, unsubscribe.
 - **Points at:** Supabase (`gsvbmwvwayrafyapqxym.supabase.co`) for data and auth.
 - **Important:** all server-side secrets live on this backend service, not on the
   frontend. Set the environment here or the API breaks.
+
+### US Agent Leads — web app (Vercel, off-box)
+
+- **Domain:** `www.usagentleads.com`
+- **Role:** marketing, Supabase Auth, directory/dashboard/API access, CSV delivery,
+  and Stripe billing. The web app itself does not run on this VPS; only its leads
+  database and PostgREST service do.
+- **Checkout:** `POST /api/checkout` creates a fresh Stripe-hosted Checkout Session
+  from one of the four allowlisted Price IDs committed in
+  `components/pricing/PlanGroups.tsx`: State Pack $49
+  (`price_1TzG2WItJWsYAnxnoeufOAnM`), Full Database $199
+  (`price_1TzG2fItJWsYAnxnC2ZYm6AP`), Pro Dashboard $49/month
+  (`price_1TzG2tItJWsYAnxnlVVNJgPc`), and Pro API $79/month
+  (`price_1TzG32ItJWsYAnxnBI0j2xQn`). These public IDs are not environment secrets.
+  A short-lived Supabase claim ensures each signed-in user has at most one payable
+  subscription Checkout Session across Pro Dashboard and Pro API.
+- **Billing callbacks:** Stripe sends signed events to `/api/webhooks/stripe`, which
+  fulfills one-time purchases and synchronizes subscriptions, renewals, failed
+  payments, cancellations, and refunds. The handler uses idempotent effects and
+  records each Stripe event ID in Supabase only after processing succeeds, so
+  failed deliveries remain retryable and completed duplicates are harmless.
+- **Billing management and discounts:** `/api/billing-portal` creates a Stripe
+  Customer Portal session for signed-in subscribers. The nurture drip creates a
+  unique, single-use Stripe promotion code for $10 off the State Pack, expiring
+  after 72 hours.
+- **Secrets:** `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` belong in the UAL
+  Vercel project. The four Price IDs stay in `PlanGroups.tsx`.
 
 ### US Agent Leads — leads database (PostgreSQL)
 - **Container:** `jv0tsd8pl7267c5vhwwpjzin`, `postgres:16-alpine`, **:5432**
@@ -94,14 +121,15 @@ FDH email automation is currently OFF.
 
 ## External services (not on the VPS)
 
-Referenced by env var name; values are in the secure credential handoff. Server
-secrets are set on the FDH **backend** service.
+Referenced by env var name; values are in the secure credential handoff. Put each
+secret on the service that uses it: FDH backend secrets remain in Coolify, while
+US Agent Leads app secrets remain in its Vercel project.
 
 | Service | Purpose | Key env vars |
 |---|---|---|
 | Supabase | FDH Postgres database + auth (Google OAuth) | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` |
 | Upstash Redis | Rate limiting | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
-| Lemon Squeezy | Subscriptions, checkout, webhooks | `LEMON_SQUEEZY_API_KEY`, `LEMON_SQUEEZY_STORE_ID`, `LEMONSQUEEZY_WEBHOOK_SECRET`, variant IDs |
+| Stripe | UAL hosted Checkout Sessions, subscriptions, refunds, Customer Portal, promotion codes, webhooks | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
 | Resend | Transactional + campaign email (HTTPS API) | `RESEND_API_KEY` |
 | PostHog | Product analytics | `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` |
 | xAI (Grok) | AI property analysis | `XAI_API_KEY` |
@@ -118,6 +146,8 @@ box.
   `Dockerfile` for the frontend, `server/Dockerfile` for the backend).
 - Environment variables are managed per service in Coolify. Backend holds the
   server secrets; frontend holds only `NEXT_PUBLIC_*` values.
+- US Agent Leads deploys separately on Vercel. Configure its Stripe secrets there,
+  and configure the production webhook URL and Customer Portal in Stripe.
 - The FDH domain and business inbox are registered at **Hostinger**.
 
 ## Operational notes
@@ -127,11 +157,10 @@ box.
   through the Resend HTTPS API, and cold-email sending is off. To restore raw SMTP,
   the account owner can request an unblock from Hetzner support.
 - **Rotate all credentials** and remove the previous owner's access: Supabase keys,
-  Lemon Squeezy keys and webhook secret, Resend, Upstash, xAI, `ADMIN_API_KEY`,
+  the Stripe secret key and webhook signing secret, Resend, Upstash, xAI, `ADMIN_API_KEY`,
   `UNSUBSCRIBE_SECRET`, the leads Postgres password, the PostgREST JWT/anon secret,
   and Coolify/SSH access.
 - **DNS:** point `foreclosuredatahub.com` and `api.foreclosuredatahub.com` at this
   server's IP at Hostinger, and update OAuth redirect URIs if hostnames change.
 - **PostgREST exposure:** the leads API is reachable on a public `*.sslip.io`
   hostname. Restrict or rotate its access if it should not be internet-facing.
-```

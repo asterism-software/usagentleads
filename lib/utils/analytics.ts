@@ -5,7 +5,7 @@ import posthog from "posthog-js"
  * instrumentation-client.ts; this wrapper keeps event names typed and
  * consistent so the funnel (intent → checkout → purchase) can be built
  * reliably in the dashboard. Purchase completion itself is tracked
- * server-side via the Lemon Squeezy webhook, not here.
+ * server-side via the Stripe webhook, not here.
  */
 export type AnalyticsEvent =
   | "buy_button_clicked"

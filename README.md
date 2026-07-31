@@ -26,7 +26,7 @@ There are really only four moving parts. Everything in the repo hangs off one of
   └───────────┬───────────┘
               ▼
   ┌── SELL ───────────────┐   Next.js app on Vercel: SEO pages → checkout →
-  │  Next.js on Vercel    │   Lemon Squeezy → webhook → emailed download link
+  │  Next.js on Vercel    │   Stripe → webhook → emailed download link
   └───────────────────────┘
 ```
 
@@ -125,41 +125,57 @@ pull prod env with the Vercel CLI before hitting live endpoints.
 ## 3. The money path
 
 ```
- PricingCards → POST /api/checkout → Lemon Squeezy hosted checkout → payment
-                       │                                                │
-              mints page_token                                          ▼
-                       │                              POST /api/webhooks/lemonsqueezy
-                       ▼                                                │
-             /purchase-success?pt=…  ◀── polls /api/purchase ──  writes purchases row
-                                                                        │
-                                                          Resend sends download link
-                                                                        ▼
-                                                        GET /api/download?token=…
-                                                     single-use, 48h, → signed Storage
-                                                        URL valid 5 minutes
+ PricingCards → POST /api/checkout → dynamic Stripe Checkout Session → payment
+                       │                                               │
+              mints page_token                                            ▼
+                       │                                  POST /api/webhooks/stripe
+                       ▼                                               │
+             /purchase-success?pt=…  ◀── polls /api/purchase ── updates purchase
+                                                                       │
+                                                         Resend sends download link
+                                                                       ▼
+                                                       GET /api/download?token=…
+                                                    single-use, 48h, → signed Storage
+                                                       URL valid 5 minutes
 ```
 
 Four products, all defined in [components/pricing/PlanGroups.tsx](components/pricing/PlanGroups.tsx)
-and mapped to Lemon Squeezy variant IDs by env var:
+with their public Stripe Price IDs. Those IDs are deliberately committed beside
+the displayed plans and double as the server-side checkout allowlist; they are not
+environment variables or secrets.
 
-| Plan | Price | Grants |
-|---|---|---|
-| State Pack | $49 one-time | One state CSV |
-| Full Database | $199 one-time | Gzipped CSV of all ~1.16M contacts |
-| Pro Dashboard | $49/mo | Searchable in-app agent browser |
-| Pro API | $79/mo | `/api/v1/agents`, 10k requests/month |
+| Plan | Price | Stripe Price ID | Grants |
+|---|---:|---|---|
+| State Pack | $49 one-time | `price_1TzG2WItJWsYAnxnoeufOAnM` | One state CSV |
+| Full Database | $199 one-time | `price_1TzG2fItJWsYAnxnC2ZYm6AP` | Gzipped CSV of all ~1.16M contacts |
+| Pro Dashboard | $49/mo | `price_1TzG2tItJWsYAnxnlVVNJgPc` | Searchable in-app agent browser |
+| Pro API | $79/mo | `price_1TzG32ItJWsYAnxnBI0j2xQn` | `/api/v1/agents`, 10k requests/month |
 
 Details that matter when touching this code:
 
-- **Idempotency**: the webhook upserts on the unique `lemon_squeezy_order_id` with
-  `ignoreDuplicates`, so redelivered events can't double-charge or double-email.
-  Events older than 5 minutes are rejected as replays; signatures are HMAC-verified.
+- **No static payment links**: `/api/checkout` validates the requested plan, creates
+  the pending one-time purchase first, and asks Stripe for a hosted Checkout Session.
+  Checkout creation carries an idempotency key and only uses an allowlisted Price ID.
+- **Webhook integrity and idempotency**: `/api/webhooks/stripe` verifies the raw body
+  and `Stripe-Signature` with Stripe's SDK. Each handler uses deterministic updates
+  and email idempotency keys, then records the unique event ID in
+  `stripe_webhook_events` only after it succeeds. Failures remain retryable, while
+  completed and concurrent duplicate deliveries are safe no-ops.
 - **`page_token` vs `download_token`**: `page_token` is minted at checkout and rides
   the redirect URL so only the buyer can look up their own order; `download_token`
   is the single-use claim on the file. The claim is a conditional `UPDATE … WHERE
   token_used = false`, so two concurrent clicks can't both win.
-- **Subscriptions** are the only flow requiring a logged-in user (the Lemon Squeezy
-  `user_id` custom-data field is how the webhook attaches the subscription).
+- **Subscriptions** are the only flow requiring a logged-in user. The `user_id` is
+  copied into Stripe Checkout and subscription metadata so webhook events attach to
+  the correct account. A user-keyed `stripe_checkout_attempts` claim permits only
+  one payable subscription Session at a time across both plans; same-plan retries
+  recover the Session with Stripe idempotency, while switching plans expires the
+  previous hosted page first. Existing Stripe Customer IDs are reused, and
+  `/api/billing-portal` creates a short-lived Customer Portal session for billing
+  management.
+- **Discounts**: the nurture drip mints a unique, single-use Stripe promotion code
+  for $10 off the State Pack. It expires after 72 hours and is backed by a
+  product-scoped coupon, so it cannot discount another plan.
 
 ---
 
@@ -201,10 +217,11 @@ can stop after one page. Don't "fix" the missing sort.
 persists the email to `sample_leads` (tagged with a capture-point source), then
 emails a 7-day signed link to a pre-generated 500-row CSV. The daily
 [nurture-drip](app/api/cron/nurture-drip/route.ts) cron walks leads through three
-gated stages (day 2 / 4 / 6); the final email mints a **unique single-use Lemon
-Squeezy discount code** per lead. Anyone who has already purchased is marked
-`converted` and dropped from the sequence. Opt-out is a stateless HMAC token, so
-unsubscribe links work without per-lead storage (CAN-SPAM).
+gated stages (day 2 / 4 / 6); the final email mints a **unique, single-use Stripe
+promotion code** for $10 off a State Pack, valid for 72 hours. Anyone who has
+already purchased is marked `converted` and dropped from the sequence. Opt-out is
+a stateless HMAC token, so unsubscribe links work without per-lead storage
+(CAN-SPAM).
 
 **Programmatic SEO.** Most of the route tree is generated from typed data files in
 [lib/data/](lib/data/) — 50 state pages, 50 directory pages, 12 personas, 13
@@ -254,7 +271,7 @@ lib/
   queries/            agents.ts (authed, unmasked) · directory.ts (public, masked)
   data/               typed content for the programmatic SEO page sets
   utils/              states.ts (generated counts) · security · rateLimit · seo · mask
-  lemonsqueezy/       checkout + webhook signature verification
+  stripe/             Checkout Sessions + webhook signature verification
   resend/             all transactional + drip email templates
 content/blog/         MDX posts
 scripts/ingest/       source adapters + the ingestion runbook
@@ -280,10 +297,11 @@ npm run dev                        # http://localhost:3000
 ```
 
 You need credentials for four services: **Supabase** (URL + anon + service role),
-the **leads PostgREST** endpoint (`LEADS_REST_URL` / `LEADS_REST_KEY`), **Lemon
-Squeezy** (API key, webhook secret, 4 variant IDs), and **Resend**. Upstash Redis is
+the **leads PostgREST** endpoint (`LEADS_REST_URL` / `LEADS_REST_KEY`), **Stripe**
+(`STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`), and **Resend**. The four Stripe
+Price IDs live in `PlanGroups.tsx`, not in the environment. Upstash Redis is
 optional locally but required for rate limiting in production. See
-[.env.local.example](.env.local.example) for the annotated list.
+[.env.example](.env.example) for the annotated list.
 
 Without the leads credentials the marketing pages still render (counts fall back to
 the static constants), but the directory, dashboard, and API return empty.
@@ -299,7 +317,7 @@ the static constants), but the directory, dashboard, and API return empty.
 | `npm run ingest:*` | Lead ingestion — see §2 |
 
 **Stack**: Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 + shadcn/ui ·
-Supabase · self-hosted Postgres + PostgREST · Lemon Squeezy · Resend · Upstash ·
+Supabase · self-hosted Postgres + PostgREST · Stripe · Resend · Upstash ·
 PostHog · Vercel.
 
 ---
@@ -314,12 +332,16 @@ Five pieces deploy independently. Only the first changes on a normal day:
 | Auth, orders, Storage | Supabase project `apisafe` | `npm run db:push` |
 | `leads` DB | Hetzner VPS via Coolify | manual — [infra/leads-db/README.md](infra/leads-db/README.md) |
 | Weekly/daily crons | GitHub Actions + Vercel Cron | committed with the repo |
-| Payments / email | Lemon Squeezy + Resend dashboards | manual config |
+| Payments / email | Stripe + Resend dashboards | manual config |
 
 ### Routine deploy
 
 Push to `main` → Vercel builds and promotes to production. Every PR gets a preview
 deployment with its own env values.
+
+For the initial Stripe cutover, apply
+`supabase/migrations/20260731130718_stripe_payments.sql` before promoting the app;
+the checkout and webhook routes depend on its Stripe columns and idempotency tables.
 
 ```bash
 npm run type-check && npm run lint && npm test   # build fails on TS errors by design
@@ -338,27 +360,22 @@ npx vercel env pull .env.local   # sync production env down (local CRON_SECRET d
 ### Environment variables
 
 Set these in **Vercel → Settings → Environment Variables** for both Production and
-Preview. [.env.local.example](.env.local.example) is annotated but **incomplete** —
-the four marked ⚠ below are used in code and absent from it.
+Preview. [.env.example](.env.example) contains the annotated local
+template; never commit the corresponding secret values.
 
 | Variable | Purpose | Missing = |
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` | Client + SSR auth | App dead |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server writes, Storage signing | Orders, downloads dead |
 | `LEADS_REST_URL` / `LEADS_REST_KEY` | Self-hosted leads DB | Directory/dashboard/API empty |
-| `LEMONSQUEEZY_API_KEY` / `_STORE_ID` | Checkout + coupon minting | No checkout |
-| `LEMONSQUEEZY_WEBHOOK_SECRET` | Webhook HMAC verification | Paid orders never fulfilled |
-| `NEXT_PUBLIC_LS_STATE_VARIANT_ID` | State Pack ($49) | That product 500s |
-| `NEXT_PUBLIC_LS_FULL_DB_VARIANT_ID` | Full Database ($199) | ” |
-| `NEXT_PUBLIC_LS_SUBSCRIPTION_VARIANT_ID` | Pro Dashboard ($49/mo) | ” |
-| ⚠ `NEXT_PUBLIC_LS_API_SUBSCRIPTION_VARIANT_ID` | Pro API ($79/mo) | ” |
+| `STRIPE_SECRET_KEY` | Checkout, Portal, subscription, and promotion-code API calls | Billing routes fail |
+| `STRIPE_WEBHOOK_SECRET` | Verify `/api/webhooks/stripe` signatures | Paid orders and subscriptions never sync |
 | `RESEND_API_KEY` / `RESEND_FROM_EMAIL` | All transactional + drip email | Buyers get no download link |
 | `NEXT_PUBLIC_APP_URL` | Absolute URLs in emails | Broken download links |
 | `CRON_SECRET` | Bearer auth on `/api/cron/*` | All crons 401 (fails closed) |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Rate limiting | Public endpoints unprotected |
-| ⚠ `INDEXNOW_KEY` | IndexNow submissions | Indexing cron fails |
-| ⚠ `NEXT_PUBLIC_POSTHOG_KEY` / `_HOST` | Analytics | No analytics |
-| `NURTURE_COUPON_AMOUNT_CENTS` | Drip discount size (default 1000) | Defaults to $10 |
+| `INDEXNOW_KEY` | IndexNow submissions | Indexing cron fails |
+| `NEXT_PUBLIC_POSTHOG_KEY` / `_HOST` | Analytics | No analytics |
 
 `CRON_SECRET` deserves attention: Vercel injects it as the `Authorization: Bearer`
 header on its own cron invocations automatically, and
@@ -374,11 +391,17 @@ workflow-driven jobs stop silently. Rotating it means updating both places at on
 2. **Leads DB** — stand up Postgres + PostgREST on the VPS and mint the app JWT, per
    [infra/leads-db/README.md](infra/leads-db/README.md). Confirm an authenticated
    `curl` returns a row and an unauthenticated one is denied before moving on.
-3. **Lemon Squeezy** — create the store and four variants ($49 state, $199 full DB,
-   $49/mo dashboard, $79/mo API). Point a webhook at
-   `https://<domain>/api/webhooks/lemonsqueezy` subscribed to `order_created`,
-   `order_refunded`, `subscription_created`, `subscription_updated`,
-   `subscription_cancelled`, `subscription_expired`, `subscription_payment_failed`.
+3. **Stripe** — confirm the four products and Prices in the table in §3 exist in
+   the same Stripe account and mode as `STRIPE_SECRET_KEY`. Configure the Customer
+   Portal, keep the State Pack's $10 coupon product-scoped, and point a webhook at
+   `https://<domain>/api/webhooks/stripe`. Subscribe it to
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+   `checkout.session.async_payment_failed`, `checkout.session.expired`,
+   `charge.refunded`, `customer.subscription.created`,
+   `customer.subscription.updated`, `customer.subscription.deleted`,
+   `customer.subscription.paused`, `customer.subscription.resumed`, `invoice.paid`,
+   and `invoice.payment_failed`. Copy that endpoint's signing secret to
+   `STRIPE_WEBHOOK_SECRET`.
 4. **Resend** — verify the sending domain (SPF/DKIM), then copy the API key.
 5. **Upstash Redis** and **PostHog** — create both, copy credentials.
 6. **Vercel** — import the GitHub repo, set every variable above, deploy.
@@ -407,8 +430,8 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" \
 
 Then, in a browser: a state page renders live counts, the free-sample dialog delivers
 an email, and a real $49 checkout produces a purchase row plus a working download
-link. Lemon Squeezy's webhook log is the fastest place to confirm fulfillment — a
-signature mismatch shows up there as a 401, not as a site error.
+link. Stripe Dashboard's webhook delivery log is the fastest place to confirm
+fulfillment; a signature mismatch returns `400 Invalid signature` at the endpoint.
 
 ### Rollback
 
