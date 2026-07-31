@@ -91,7 +91,7 @@ function PurchaseSuccessContent() {
   const showStateUpsell = purchase?.status === "completed" && purchase.purchaseType === "state"
 
   return (
-    <div className="bg-page min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <div className="bg-page min-h-screen flex items-center justify-center px-4 py-16">
       <div className="flex w-full max-w-lg flex-col gap-5">
       <div className="card w-full p-10 text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-success-bg border border-success/20">

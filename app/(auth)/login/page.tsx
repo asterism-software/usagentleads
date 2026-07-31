@@ -47,7 +47,7 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <LogoIcon className="mx-auto mb-4 h-10 w-10 text-accent" />

@@ -2,9 +2,6 @@ import Script from "next/script"
 import type { Metadata } from "next"
 import { Poppins, JetBrains_Mono } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
-import { Navbar } from "@/components/layout/Navbar"
-import { Footer } from "@/components/layout/Footer"
-import { SupportWidgetLazy } from "@/components/layout/SupportWidgetLazy"
 import { ScrollRevealProvider } from "@/components/layout/ScrollRevealProvider"
 import "./globals.css"
 
@@ -122,10 +119,7 @@ export default function RootLayout({
           />
         </noscript>
         <ScrollRevealProvider />
-        <Navbar />
-        <main className="pt-16">{children}</main>
-        <Footer />
-        <SupportWidgetLazy />
+        {children}
         <Toaster />
       </body>
     </html>

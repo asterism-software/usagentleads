@@ -51,7 +51,7 @@ function ResumeContent() {
   }, [searchParams, router])
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center px-4 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
       {failed ? (
         <>
           <p className="text-[16px] font-semibold text-ink">Couldn&apos;t start checkout</p>
