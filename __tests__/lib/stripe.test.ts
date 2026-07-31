@@ -90,7 +90,7 @@ describe("Stripe Checkout helper", () => {
         line_items: [{ price: STRIPE_PLANS.full_database.priceId, quantity: 1 }],
         success_url: "https://app.example.com/purchase-success?pt=page-token-123",
         cancel_url: "https://app.example.com/pricing",
-        allow_promotion_codes: false,
+        allow_promotion_codes: true,
         billing_address_collection: "auto",
         client_reference_id: "attempt-123",
         locale: "auto",
@@ -136,6 +136,7 @@ describe("Stripe Checkout helper", () => {
         line_items: [{ price: STRIPE_PLANS.subscription_api.priceId, quantity: 1 }],
         success_url: "https://app.example.com/dashboard/api-keys?welcome=1",
         cancel_url: "https://app.example.com/pricing",
+        allow_promotion_codes: true,
         client_reference_id: "user-123",
         submit_type: "subscribe",
         customer: "cus_existing",
@@ -187,7 +188,7 @@ describe("Stripe Checkout helper", () => {
     })
   })
 
-  it("enables promotion codes only for the State Pack", async () => {
+  it("enables promotion-code entry for one-time purchases", async () => {
     const { createCheckout } = await import("@/lib/stripe/client")
 
     await createCheckout({
@@ -215,6 +216,7 @@ describe("Stripe Checkout helper", () => {
       id: "cs_existing",
       status: "open",
       url: "https://checkout.stripe.com/c/pay/cs_existing",
+      allow_promotion_codes: true,
     })
     const { expireCheckoutSession, getCheckoutSessionSummary } = await import(
       "@/lib/stripe/client"
@@ -223,6 +225,7 @@ describe("Stripe Checkout helper", () => {
     await expect(getCheckoutSessionSummary("cs_existing")).resolves.toEqual({
       status: "open",
       url: "https://checkout.stripe.com/c/pay/cs_existing",
+      allowPromotionCodes: true,
     })
     await expect(expireCheckoutSession("cs_existing")).resolves.toBeUndefined()
     expect(mockSessionRetrieve).toHaveBeenCalledWith("cs_existing")

@@ -317,6 +317,7 @@ describe("POST /api/checkout", () => {
     mockGetCheckoutSessionSummary.mockResolvedValueOnce({
       status: "open",
       url: "https://checkout.stripe.com/c/pay/cs_existing",
+      allowPromotionCodes: true,
     })
 
     const response = await POST(makeRequest({ purchaseType: "subscription" }))
@@ -331,6 +332,33 @@ describe("POST /api/checkout", () => {
     expect(mockAttemptUpdate).not.toHaveBeenCalled()
     expect(mockAttemptDelete).not.toHaveBeenCalled()
     expect(mockExpireCheckoutSession).not.toHaveBeenCalled()
+  })
+
+  it("rotates an older Session that lacks promotion-code entry", async () => {
+    const existing = checkoutAttempt()
+    attemptInsertResults.push(
+      { error: { code: "23505", message: "duplicate key" } },
+      { error: null }
+    )
+    attemptSelectResults.push({ data: existing, error: null })
+    mockGetCheckoutSessionSummary.mockResolvedValueOnce({
+      status: "open",
+      url: "https://checkout.stripe.com/c/pay/cs_existing",
+      allowPromotionCodes: false,
+    })
+
+    const response = await POST(makeRequest({ purchaseType: "subscription" }))
+
+    expect(response.status).toBe(200)
+    expect(mockAttemptInsert).toHaveBeenCalledTimes(2)
+    expect(mockExpireCheckoutSession).toHaveBeenCalledWith("cs_existing")
+    expect(mockAttemptDelete).toHaveBeenCalledTimes(1)
+    expect(attemptDeleteQueries[0].eq).toHaveBeenNthCalledWith(1, "user_id", USER_ID)
+    expect(attemptDeleteQueries[0].eq).toHaveBeenNthCalledWith(2, "attempt_id", existing.attempt_id)
+    expect(mockCreateCheckout).toHaveBeenCalledTimes(1)
+    expect(mockExpireCheckoutSession.mock.invocationCallOrder[0]).toBeLessThan(
+      mockCreateCheckout.mock.invocationCallOrder[0]
+    )
   })
 
   it("blocks a concurrent different-plan request while the first claim is in progress", async () => {
@@ -364,6 +392,7 @@ describe("POST /api/checkout", () => {
     mockGetCheckoutSessionSummary.mockResolvedValueOnce({
       status: "open",
       url: "https://checkout.stripe.com/c/pay/cs_existing",
+      allowPromotionCodes: true,
     })
 
     const response = await POST(makeRequest({ purchaseType: "subscription" }))

@@ -58,6 +58,7 @@ export interface CreatedCheckout {
 export interface CheckoutSessionSummary {
   status: Stripe.Checkout.Session.Status | null
   url: string | null
+  allowPromotionCodes: boolean
 }
 
 export async function createCheckout({
@@ -94,7 +95,9 @@ export async function createCheckout({
     line_items: [{ price: plan.priceId, quantity: 1 }],
     success_url: successUrl,
     cancel_url: purchaseType === "state" ? `${appUrl()}/states` : `${appUrl()}/pricing`,
-    allow_promotion_codes: purchaseType === "state",
+    // The Checkout field should be available for every plan. Stripe still
+    // enforces each coupon's product and recurring-payment restrictions.
+    allow_promotion_codes: true,
     billing_address_collection: "auto",
     client_reference_id: metadata.user_id || metadata.checkout_attempt_id,
     locale: "auto",
@@ -133,7 +136,11 @@ export async function getCheckoutSessionSummary(
   sessionId: string
 ): Promise<CheckoutSessionSummary> {
   const session = await getStripe().checkout.sessions.retrieve(sessionId)
-  return { status: session.status, url: session.url }
+  return {
+    status: session.status,
+    url: session.url,
+    allowPromotionCodes: session.allow_promotion_codes === true,
+  }
 }
 
 export async function expireCheckoutSession(sessionId: string): Promise<void> {
@@ -148,8 +155,8 @@ export interface StateDiscount {
 
 /**
  * Create a unique, single-use State Pack promotion code for the nurture drip.
- * Promotion-code entry is enabled only for State Pack Checkout, and the
- * underlying coupon is also product-scoped as a defense in depth.
+ * The underlying coupon is product-scoped to the State Pack, so exposing the
+ * Checkout field on other plans cannot make this campaign discount apply.
  */
 export async function createStateDiscount(opts?: {
   expiresInHours?: number

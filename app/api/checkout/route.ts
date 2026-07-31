@@ -159,6 +159,15 @@ async function claimSubscriptionCheckout(
       continue
     }
 
+    if (session.status === "open" && session.allowPromotionCodes === false) {
+      // Checkout Session settings are immutable. Rotate a Session created
+      // before promotion-code entry was enabled instead of reusing it for up
+      // to an hour with the old hosted-page configuration.
+      await expireCheckoutSession(existing.stripe_checkout_session_id)
+      await deleteCheckoutAttempt(userId, existing.attempt_id)
+      continue
+    }
+
     if (existing.purchase_type === purchaseType && session.status === "open" && session.url) {
       return {
         kind: "reuse",
