@@ -5,6 +5,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { track } from "@/lib/utils/analytics"
+import { getCheckoutAttribution } from "@/lib/utils/attribution"
 
 export function SubscribeButton({
   className,
@@ -39,6 +40,7 @@ export function SubscribeButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           purchaseType,
+          ...getCheckoutAttribution(),
         }),
       })
       const data = await res.json()

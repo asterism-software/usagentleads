@@ -1,4 +1,9 @@
 import posthog from "posthog-js"
+import { captureFirstTouchAttribution } from "@/lib/utils/attribution"
+
+// Runs before the app hydrates, preserving the original document referrer and
+// landing pathname before any client-side navigation can change the page.
+captureFirstTouchAttribution()
 
 // PostHog pulls in autocapture, web-vitals, and — when session replay is enabled
 // server-side — the rrweb recorder (posthog-recorder.js, ~53 KiB). Initializing

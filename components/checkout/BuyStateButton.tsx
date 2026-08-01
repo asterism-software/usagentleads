@@ -4,6 +4,7 @@ import { Loader2, ArrowRight } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { track } from "@/lib/utils/analytics"
+import { getCheckoutAttribution } from "@/lib/utils/attribution"
 
 interface BuyStateButtonProps {
   stateCode: string
@@ -24,6 +25,7 @@ export function BuyStateButton({ stateCode, stateName, className }: BuyStateButt
         body: JSON.stringify({
           purchaseType: "state",
           stateCode,
+          ...getCheckoutAttribution(),
         }),
       })
       const data = await res.json()

@@ -4,6 +4,7 @@ import { Loader2, ArrowRight } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { track } from "@/lib/utils/analytics"
+import { getCheckoutAttribution } from "@/lib/utils/attribution"
 
 export function BuyFullDBButton({ className }: { className?: string }) {
   const [loading, setLoading] = useState(false)
@@ -17,6 +18,7 @@ export function BuyFullDBButton({ className }: { className?: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           purchaseType: "full_database",
+          ...getCheckoutAttribution(),
         }),
       })
       const data = await res.json()

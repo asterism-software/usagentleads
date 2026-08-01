@@ -2,18 +2,24 @@ import { NextResponse } from "next/server"
 import crypto from "crypto"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import {
+  compactStripeMetadata,
   createCheckout,
   expireCheckoutSession,
   getCheckoutSessionSummary,
   type CheckoutMetadata,
 } from "@/lib/stripe/client"
+import { STRIPE_PLANS, type PurchaseType } from "@/components/pricing/PlanGroups"
 import { isValidStateCode } from "@/lib/utils/security"
 import { rateLimit } from "@/lib/utils/rateLimit"
+import { getCountryCodeForTimezone } from "@/lib/utils/timezone"
 import { z } from "zod"
 
 const checkoutSchema = z.object({
   purchaseType: z.enum(["state", "full_database", "subscription", "subscription_api"]),
   stateCode: z.string().optional(),
+  // Attribution must never prevent a valid purchase. The browser helper sends
+  // a small object, while this route safely normalizes any stale/tampered value.
+  attribution: z.unknown().optional(),
 })
 
 type SubscriptionPurchaseType = "subscription" | "subscription_api"
@@ -24,12 +30,85 @@ interface SubscriptionCheckoutAttempt {
   attempt_id: string
   stripe_checkout_session_id: string | null
   expires_at: string
+  metadata: Record<string, unknown> | null
 }
 
 type SubscriptionCheckoutClaim =
-  | { kind: "create"; attemptId: string; expiresAt: string }
+  | { kind: "create"; attemptId: string; expiresAt: string; metadata: CheckoutMetadata }
   | { kind: "reuse"; attemptId: string; sessionId: string; url: string }
   | { kind: "blocked"; message: string }
+
+function attributionRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {}
+}
+
+function normalizedMetadataValue(
+  value: unknown,
+  fallback: string,
+  maxLength: number
+): string {
+  if (typeof value !== "string") return fallback
+  return value.trim().slice(0, maxLength) || fallback
+}
+
+function normalizedReferrer(value: unknown): string {
+  const candidate = normalizedMetadataValue(value, "", 500)
+  if (!candidate) return "direct"
+
+  try {
+    const url = new URL(candidate)
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.origin.slice(0, 500)
+      : "direct"
+  } catch {
+    return "direct"
+  }
+}
+
+function buildCheckoutMetadata(
+  purchaseType: PurchaseType,
+  ip: string,
+  rawAttribution: unknown
+): CheckoutMetadata {
+  const attribution = attributionRecord(rawAttribution)
+  const timezone = normalizedMetadataValue(attribution.timezone, "unknown", 100)
+  const plan = STRIPE_PLANS[purchaseType]
+
+  return {
+    purchase_type: purchaseType,
+    checkout_attempt_id: crypto.randomUUID(),
+    ip: normalizedMetadataValue(ip, "unknown", 100),
+    timezone,
+    country: getCountryCodeForTimezone(timezone) || "unknown",
+    referrer: normalizedReferrer(attribution.referrer),
+    first_landing_page: normalizedMetadataValue(
+      attribution.firstLandingPage,
+      "/",
+      500
+    ),
+    plan_name: plan.name,
+    plan_price: (plan.amount / 100).toFixed(2),
+    plan_price_cents: String(plan.amount),
+    currency: plan.currency,
+  }
+}
+
+function metadataForExistingAttempt(
+  attempt: SubscriptionCheckoutAttempt,
+  userId: string
+): CheckoutMetadata {
+  // Empty metadata identifies a claim created before attribution snapshots
+  // existed. Retrying only its legacy keys preserves Stripe idempotency.
+  const stored = compactStripeMetadata(attempt.metadata)
+  return {
+    ...stored,
+    purchase_type: attempt.purchase_type,
+    checkout_attempt_id: attempt.attempt_id,
+    user_id: userId,
+  }
+}
 
 const serviceDb = () => createServiceClient().schema("usagentleads")
 
@@ -85,7 +164,8 @@ async function deleteCheckoutAttempt(userId: string, attemptId: string) {
 
 async function claimSubscriptionCheckout(
   userId: string,
-  purchaseType: SubscriptionPurchaseType
+  purchaseType: SubscriptionPurchaseType,
+  requestedMetadata: CheckoutMetadata
 ): Promise<SubscriptionCheckoutClaim> {
   // The primary key on user_id is the cross-instance lock. Only one plan can
   // own an open Checkout Session for an account at a time.
@@ -94,6 +174,12 @@ async function claimSubscriptionCheckout(
     // A one-hour absolute expiry leaves a 30-minute recovery window while
     // still satisfying Stripe's minimum Session lifetime on an uncached retry.
     const expiresAt = new Date(Date.now() + 60 * 60 * 1_000).toISOString()
+    const attemptMetadata: CheckoutMetadata = {
+      ...requestedMetadata,
+      purchase_type: purchaseType,
+      checkout_attempt_id: attemptId,
+      user_id: userId,
+    }
     const { error: insertError } = await serviceDb()
       .from("stripe_checkout_attempts")
       .insert({
@@ -101,16 +187,21 @@ async function claimSubscriptionCheckout(
         purchase_type: purchaseType,
         attempt_id: attemptId,
         expires_at: expiresAt,
+        metadata: compactStripeMetadata(attemptMetadata),
       })
 
-    if (!insertError) return { kind: "create", attemptId, expiresAt }
+    if (!insertError) {
+      return { kind: "create", attemptId, expiresAt, metadata: attemptMetadata }
+    }
     if (insertError.code !== "23505") {
       throw new Error(`Unable to reserve subscription checkout: ${insertError.message}`)
     }
 
     const { data, error: selectError } = await serviceDb()
       .from("stripe_checkout_attempts")
-      .select("user_id, purchase_type, attempt_id, stripe_checkout_session_id, expires_at")
+      .select(
+        "user_id, purchase_type, attempt_id, stripe_checkout_session_id, expires_at, metadata"
+      )
       .eq("user_id", userId)
       .maybeSingle()
     if (selectError) {
@@ -134,6 +225,7 @@ async function claimSubscriptionCheckout(
           kind: "create",
           attemptId: existing.attempt_id,
           expiresAt: existing.expires_at,
+          metadata: metadataForExistingAttempt(existing, userId),
         }
       }
       return {
@@ -217,10 +309,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid state code" }, { status: 400 })
     }
 
-    const metadata: CheckoutMetadata = {
-      purchase_type: purchaseType,
-      checkout_attempt_id: crypto.randomUUID(),
-    }
+    let metadata = buildCheckoutMetadata(purchaseType, ip, parsed.data.attribution)
+    if (purchaseType === "state") metadata.state_code = stateCode!
     let customerEmail: string | undefined
     let stripeCustomerId: string | undefined
     let successPageToken: string | undefined
@@ -247,14 +337,13 @@ export async function POST(request: Request) {
           status: "pending",
           page_token: successPageToken,
           billing_provider: "stripe",
+          metadata: compactStripeMetadata(metadata),
         })
 
       if (purchaseError) throw new Error(`Unable to initialize purchase: ${purchaseError.message}`)
     }
 
-    if (purchaseType === "state") {
-      metadata.state_code = stateCode!
-    } else if (purchaseType === "subscription" || purchaseType === "subscription_api") {
+    if (purchaseType === "subscription" || purchaseType === "subscription_api") {
       const supabase = await createClient()
       const {
         data: { user },
@@ -292,7 +381,7 @@ export async function POST(request: Request) {
         stripeCustomerId = existingSubscription.stripe_customer_id
       }
 
-      const claim = await claimSubscriptionCheckout(user.id, purchaseType)
+      const claim = await claimSubscriptionCheckout(user.id, purchaseType, metadata)
       if (claim.kind === "blocked") {
         return NextResponse.json({ error: claim.message }, { status: 409 })
       }
@@ -316,7 +405,7 @@ export async function POST(request: Request) {
       subscriptionAttemptId = claim.attemptId
       subscriptionAttemptExpiresAt = claim.expiresAt
       subscriptionUserId = user.id
-      metadata.checkout_attempt_id = claim.attemptId
+      metadata = claim.metadata
       if (
         refreshedSubscription?.billing_provider === "stripe" &&
         refreshedSubscription.stripe_customer_id

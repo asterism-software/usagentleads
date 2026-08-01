@@ -4,6 +4,20 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const USER_ID = "11111111-1111-4111-8111-111111111111"
 const CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_123"
 const CHECKOUT_EXPIRES_AT = "2026-08-01T00:31:00.000Z"
+const ATTRIBUTION = {
+  referrer: "https://www.google.com/search?q=real-estate-agents",
+  firstLandingPage: "/pricing",
+  timezone: "America/New_York",
+}
+
+function compactMetadata(metadata: object | null | undefined): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(metadata || {}).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && entry[1].length > 0
+    )
+  )
+}
 
 interface AwaitableQuery {
   eq: ReturnType<typeof vi.fn>
@@ -33,6 +47,7 @@ function checkoutAttempt(overrides: Partial<Record<string, unknown>> = {}) {
     attempt_id: "22222222-2222-4222-8222-222222222222",
     stripe_checkout_session_id: "cs_existing",
     expires_at: new Date(Date.now() + 20 * 60 * 1_000).toISOString(),
+    metadata: {},
     ...overrides,
   }
 }
@@ -148,6 +163,7 @@ describe("POST /api/checkout", () => {
     })
 
     vi.doMock("@/lib/stripe/client", () => ({
+      compactStripeMetadata: compactMetadata,
       createCheckout: mockCreateCheckout,
       getCheckoutSessionSummary: mockGetCheckoutSessionSummary,
       expireCheckoutSession: mockExpireCheckoutSession,
@@ -201,6 +217,25 @@ describe("POST /api/checkout", () => {
     expect(mockCreateCheckout).not.toHaveBeenCalled()
   })
 
+  it("falls back safely when stored attribution is malformed", async () => {
+    const response = await POST(makeRequest({
+      purchaseType: "full_database",
+      attribution: "corrupt-local-storage-value",
+    }))
+
+    expect(response.status).toBe(200)
+    expect(mockCreateCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          referrer: "direct",
+          first_landing_page: "/",
+          timezone: "unknown",
+          country: "unknown",
+        }),
+      })
+    )
+  })
+
   it.each(["subscription", "subscription_api"] as const)(
     "requires authentication for %s",
     async (purchaseType) => {
@@ -218,7 +253,10 @@ describe("POST /api/checkout", () => {
   )
 
   it("creates an isolated pending row and keeps the page token out of Stripe metadata", async () => {
-    const response = await POST(makeRequest({ purchaseType: "full_database" }))
+    const response = await POST(makeRequest({
+      purchaseType: "full_database",
+      attribution: ATTRIBUTION,
+    }))
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({ url: CHECKOUT_URL })
@@ -231,17 +269,28 @@ describe("POST /api/checkout", () => {
       status: "pending",
       page_token: expect.stringMatching(UUID_RE),
       billing_provider: "stripe",
+      metadata: {
+        purchase_type: "full_database",
+        checkout_attempt_id: expect.stringMatching(UUID_RE),
+        purchase_id: expect.stringMatching(UUID_RE),
+        ip: "1.2.3.4",
+        timezone: "America/New_York",
+        country: "US",
+        referrer: "https://www.google.com",
+        first_landing_page: "/pricing",
+        plan_name: "Full Database",
+        plan_price: "199.00",
+        plan_price_cents: "19900",
+        currency: "usd",
+      },
     })
     expect(pendingRow.page_token).not.toBe(pendingRow.id)
+    expect(pendingRow.metadata.purchase_id).toBe(pendingRow.id)
 
     const checkout = mockCreateCheckout.mock.calls[0][0]
     expect(checkout).toEqual({
       purchaseType: "full_database",
-      metadata: {
-        purchase_type: "full_database",
-        checkout_attempt_id: expect.stringMatching(UUID_RE),
-        purchase_id: pendingRow.id,
-      },
+      metadata: pendingRow.metadata,
       customerEmail: undefined,
       stripeCustomerId: undefined,
       successPageToken: pendingRow.page_token,
@@ -274,7 +323,10 @@ describe("POST /api/checkout", () => {
       error: null,
     })
 
-    const response = await POST(makeRequest({ purchaseType: "subscription_api" }))
+    const response = await POST(makeRequest({
+      purchaseType: "subscription_api",
+      attribution: ATTRIBUTION,
+    }))
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({ url: CHECKOUT_URL })
@@ -285,17 +337,28 @@ describe("POST /api/checkout", () => {
       purchase_type: "subscription_api",
       attempt_id: expect.stringMatching(UUID_RE),
       expires_at: expect.any(String),
+      metadata: {
+        purchase_type: "subscription_api",
+        checkout_attempt_id: expect.stringMatching(UUID_RE),
+        user_id: USER_ID,
+        ip: "1.2.3.4",
+        timezone: "America/New_York",
+        country: "US",
+        referrer: "https://www.google.com",
+        first_landing_page: "/pricing",
+        plan_name: "Pro API",
+        plan_price: "79.00",
+        plan_price_cents: "7900",
+        currency: "usd",
+      },
     })
+    expect(claim.metadata.checkout_attempt_id).toBe(claim.attempt_id)
     const remainingClaimLifetime = Date.parse(claim.expires_at) - Date.now()
     expect(remainingClaimLifetime).toBeGreaterThan(59 * 60 * 1_000)
     expect(remainingClaimLifetime).toBeLessThanOrEqual(60 * 60 * 1_000)
     expect(mockCreateCheckout).toHaveBeenCalledWith({
       purchaseType: "subscription_api",
-      metadata: {
-        purchase_type: "subscription_api",
-        checkout_attempt_id: claim.attempt_id,
-        user_id: USER_ID,
-      },
+      metadata: claim.metadata,
       customerEmail: "buyer@example.com",
       stripeCustomerId: "cus_existing",
       successPageToken: undefined,
@@ -430,11 +493,24 @@ describe("POST /api/checkout", () => {
         attempt_id: retainedClaim.attempt_id,
         stripe_checkout_session_id: null,
         expires_at: retainedClaim.expires_at,
+        metadata: retainedClaim.metadata,
       }),
       error: null,
     })
 
-    const retryResponse = await POST(makeRequest({ purchaseType: "subscription" }))
+    const retryResponse = await POST(
+      makeRequest(
+        {
+          purchaseType: "subscription",
+          attribution: {
+            referrer: "https://example.com/later",
+            firstLandingPage: "/later",
+            timezone: "Europe/Paris",
+          },
+        },
+        "5.6.7.8"
+      )
+    )
 
     expect(retryResponse.status).toBe(200)
     await expect(retryResponse.json()).resolves.toEqual({ url: CHECKOUT_URL })
@@ -444,6 +520,9 @@ describe("POST /api/checkout", () => {
     )
     expect(mockCreateCheckout.mock.calls[1][0].metadata.checkout_attempt_id).toBe(
       retainedClaim.attempt_id
+    )
+    expect(mockCreateCheckout.mock.calls[1][0].metadata).toEqual(
+      mockCreateCheckout.mock.calls[0][0].metadata
     )
     expect(mockCreateCheckout.mock.calls[0][0].subscriptionExpiresAt).toBe(
       retainedClaim.expires_at
@@ -479,6 +558,7 @@ describe("POST /api/checkout", () => {
         attempt_id: retainedClaim.attempt_id,
         stripe_checkout_session_id: null,
         expires_at: retainedClaim.expires_at,
+        metadata: retainedClaim.metadata,
       }),
       error: null,
     })

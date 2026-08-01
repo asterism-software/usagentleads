@@ -124,9 +124,10 @@ mid-week ingest.
 
 ## Deployment and payment smoke test
 
-Apply `supabase/migrations/20260731130718_stripe_payments.sql` before pushing the
-Stripe-enabled app to production. Then push the production branch to trigger the
-Vercel deployment.
+Run `npm run db:push` before pushing the Stripe-enabled app to production. Confirm
+that both `20260731130718_stripe_payments.sql` and
+`20260801081007_add_checkout_metadata.sql` have been applied, then push the
+production branch to trigger the Vercel deployment.
 Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in every Vercel environment that
 must accept payments. Configure Stripe Customer Portal access and the production
 webhook separately in the Stripe Dashboard. Never place secret values in this

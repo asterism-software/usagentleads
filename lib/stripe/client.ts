@@ -29,14 +29,28 @@ function appUrl(): string {
 export interface CheckoutMetadata {
   purchase_type: PurchaseType
   checkout_attempt_id: string
+  ip?: string
+  timezone?: string
+  country?: string
+  referrer?: string
+  first_landing_page?: string
+  plan_name?: string
+  plan_price?: string
+  plan_price_cents?: string
+  currency?: string
   purchase_id?: string
   state_code?: string
   user_id?: string
 }
 
-function compactMetadata(metadata: CheckoutMetadata): Record<string, string> {
+export function compactStripeMetadata(
+  metadata: object | null | undefined
+): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(metadata).filter((entry): entry is [string, string] => typeof entry[1] === "string")
+    Object.entries(metadata || {}).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && entry[1].length > 0
+    )
   )
 }
 
@@ -73,7 +87,7 @@ export async function createCheckout({
   const plan = STRIPE_PLANS[purchaseType]
   const isSubscription = plan.mode === "subscription"
   const isApiSubscription = purchaseType === "subscription_api"
-  const stripeMetadata = compactMetadata(metadata)
+  const stripeMetadata = compactStripeMetadata(metadata)
   // The route persists this absolute value with the user-scoped claim. Reusing
   // it verbatim is required because Stripe rejects an idempotency-key retry if
   // any request parameter changes.

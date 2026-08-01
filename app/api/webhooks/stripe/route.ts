@@ -9,7 +9,7 @@ import {
   sendSubscriptionWelcome,
 } from "@/lib/resend/emails"
 import { createServiceClient } from "@/lib/supabase/server"
-import { getStripe } from "@/lib/stripe/client"
+import { compactStripeMetadata, getStripe } from "@/lib/stripe/client"
 import { constructWebhookEvent } from "@/lib/stripe/webhook"
 import { isValidUUID } from "@/lib/utils/security"
 import { SITE_URL } from "@/lib/utils/site"
@@ -88,6 +88,18 @@ async function recordProcessedEvent(event: Stripe.Event): Promise<void> {
   }
 }
 
+async function syncCheckoutCustomerMetadata(
+  session: Stripe.Checkout.Session
+): Promise<void> {
+  const customerId = objectId(session.customer)
+  const metadata = compactStripeMetadata(session.metadata)
+  if (!customerId || Object.keys(metadata).length === 0) return
+
+  // Checkout cannot put metadata directly on the Customer it creates. Once
+  // confirmation has created that Customer, copy the signed Session snapshot.
+  await getStripe().customers.update(customerId, { metadata })
+}
+
 async function fulfillCheckout(sessionId: string): Promise<void> {
   const session = await getStripe().checkout.sessions.retrieve(sessionId, {
     expand: ["line_items.data.price"],
@@ -98,11 +110,14 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
     if (!subscriptionId) {
       throw new Error(`Checkout Session ${session.id} has no subscription`)
     }
-    await syncSubscription(subscriptionId)
+    const synced = await syncSubscription(subscriptionId)
+    if (synced) await syncCheckoutCustomerMetadata(session)
     return
   }
   if (session.mode !== "payment") return
-  if (!["paid", "no_payment_required"].includes(session.payment_status)) return
+  const paymentIsComplete = ["paid", "no_payment_required"].includes(
+    session.payment_status
+  )
 
   const purchaseId = session.metadata?.purchase_id
   if (!purchaseId || !isValidUUID(purchaseId)) {
@@ -140,6 +155,13 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
   if (purchaseType === "state" && (!stateCode || !state)) {
     throw new Error(`Checkout Session ${session.id} has an invalid state code`)
   }
+  const checkoutMetadata = compactStripeMetadata(session.metadata)
+  if (!paymentIsComplete) {
+    // Delayed payment methods create the Customer at Checkout completion, even
+    // though fulfillment waits for checkout.session.async_payment_succeeded.
+    await syncCheckoutCustomerMetadata(session)
+    return
+  }
   const { data: purchase, error } = await db()
     .from("purchases")
     .update({
@@ -151,6 +173,7 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
       stripe_customer_id: objectId(session.customer),
       amount_paid: session.amount_total || 0,
       currency: session.currency,
+      metadata: checkoutMetadata,
       status: "completed",
       expires_at: new Date(Date.now() + 48 * 60 * 60 * 1_000).toISOString(),
     })
@@ -182,6 +205,10 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
       .eq("id", purchaseId)
     if (emailUpdateError) throw new Error(`Unable to record fulfillment email: ${emailUpdateError.message}`)
   }
+
+  // Customer enrichment is retried with the webhook, but a transient Stripe
+  // update failure cannot prevent the paid purchase from being fulfilled.
+  await syncCheckoutCustomerMetadata(session)
 }
 
 async function markCheckoutFailed(session: Stripe.Checkout.Session): Promise<void> {
@@ -202,6 +229,8 @@ async function markCheckoutFailed(session: Stripe.Checkout.Session): Promise<voi
   const purchaseId = session.metadata?.purchase_id
   if (!purchaseId || !isValidUUID(purchaseId)) return
 
+  const checkoutMetadata = compactStripeMetadata(session.metadata)
+
   const { error } = await db()
     .from("purchases")
     .update({
@@ -210,6 +239,9 @@ async function markCheckoutFailed(session: Stripe.Checkout.Session): Promise<voi
       stripe_payment_intent_id: objectId(session.payment_intent),
       stripe_customer_id: objectId(session.customer),
       guest_email: session.customer_details?.email || session.customer_email || null,
+      ...(Object.keys(checkoutMetadata).length > 0
+        ? { metadata: checkoutMetadata }
+        : {}),
     })
     .eq("id", purchaseId)
     .eq("billing_provider", "stripe")
@@ -260,6 +292,7 @@ async function syncSubscription(subscriptionId: string): Promise<SyncedSubscript
   const period = getSubscriptionPeriod(subscription)
   const normalizedStatus = normalizeSubscriptionStatus(subscription.status)
   const stripeCustomerId = objectId(subscription.customer)
+  const checkoutMetadata = compactStripeMetadata(subscription.metadata)
 
   const { error } = await db().from("subscriptions").upsert(
     {
@@ -276,6 +309,9 @@ async function syncSubscription(subscriptionId: string): Promise<SyncedSubscript
       trial_ends_at: toIso(subscription.trial_end),
       cancel_at_period_end: subscription.cancel_at_period_end,
       cancelled_at: toIso(subscription.canceled_at),
+      ...(Object.keys(checkoutMetadata).length > 0
+        ? { metadata: checkoutMetadata }
+        : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }

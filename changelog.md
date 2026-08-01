@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-08-01
+- [x] add customer meta data
+
 ## 2026-07-31
 - [x] refactor app pages
 - [x] local dev sign-in flow

@@ -4,6 +4,26 @@ import { STRIPE_PLANS } from "@/components/pricing/PlanGroups"
 const USER_ID = "11111111-1111-4111-8111-111111111111"
 const PURCHASE_ID = "22222222-2222-4222-8222-222222222222"
 const CHECKOUT_ATTEMPT_ID = "33333333-3333-4333-8333-333333333333"
+const CHECKOUT_CONTEXT_METADATA = {
+  ip: "1.2.3.4",
+  timezone: "America/New_York",
+  country: "US",
+  referrer: "https://www.google.com",
+  first_landing_page: "/pricing",
+  plan_name: "Pro API",
+  plan_price: "79.00",
+  plan_price_cents: "7900",
+  currency: "usd",
+}
+
+function compactMetadata(metadata: object | null | undefined): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(metadata || {}).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && entry[1].length > 0
+    )
+  )
+}
 
 interface QueryMock {
   eq: ReturnType<typeof vi.fn>
@@ -32,6 +52,7 @@ describe("POST /api/webhooks/stripe", () => {
   let mockRetrieveSession: ReturnType<typeof vi.fn>
   let mockRetrieveSubscription: ReturnType<typeof vi.fn>
   let mockRetrieveCustomer: ReturnType<typeof vi.fn>
+  let mockUpdateCustomer: ReturnType<typeof vi.fn>
   let mockEventSelect: ReturnType<typeof vi.fn>
   let mockEventInsert: ReturnType<typeof vi.fn>
   let eventLookupQueries: QueryMock[]
@@ -62,6 +83,7 @@ describe("POST /api/webhooks/stripe", () => {
     mockRetrieveSession = vi.fn()
     mockRetrieveSubscription = vi.fn()
     mockRetrieveCustomer = vi.fn()
+    mockUpdateCustomer = vi.fn().mockResolvedValue({ id: "cus_updated" })
     processedEvent = null
     processedEventLookupError = null
     eventLookupQueries = []
@@ -118,10 +140,11 @@ describe("POST /api/webhooks/stripe", () => {
       constructWebhookEvent: mockConstructWebhookEvent,
     }))
     vi.doMock("@/lib/stripe/client", () => ({
+      compactStripeMetadata: compactMetadata,
       getStripe: vi.fn(() => ({
         checkout: { sessions: { retrieve: mockRetrieveSession } },
         subscriptions: { retrieve: mockRetrieveSubscription },
-        customers: { retrieve: mockRetrieveCustomer },
+        customers: { retrieve: mockRetrieveCustomer, update: mockUpdateCustomer },
       })),
     }))
     vi.doMock("@/lib/supabase/server", () => ({
@@ -251,7 +274,16 @@ describe("POST /api/webhooks/stripe", () => {
       id: "cs_state",
       mode: "payment",
       payment_status: "paid",
-      metadata: { purchase_id: PURCHASE_ID, state_code: "ca" },
+      metadata: {
+        ...CHECKOUT_CONTEXT_METADATA,
+        purchase_type: "state",
+        checkout_attempt_id: CHECKOUT_ATTEMPT_ID,
+        purchase_id: PURCHASE_ID,
+        state_code: "ca",
+        plan_name: "State Pack",
+        plan_price: "49.00",
+        plan_price_cents: "4900",
+      },
       line_items: { data: [{ price: { id: STRIPE_PLANS.state.priceId }, quantity: 1 }] },
       amount_total: STRIPE_PLANS.state.amount - 1_000,
       currency: "usd",
@@ -278,11 +310,36 @@ describe("POST /api/webhooks/stripe", () => {
         stripe_customer_id: "cus_state",
         amount_paid: STRIPE_PLANS.state.amount - 1_000,
         currency: "usd",
+        metadata: {
+          ...CHECKOUT_CONTEXT_METADATA,
+          purchase_type: "state",
+          checkout_attempt_id: CHECKOUT_ATTEMPT_ID,
+          purchase_id: PURCHASE_ID,
+          state_code: "ca",
+          plan_name: "State Pack",
+          plan_price: "49.00",
+          plan_price_cents: "4900",
+        },
         status: "completed",
       })
     )
     expect(purchaseUpdates[0].query.eq).toHaveBeenNthCalledWith(1, "id", PURCHASE_ID)
     expect(purchaseUpdates[0].query.eq).toHaveBeenNthCalledWith(2, "billing_provider", "stripe")
+    expect(mockUpdateCustomer).toHaveBeenCalledWith("cus_state", {
+      metadata: {
+        ...CHECKOUT_CONTEXT_METADATA,
+        purchase_type: "state",
+        checkout_attempt_id: CHECKOUT_ATTEMPT_ID,
+        purchase_id: PURCHASE_ID,
+        state_code: "ca",
+        plan_name: "State Pack",
+        plan_price: "49.00",
+        plan_price_cents: "4900",
+      },
+    })
+    expect(mockPurchaseUpdate.mock.invocationCallOrder[0]).toBeLessThan(
+      mockUpdateCustomer.mock.invocationCallOrder[0]
+    )
     expect(mockSendDownloadEmail).toHaveBeenCalledWith({
       to: "buyer@example.com",
       downloadUrl: expect.stringContaining("/api/download?token=download-token"),
@@ -297,6 +354,42 @@ describe("POST /api/webhooks/stripe", () => {
       id: "evt_checkout",
       event_type: "checkout.session.completed",
     })
+  })
+
+  it("enriches a Checkout-created customer while a delayed payment is pending", async () => {
+    currentEvent = {
+      id: "evt_checkout_pending",
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_pending" } },
+    }
+    const metadata = {
+      ...CHECKOUT_CONTEXT_METADATA,
+      purchase_type: "full_database",
+      checkout_attempt_id: CHECKOUT_ATTEMPT_ID,
+      purchase_id: PURCHASE_ID,
+      plan_name: "Full Database",
+      plan_price: "199.00",
+      plan_price_cents: "19900",
+    }
+    mockRetrieveSession.mockResolvedValueOnce({
+      id: "cs_pending",
+      mode: "payment",
+      payment_status: "unpaid",
+      metadata,
+      line_items: {
+        data: [{ price: { id: STRIPE_PLANS.full_database.priceId }, quantity: 1 }],
+      },
+      amount_total: STRIPE_PLANS.full_database.amount,
+      currency: "usd",
+      customer_details: { email: "buyer@example.com" },
+      customer: "cus_pending",
+    })
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(200)
+    expect(mockPurchaseUpdate).not.toHaveBeenCalled()
+    expect(mockUpdateCustomer).toHaveBeenCalledWith("cus_pending", { metadata })
   })
 
   it("rejects a one-time Checkout Session whose Price is not allowlisted", async () => {
@@ -393,6 +486,7 @@ describe("POST /api/webhooks/stripe", () => {
       customer: "cus_subscription",
       status: "trialing",
       metadata: {
+        ...CHECKOUT_CONTEXT_METADATA,
         user_id: USER_ID,
         purchase_type: "subscription_api",
         checkout_attempt_id: CHECKOUT_ATTEMPT_ID,
@@ -437,6 +531,12 @@ describe("POST /api/webhooks/stripe", () => {
         trial_ends_at: new Date(trialEnd * 1_000).toISOString(),
         cancel_at_period_end: false,
         cancelled_at: null,
+        metadata: {
+          ...CHECKOUT_CONTEXT_METADATA,
+          user_id: USER_ID,
+          purchase_type: "subscription_api",
+          checkout_attempt_id: CHECKOUT_ATTEMPT_ID,
+        },
         updated_at: expect.any(String),
       },
       { onConflict: "user_id" }

@@ -10,6 +10,17 @@ const API_ATTEMPT_ID = crypto
   .createHash("sha256")
   .update("subscription:user-123:subscription_api")
   .digest("hex")
+const ATTRIBUTION_METADATA = {
+  ip: "1.2.3.4",
+  timezone: "America/New_York",
+  country: "US",
+  referrer: "https://www.google.com",
+  first_landing_page: "/pricing",
+  plan_name: "Full Database",
+  plan_price: "199.00",
+  plan_price_cents: "19900",
+  currency: "usd",
+}
 
 describe("Stripe Checkout helper", () => {
   let mockSessionCreate: ReturnType<typeof vi.fn>
@@ -72,6 +83,7 @@ describe("Stripe Checkout helper", () => {
     const checkout = await createCheckout({
       purchaseType: "full_database",
       metadata: {
+        ...ATTRIBUTION_METADATA,
         purchase_type: "full_database",
         checkout_attempt_id: "attempt-123",
         purchase_id: "purchase-123",
@@ -95,6 +107,7 @@ describe("Stripe Checkout helper", () => {
         client_reference_id: "attempt-123",
         locale: "auto",
         metadata: {
+          ...ATTRIBUTION_METADATA,
           purchase_type: "full_database",
           checkout_attempt_id: "attempt-123",
           purchase_id: "purchase-123",
@@ -104,6 +117,7 @@ describe("Stripe Checkout helper", () => {
         customer_creation: "always",
         payment_intent_data: {
           metadata: {
+            ...ATTRIBUTION_METADATA,
             purchase_type: "full_database",
             checkout_attempt_id: "attempt-123",
             purchase_id: "purchase-123",
@@ -120,6 +134,10 @@ describe("Stripe Checkout helper", () => {
     await createCheckout({
       purchaseType: "subscription_api",
       metadata: {
+        ...ATTRIBUTION_METADATA,
+        plan_name: "Pro API",
+        plan_price: "79.00",
+        plan_price_cents: "7900",
         purchase_type: "subscription_api",
         checkout_attempt_id: API_ATTEMPT_ID,
         user_id: "user-123",
@@ -142,6 +160,10 @@ describe("Stripe Checkout helper", () => {
         customer: "cus_existing",
         subscription_data: {
           metadata: {
+            ...ATTRIBUTION_METADATA,
+            plan_name: "Pro API",
+            plan_price: "79.00",
+            plan_price_cents: "7900",
             purchase_type: "subscription_api",
             checkout_attempt_id: API_ATTEMPT_ID,
             user_id: "user-123",
@@ -151,6 +173,7 @@ describe("Stripe Checkout helper", () => {
     )
     expect(params).not.toHaveProperty("customer_email")
     expect(params).not.toHaveProperty("payment_intent_data")
+    expect(params.metadata).toEqual(params.subscription_data.metadata)
     expect(params.expires_at).toBe(
       Math.floor(Date.parse(SUBSCRIPTION_EXPIRES_AT) / 1_000)
     )

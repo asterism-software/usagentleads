@@ -6,6 +6,19 @@ export interface Agent {
   state: string
 }
 
+export interface CheckoutMetadataSnapshot {
+  ip?: string
+  timezone?: string
+  country?: string
+  referrer?: string
+  first_landing_page?: string
+  plan_name?: string
+  plan_price?: string
+  plan_price_cents?: string
+  currency?: string
+  [key: string]: string | undefined
+}
+
 export interface Purchase {
   id: string
   user_id: string | null
@@ -23,6 +36,7 @@ export interface Purchase {
   download_token: string
   token_used: boolean
   fulfillment_email_sent_at: string | null
+  metadata: CheckoutMetadataSnapshot
   expires_at: string | null
   created_at: string
 }
@@ -42,6 +56,7 @@ export interface Subscription {
   trial_ends_at: string | null
   cancel_at_period_end: boolean
   cancelled_at: string | null
+  metadata: CheckoutMetadataSnapshot
   created_at: string
   updated_at: string
 }

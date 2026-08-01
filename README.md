@@ -276,7 +276,7 @@ lib/
 content/blog/         MDX posts
 scripts/ingest/       source adapters + the ingestion runbook
 scripts/              sync-state-counts.mjs · announce-1m.mjs
-supabase/migrations/  0001–0006 (see note below)
+supabase/migrations/  ordered schema migrations (see note below)
 infra/leads-db/       self-hosted Postgres + PostgREST: schema, compose, runbook
 __tests__/            Vitest — API routes and security-critical libs
 ```
@@ -339,9 +339,10 @@ Five pieces deploy independently. Only the first changes on a normal day:
 Push to `main` → Vercel builds and promotes to production. Every PR gets a preview
 deployment with its own env values.
 
-For the initial Stripe cutover, apply
-`supabase/migrations/20260731130718_stripe_payments.sql` before promoting the app;
-the checkout and webhook routes depend on its Stripe columns and idempotency tables.
+Before promoting the app, run `npm run db:push` so both Stripe migrations are
+applied in order: `20260731130718_stripe_payments.sql`, then
+`20260801081007_add_checkout_metadata.sql`. The checkout and webhook routes depend
+on the Stripe tables and the new JSON metadata columns.
 
 ```bash
 npm run type-check && npm run lint && npm test   # build fails on TS errors by design
