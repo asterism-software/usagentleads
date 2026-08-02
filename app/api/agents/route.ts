@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { rateLimit } from "@/lib/utils/rateLimit"
 import { queryAgents } from "@/lib/queries/agents"
+import { getSubscriptionAccess } from "@/lib/subscriptions"
 
 export async function GET(request: Request) {
   // Auth check
@@ -29,22 +30,7 @@ export async function GET(request: Request) {
     .eq("user_id", user.id)
     .single()
 
-  const now = new Date()
-  const periodValid = subscription?.current_period_end
-    ? new Date(subscription.current_period_end) > now
-    : false
-  const trialValid = subscription?.trial_ends_at
-    ? new Date(subscription.trial_ends_at) > now
-    : false
-
-  const isActive =
-    subscription &&
-    (
-      (["active", "on_trial"].includes(subscription.status) && (periodValid || trialValid)) ||
-      (subscription.cancel_at_period_end && (periodValid || trialValid))
-    )
-
-  if (!isActive) {
+  if (!getSubscriptionAccess(subscription).hasDashboard) {
     return NextResponse.json(
       { error: "Active subscription required" },
       { status: 403 }

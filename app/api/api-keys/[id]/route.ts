@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { rateLimit } from "@/lib/utils/rateLimit"
-import { isValidUUID } from "@/lib/utils/security"
+import { isSameOriginRequest, isValidUUID } from "@/lib/utils/security"
 import { z } from "zod"
+import { getSubscriptionAccess } from "@/lib/subscriptions"
 
 const db = () => createServiceClient().schema("usagentleads")
 
@@ -10,11 +11,23 @@ const renameSchema = z.object({
   name: z.string().min(1).max(50),
 })
 
+async function hasApiAccess(userId: string) {
+  const { data } = await db()
+    .from("subscriptions")
+    .select("billing_provider, status, plan, current_period_end, trial_ends_at, cancel_at_period_end")
+    .eq("user_id", userId)
+    .single()
+  return getSubscriptionAccess(data).hasApi
+}
+
 // DELETE — revoke an API key
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 })
+  }
   const supabase = await createClient()
   const {
     data: { user },
@@ -27,6 +40,10 @@ export async function DELETE(
   const { success } = await rateLimit(`api-keys-revoke:${user.id}`, 10)
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+  }
+
+  if (!(await hasApiAccess(user.id))) {
+    return NextResponse.json({ error: "Pro API subscription required", upgrade: true }, { status: 403 })
   }
 
   const { id } = await params
@@ -56,6 +73,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 })
+  }
   const supabase = await createClient()
   const {
     data: { user },
@@ -68,6 +88,10 @@ export async function PATCH(
   const { success } = await rateLimit(`api-keys-rename:${user.id}`, 10)
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+  }
+
+  if (!(await hasApiAccess(user.id))) {
+    return NextResponse.json({ error: "Pro API subscription required", upgrade: true }, { status: 403 })
   }
 
   const { id } = await params

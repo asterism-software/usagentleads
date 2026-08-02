@@ -162,7 +162,7 @@ describe("authenticateApiKey", () => {
     expect(json.error).toBe("Subscription is not active")
   })
 
-  it("rejects key when monthly quota is exceeded", async () => {
+  it("returns the authenticated identity before the route reserves quota", async () => {
     mockSingleResults = [
       { data: { id: "key-id", user_id: "user-id", revoked_at: null, expires_at: null }, error: null },
       { data: { status: "active", plan: "pro_api", current_period_end: "2027-01-01T00:00:00Z", cancel_at_period_end: false, trial_ends_at: null }, error: null },
@@ -172,8 +172,8 @@ describe("authenticateApiKey", () => {
     const result = await authenticateApiKey(
       makeRequest({ "x-api-key": "sk_live_over_quota_123456789012" })
     )
-    const json = await (result as Response).json()
-    expect(json.error).toBe("Monthly API quota exceeded")
+    expect(result).toHaveProperty("userId", "user-id")
+    expect(result).toHaveProperty("apiKeyId", "key-id")
   })
 
   it("returns userId and apiKeyId for valid active subscription", async () => {

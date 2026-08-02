@@ -21,7 +21,7 @@ describe("GET /api/v1/agents", () => {
             return vi.fn(() => Promise.resolve(mockSingleResults.shift() ?? { data: null, error: null }))
           }
           if (prop === "then") {
-            return vi.fn((cb: () => void) => cb())
+            return vi.fn((resolve: (value: unknown) => void) => resolve({ data: null, error: null }))
           }
           if (prop === "lt") {
             return vi.fn(() => Promise.resolve(mockCountResult))
@@ -33,7 +33,11 @@ describe("GET /api/v1/agents", () => {
     }
 
     const mockFrom = vi.fn(() => createChainProxy())
-    const mockSchema = vi.fn(() => ({ from: mockFrom }))
+    const mockRpc = vi.fn(async () => ({
+      data: [{ allowed: true, log_id: "log-1", used: mockCountResult.count + 1 }],
+      error: null,
+    }))
+    const mockSchema = vi.fn(() => ({ from: mockFrom, rpc: mockRpc }))
 
     vi.doMock("@/lib/supabase/server", () => ({
       createServiceClient: vi.fn(() => ({ schema: mockSchema })),

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { STRIPE_PLANS } from "@/components/pricing/PlanGroups"
+import { STRIPE_PLANS } from "@/lib/billing/plans"
 
 const USER_ID = "11111111-1111-4111-8111-111111111111"
 const PURCHASE_ID = "22222222-2222-4222-8222-222222222222"

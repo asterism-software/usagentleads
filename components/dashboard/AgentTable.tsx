@@ -17,7 +17,6 @@ const PAGE_SIZE_OPTIONS = [
 
 interface AgentTableProps {
   agents: Agent[]
-  count: number
   page: number
   totalPages: number
   loading: boolean
@@ -28,7 +27,6 @@ interface AgentTableProps {
 
 export function AgentTable({
   agents,
-  count,
   page,
   totalPages,
   loading,
@@ -148,6 +146,7 @@ export function AgentTable({
               onChange={(v) => onPageSizeChange(Number(v))}
               aria-label="Rows per page"
               minWidth={120}
+              menuPlacement="top"
             />
           </div>
 

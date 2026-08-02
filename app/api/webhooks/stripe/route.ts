@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import type Stripe from "stripe"
-import { STRIPE_PLANS, type PurchaseType } from "@/components/pricing/PlanGroups"
+import { STRIPE_PLANS, type PurchaseType } from "@/lib/billing/plans"
 import {
   sendDownloadEmail,
   sendPaymentFailed,

@@ -6,7 +6,25 @@ import {
   isValidStateCode,
   clampPage,
   isValidUUID,
+  isSameOriginRequest,
 } from "@/lib/utils/security"
+
+describe("isSameOriginRequest", () => {
+  it("accepts a matching Origin header", () => {
+    const request = new Request("https://example.com/api/settings", { headers: { origin: "https://example.com" } })
+    expect(isSameOriginRequest(request)).toBe(true)
+  })
+
+  it("rejects a cross-site Origin header", () => {
+    const request = new Request("https://example.com/api/settings", { headers: { origin: "https://attacker.example" } })
+    expect(isSameOriginRequest(request)).toBe(false)
+  })
+
+  it("rejects browser requests marked cross-site", () => {
+    const request = new Request("https://example.com/api/settings", { headers: { "sec-fetch-site": "cross-site" } })
+    expect(isSameOriginRequest(request)).toBe(false)
+  })
+})
 
 describe("sanitizeSearchInput", () => {
   it("passes through alphanumeric strings", () => {

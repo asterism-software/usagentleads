@@ -1,6 +1,6 @@
 import crypto from "crypto"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { STRIPE_PLANS } from "@/components/pricing/PlanGroups"
+import { STRIPE_PLANS } from "@/lib/billing/plans"
 
 const ORIGINAL_STRIPE_SECRET = process.env.STRIPE_SECRET_KEY
 const ORIGINAL_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
-import { authenticateApiKey, getQuotaHeaders, MONTHLY_QUOTA } from "@/lib/utils/apiKeyAuth"
+import { authenticateApiKey, finalizeApiUsage, getQuotaHeaders, MONTHLY_QUOTA, reserveApiUsage } from "@/lib/utils/apiKeyAuth"
 import { rateLimit } from "@/lib/utils/rateLimit"
 import { queryAgents } from "@/lib/queries/agents"
-import { createServiceClient } from "@/lib/supabase/server"
 
 // GET /api/v1/agents — public API endpoint, authenticated via API key
 export async function GET(request: Request) {
@@ -14,7 +13,7 @@ export async function GET(request: Request) {
     return authResult
   }
 
-  const { userId, apiKeyId } = authResult
+  const { apiKeyId } = authResult
 
   // Per-minute rate limit
   const { success, remaining } = await rateLimit(`api-v1:${apiKeyId}`, 60)
@@ -24,6 +23,9 @@ export async function GET(request: Request) {
       { status: 429, headers: { "X-RateLimit-Limit": "60", "X-RateLimit-Remaining": "0" } }
     )
   }
+
+  const reservation = await reserveApiUsage(authResult, request, "/api/v1/agents")
+  if (reservation instanceof NextResponse) return reservation
 
   // Parse query params
   const { searchParams } = new URL(request.url)
@@ -38,29 +40,17 @@ export async function GET(request: Request) {
     result = await queryAgents({ state, search, page, pageSize })
   } catch {
     statusCode = 500
-    logUsage(apiKeyId, userId, "/api/v1/agents", statusCode, request, Date.now() - startTime)
+    await finalizeApiUsage(reservation.logId, statusCode, Date.now() - startTime)
     return NextResponse.json({ error: "Query failed" }, { status: 500 })
   }
 
   // Get current monthly usage for quota headers
   const now = new Date()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-
-  const serviceClient = createServiceClient()
-  const { count: monthlyUsed } = await serviceClient
-    .schema("usagentleads")
-    .from("api_usage_logs")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .gte("created_at", monthStart.toISOString())
-    .lt("status_code", 400)
-
-  const used = (monthlyUsed ?? 0) + 1
+  const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
+  const used = reservation.used
   const quotaHeaders = getQuotaHeaders(used)
 
-  // Log usage (fire-and-forget)
-  logUsage(apiKeyId, userId, "/api/v1/agents", statusCode, request, Date.now() - startTime)
+  await finalizeApiUsage(reservation.logId, statusCode, Date.now() - startTime)
 
   return NextResponse.json(
     {
@@ -81,30 +71,4 @@ export async function GET(request: Request) {
       },
     }
   )
-}
-
-function logUsage(
-  apiKeyId: string,
-  userId: string,
-  endpoint: string,
-  statusCode: number,
-  request: Request,
-  responseTimeMs: number
-) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null
-  const userAgent = request.headers.get("user-agent") || null
-
-  createServiceClient()
-    .schema("usagentleads")
-    .from("api_usage_logs")
-    .insert({
-      api_key_id: apiKeyId,
-      user_id: userId,
-      endpoint,
-      status_code: statusCode,
-      ip_address: ip,
-      user_agent: userAgent,
-      response_time_ms: responseTimeMs,
-    })
-    .then(() => {})
 }

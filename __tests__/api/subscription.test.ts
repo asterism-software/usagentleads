@@ -86,7 +86,7 @@ describe("/api/subscription local Stripe sync", () => {
       canceled_at: null,
     })
 
-    const response = await DELETE()
+    const response = await DELETE(new Request("https://www.usagentleads.com/api/subscription", { method: "DELETE", headers: { origin: "https://www.usagentleads.com" } }))
 
     expect(response.status).toBe(202)
     await expect(response.json()).resolves.toEqual({
@@ -122,7 +122,7 @@ describe("/api/subscription local Stripe sync", () => {
       canceled_at: null,
     })
 
-    const response = await PATCH()
+    const response = await PATCH(new Request("https://www.usagentleads.com/api/subscription", { method: "PATCH", headers: { origin: "https://www.usagentleads.com" } }))
 
     expect(response.status).toBe(202)
     await expect(response.json()).resolves.toEqual({

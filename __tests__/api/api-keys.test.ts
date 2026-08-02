@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 const VALID_UUID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
-const VALID_UUID_2 = "b1ffcd00-0d1c-5fg9-cc7e-7ccace491b22"
 
 describe("API Key Management Routes", () => {
   let mockQuery: Record<string, ReturnType<typeof vi.fn>>
   let mockAuthClient: { auth: { getUser: ReturnType<typeof vi.fn> } }
+  let mockSubscription: Record<string, unknown>
 
   beforeEach(async () => {
     vi.resetModules()
@@ -34,7 +34,26 @@ describe("API Key Management Routes", () => {
       },
     }
 
-    const mockFrom = vi.fn(() => mockQuery)
+    mockSubscription = {
+      billing_provider: "stripe",
+      plan: "pro_api",
+      status: "active",
+      current_period_end: "2099-01-01T00:00:00Z",
+      trial_ends_at: null,
+      cancel_at_period_end: false,
+    }
+
+    const mockFrom = vi.fn((table: string) => {
+      if (table !== "subscriptions") return mockQuery
+      const subscriptionQuery = {
+        select: vi.fn(),
+        eq: vi.fn(),
+        single: vi.fn(async () => ({ data: mockSubscription, error: null })),
+      }
+      subscriptionQuery.select.mockReturnValue(subscriptionQuery)
+      subscriptionQuery.eq.mockReturnValue(subscriptionQuery)
+      return subscriptionQuery
+    })
     const mockSchema = vi.fn(() => ({ from: mockFrom }))
 
     vi.doMock("@/lib/supabase/server", () => ({
@@ -48,22 +67,20 @@ describe("API Key Management Routes", () => {
       mockAuthClient.auth.getUser.mockResolvedValue({ data: { user: null } })
 
       const { GET } = await import("@/app/api/api-keys/route")
-      const res = await GET(new Request("https://example.com/api/api-keys"))
+      const res = await GET()
       const json = await res.json()
       expect(json.error).toBe("Unauthorized")
     })
 
-    it("returns 403 for non-pro_api subscribers", async () => {
-      mockQuery.single.mockResolvedValueOnce({
-        data: { plan: "pro_monthly", status: "active" },
-        error: null,
-      })
+    it("returns a locked preview for non-pro_api subscribers", async () => {
+      mockSubscription.plan = "pro_monthly"
 
       const { GET } = await import("@/app/api/api-keys/route")
-      const res = await GET(new Request("https://example.com/api/api-keys"))
+      const res = await GET()
       const json = await res.json()
-      expect(json.error).toBe("Pro API subscription required")
-      expect(json.upgrade).toBe(true)
+      expect(res.status).toBe(200)
+      expect(json.keys).toEqual([])
+      expect(json.access.hasApi).toBe(false)
     })
 
     it("returns keys list for pro_api subscribers", async () => {
@@ -71,19 +88,13 @@ describe("API Key Management Routes", () => {
         { id: "k1", name: "Production", key_prefix: "sk_live_ab", created_at: "2026-01-01" },
       ]
 
-      // Subscription check
-      mockQuery.single.mockResolvedValueOnce({
-        data: { plan: "pro_api", status: "active" },
-        error: null,
-      })
-
       // Keys list
       mockQuery.order.mockReturnValue(
         Promise.resolve({ data: mockKeys, error: null })
       )
 
       const { GET } = await import("@/app/api/api-keys/route")
-      const res = await GET(new Request("https://example.com/api/api-keys"))
+      const res = await GET()
       const json = await res.json()
       expect(json.keys).toBeDefined()
     })
@@ -105,10 +116,7 @@ describe("API Key Management Routes", () => {
     })
 
     it("returns 403 for non-pro_api subscribers", async () => {
-      mockQuery.single.mockResolvedValueOnce({
-        data: { plan: "pro_monthly", status: "active" },
-        error: null,
-      })
+      mockSubscription.plan = "pro_monthly"
 
       const { POST } = await import("@/app/api/api-keys/route")
       const res = await POST(
@@ -123,12 +131,6 @@ describe("API Key Management Routes", () => {
     })
 
     it("limits to 3 active keys", async () => {
-      // Subscription check passes
-      mockQuery.single.mockResolvedValueOnce({
-        data: { plan: "pro_api", status: "active" },
-        error: null,
-      })
-
       // Count active keys returns 3
       mockQuery.select.mockReturnValue(mockQuery)
       mockQuery.is.mockReturnValue(

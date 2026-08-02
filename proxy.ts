@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import { getSubscriptionAccess } from "@/lib/subscriptions"
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -15,7 +16,7 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({
@@ -60,20 +61,7 @@ export async function proxy(request: NextRequest) {
       .eq("user_id", userId)
       .single()
 
-    if (!subscription) return false
-
-    const now = new Date()
-    const periodValid = subscription.current_period_end
-      ? new Date(subscription.current_period_end) > now
-      : false
-    const trialValid = subscription.trial_ends_at
-      ? new Date(subscription.trial_ends_at) > now
-      : false
-
-    return (
-      (["active", "on_trial"].includes(subscription.status) && (periodValid || trialValid)) ||
-      (subscription.cancel_at_period_end && (periodValid || trialValid))
-    )
+    return getSubscriptionAccess(subscription).hasDashboard
   }
 
   // Signed-in user with active subscription on homepage → redirect to dashboard

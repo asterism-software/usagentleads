@@ -16,6 +16,7 @@ interface CustomSelectProps {
   className?: string
   "aria-label"?: string
   minWidth?: number
+  menuPlacement?: "top" | "bottom"
 }
 
 export function CustomSelect({
@@ -26,6 +27,7 @@ export function CustomSelect({
   className = "",
   "aria-label": ariaLabel,
   minWidth = 160,
+  menuPlacement = "bottom",
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -75,7 +77,13 @@ export function CustomSelect({
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full rounded-xl border border-border bg-white shadow-lg overflow-hidden animate-slide-down">
+        <div
+          className={`absolute z-50 w-full overflow-hidden rounded-xl border border-border bg-white shadow-lg ${
+            menuPlacement === "top"
+              ? "bottom-full mb-1.5 animate-slide-up"
+              : "top-full mt-1.5 animate-slide-down"
+          }`}
+        >
           <div className="max-h-[280px] overflow-y-auto py-1">
             {options.map((option) => {
               const isActive = option.value === value

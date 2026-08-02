@@ -85,7 +85,7 @@ export function SupportWidget() {
               </div>
               <p className="text-[15px] font-semibold text-ink">Message sent</p>
               <p className="text-[13px] text-tertiary mt-1">
-                We'll get back to you within 24 hours.
+                We&apos;ll get back to you within 24 hours.
               </p>
               <button
                 onClick={() => { setSent(false); setOpen(false) }}

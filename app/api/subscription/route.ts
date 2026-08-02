@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { getStripe } from "@/lib/stripe/client"
 import { rateLimit } from "@/lib/utils/rateLimit"
+import { isSameOriginRequest } from "@/lib/utils/security"
 
 const db = () => createServiceClient().schema("usagentleads")
 
@@ -43,7 +44,10 @@ export async function GET() {
 }
 
 // DELETE — schedule cancellation at the end of the current billing period.
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 })
+  }
   const user = await authenticatedUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
@@ -111,7 +115,10 @@ export async function DELETE() {
 }
 
 // PATCH — stop a scheduled cancellation before the billing period ends.
-export async function PATCH() {
+export async function PATCH(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 })
+  }
   const user = await authenticatedUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 

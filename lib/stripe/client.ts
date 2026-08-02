@@ -4,7 +4,7 @@ import {
   STRIPE_STATE_NURTURE_COUPON_ID,
   STRIPE_PLANS,
   type PurchaseType,
-} from "@/components/pricing/PlanGroups"
+} from "@/lib/billing/plans"
 import { SITE_URL } from "@/lib/utils/site"
 
 let stripeClient: Stripe | null = null

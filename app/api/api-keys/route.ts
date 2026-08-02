@@ -3,6 +3,8 @@ import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { generateApiKey, hashApiKey, extractPrefix } from "@/lib/utils/apiKeys"
 import { rateLimit } from "@/lib/utils/rateLimit"
 import { z } from "zod"
+import { getSubscriptionAccess } from "@/lib/subscriptions"
+import { isSameOriginRequest } from "@/lib/utils/security"
 
 const MAX_ACTIVE_KEYS = 3
 
@@ -13,7 +15,7 @@ const createKeySchema = z.object({
 const db = () => createServiceClient().schema("usagentleads")
 
 // GET — list user's API keys
-export async function GET(request: Request) {
+export async function GET() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -35,12 +37,7 @@ export async function GET(request: Request) {
     .eq("user_id", user.id)
     .single()
 
-  if (!subscription || subscription.plan !== "pro_api") {
-    return NextResponse.json(
-      { error: "Pro API subscription required", upgrade: true },
-      { status: 403 }
-    )
-  }
+  const access = getSubscriptionAccess(subscription)
 
   const { data: keys } = await db()
     .from("api_keys")
@@ -48,11 +45,14 @@ export async function GET(request: Request) {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
-  return NextResponse.json({ keys: keys || [] })
+  return NextResponse.json({ keys: access.hasApi ? keys || [] : [], access })
 }
 
 // POST — create a new API key
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 })
+  }
   const supabase = await createClient()
   const {
     data: { user },
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     .eq("user_id", user.id)
     .single()
 
-  if (!subscription || subscription.plan !== "pro_api") {
+  if (!getSubscriptionAccess(subscription).hasApi) {
     return NextResponse.json(
       { error: "Pro API subscription required", upgrade: true },
       { status: 403 }
@@ -86,11 +86,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const parsed = createKeySchema.safeParse(body)
-    if (parsed.success && parsed.data.name) {
-      name = parsed.data.name
-    }
+    if (!parsed.success) return NextResponse.json({ error: "Invalid key name" }, { status: 400 })
+    if (parsed.data.name) name = parsed.data.name
   } catch {
-    // Use default name
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
   // Check max active keys

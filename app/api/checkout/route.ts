@@ -8,7 +8,7 @@ import {
   getCheckoutSessionSummary,
   type CheckoutMetadata,
 } from "@/lib/stripe/client"
-import { STRIPE_PLANS, type PurchaseType } from "@/components/pricing/PlanGroups"
+import { STRIPE_PLANS, type PurchaseType } from "@/lib/billing/plans"
 import { isValidStateCode } from "@/lib/utils/security"
 import { rateLimit } from "@/lib/utils/rateLimit"
 import { getCountryCodeForTimezone } from "@/lib/utils/timezone"

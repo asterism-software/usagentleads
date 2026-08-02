@@ -418,6 +418,10 @@ html, body {
   animation: slide-down 0.4s ease-out forwards;
 }
 
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out forwards;
+}
+
 .animate-pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
 }
@@ -433,4 +437,3 @@ html, body {
   filter: blur(3px);
   user-select: none;
 }
-

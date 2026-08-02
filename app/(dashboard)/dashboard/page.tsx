@@ -1,27 +1,26 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
-import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
+import { useRouter, useSearchParams } from "next/navigation"
 import { AgentTable } from "@/components/dashboard/AgentTable"
 import { SearchFilterBar } from "@/components/dashboard/SearchFilterBar"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import type { Agent } from "@/types"
-
-const COLLAPSED_KEY = "dashboard-sidebar-collapsed"
+import { useDashboard } from "@/components/dashboard/DashboardContext"
 
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { preferences } = useDashboard()
   const [agents, setAgents] = useState<Agent[]>([])
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [state, setState] = useState("")
-  const [pageSize, setPageSize] = useState(25)
-  const [collapsed, setCollapsed] = useState(false)
+  const requestedState = searchParams.get("state")
+  const [state, setState] = useState(requestedState === "all" ? "" : requestedState || preferences.defaultState || "")
+  const [pageSize, setPageSize] = useState(preferences.defaultPageSize)
   const [accessError, setAccessError] = useState<"auth" | "subscription" | null>(null)
 
   // True right after a successful checkout (?welcome=1). The subscription_created
@@ -31,11 +30,11 @@ export default function DashboardPage() {
   const subRetries = useRef(0)
   const MAX_SUB_RETRIES = 8
 
-  // Restore collapsed preference
   useEffect(() => {
-    const saved = localStorage.getItem(COLLAPSED_KEY)
-    if (saved === "true") setCollapsed(true)
-  }, [])
+    const requested = searchParams.get("state")
+    setState(requested === "all" ? "" : requested || preferences.defaultState || "")
+    setPage(1)
+  }, [searchParams, preferences.defaultState])
 
   // Detect post-checkout landing and strip the flag from the URL
   useEffect(() => {
@@ -45,14 +44,6 @@ export default function DashboardPage() {
       window.history.replaceState({}, "", "/dashboard")
     }
   }, [])
-
-  const toggleCollapsed = () => {
-    setCollapsed((prev) => {
-      const next = !prev
-      localStorage.setItem(COLLAPSED_KEY, String(next))
-      return next
-    })
-  }
 
   const fetchAgents = useCallback(async () => {
     setLoading(true)
@@ -105,16 +96,18 @@ export default function DashboardPage() {
   const handleStateSelect = (stateCode: string) => {
     setState(stateCode)
     setPage(1)
+    router.replace(stateCode ? `/dashboard?state=${encodeURIComponent(stateCode)}` : "/dashboard?state=all")
   }
 
   const handleClear = () => {
     setSearch("")
     setState("")
     setPage(1)
+    router.replace("/dashboard?state=all")
   }
 
   const handlePageSizeChange = (size: number) => {
-    setPageSize(size)
+    setPageSize(size as 25 | 50 | 100)
     setPage(1)
   }
 
@@ -152,41 +145,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen">
-      {/* Desktop Sidebar */}
-      <aside
-        className={`hidden shrink-0 lg:block transition-all duration-200 ${collapsed ? "w-17" : "w-64"}`}
-      >
-        <DashboardSidebar
-          activeState={state}
-          onStateSelect={handleStateSelect}
-          collapsed={collapsed}
-          onToggleCollapse={toggleCollapsed}
-        />
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto bg-page">
-        <div className="p-8 max-sm:p-4">
-          {/* Mobile sidebar trigger */}
-          <div className="mb-4 flex items-center gap-3 lg:hidden">
-            <Sheet>
-              <SheetTrigger render={<button className="btn-ghost p-2" />}>
-                  <Menu size={20} />
-                  <span className="sr-only">Open sidebar</span>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-0">
-                <DashboardSidebar
-                  activeState={state}
-                  onStateSelect={handleStateSelect}
-                />
-              </SheetContent>
-            </Sheet>
-            <h1 className="text-[20px] font-semibold text-ink">Agent Database</h1>
-          </div>
-
-          {/* Page header (desktop) */}
-          <div className="hidden lg:block mb-8">
+    <div className="p-4 sm:p-8">
+          <div className="mb-8">
             <h1 className="text-[24px] font-semibold text-ink tracking-[-0.01em]">
               Agent Database
             </h1>
@@ -212,7 +172,6 @@ export default function DashboardPage() {
 
           <AgentTable
             agents={agents}
-            count={count}
             page={page}
             totalPages={totalPages}
             loading={loading}
@@ -220,8 +179,6 @@ export default function DashboardPage() {
             onPageChange={setPage}
             onPageSizeChange={handlePageSizeChange}
           />
-        </div>
-      </div>
     </div>
   )
 }

@@ -46,7 +46,7 @@ describe("GET /api/api-keys/usage", () => {
   it("returns 401 for unauthenticated users", async () => {
     mockAuthClient.auth.getUser.mockResolvedValue({ data: { user: null } })
 
-    const res = await GET(new Request("https://example.com/api/api-keys/usage"))
+    const res = await GET()
     const json = await res.json()
     expect(json.error).toBe("Unauthorized")
   })
@@ -64,7 +64,7 @@ describe("GET /api/api-keys/usage", () => {
       ],
     })
 
-    const res = await GET(new Request("https://example.com/api/api-keys/usage"))
+    const res = await GET()
     const json = await res.json()
 
     expect(json.monthly_limit).toBe(10000)
@@ -79,7 +79,7 @@ describe("GET /api/api-keys/usage", () => {
     // Daily logs
     mockQuery.order.mockResolvedValueOnce({ data: [] })
 
-    const res = await GET(new Request("https://example.com/api/api-keys/usage"))
+    const res = await GET()
     const json = await res.json()
 
     expect(json.monthly_limit).toBe(10000)
@@ -102,7 +102,7 @@ describe("GET /api/api-keys/usage", () => {
       ],
     })
 
-    const res = await GET(new Request("https://example.com/api/api-keys/usage"))
+    const res = await GET()
     const json = await res.json()
 
     expect(json.daily_counts).toEqual([
@@ -119,7 +119,7 @@ describe("GET /api/api-keys/usage", () => {
     mockQuery.lt.mockResolvedValueOnce({ count: 0 })
     mockQuery.order.mockResolvedValueOnce({ data: [] })
 
-    const res = await GET(new Request("https://example.com/api/api-keys/usage"))
+    const res = await GET()
     const json = await res.json()
 
     expect(json.resets_at).toBeDefined()

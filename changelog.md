@@ -2,6 +2,7 @@
 
 ## 2026-08-02
 - [x] add Google OAuth
+- [x] fix dashboard sidebar
 
 ## 2026-08-01
 - [x] add customer meta data

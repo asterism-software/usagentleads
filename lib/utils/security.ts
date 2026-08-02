@@ -53,3 +53,28 @@ export function clampPage(page: unknown): number {
 export function isValidUUID(str: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 }
+
+/** Reject browser cross-site mutation requests that could ride session cookies. */
+export function isSameOriginRequest(request: Request): boolean {
+  const fetchSite = request.headers.get("sec-fetch-site")
+  if (fetchSite === "cross-site") return false
+
+  let targetOrigin: string
+  try {
+    targetOrigin = new URL(request.url).origin
+  } catch {
+    return false
+  }
+
+  const source = request.headers.get("origin") || request.headers.get("referer")
+  // Non-browser callers do not send Fetch Metadata headers and cannot cause a
+  // browser to attach session cookies implicitly. Browser cross-site requests
+  // were rejected above.
+  if (!source) return fetchSite !== "cross-site"
+
+  try {
+    return new URL(source).origin === targetOrigin
+  } catch {
+    return false
+  }
+}

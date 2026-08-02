@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/server"
 import { hashApiKey } from "./apiKeys"
+import { getSubscriptionAccess } from "@/lib/subscriptions"
 
 const MONTHLY_QUOTA = 10_000
 
 interface AuthResult {
   userId: string
   apiKeyId: string
+}
+
+interface UsageReservation {
+  logId: string
+  used: number
 }
 
 export async function authenticateApiKey(
@@ -71,53 +77,64 @@ export async function authenticateApiKey(
     )
   }
 
-  const now = new Date()
-  const periodValid = subscription.current_period_end
-    ? new Date(subscription.current_period_end) > now
-    : false
-  const trialValid = subscription.trial_ends_at
-    ? new Date(subscription.trial_ends_at) > now
-    : false
-
-  const isActive =
-    (["active", "on_trial"].includes(subscription.status) && (periodValid || trialValid)) ||
-    (subscription.cancel_at_period_end && (periodValid || trialValid))
-
-  if (!isActive) {
+  if (!getSubscriptionAccess(subscription).hasApi) {
     return NextResponse.json(
       { error: "Subscription is not active" },
       { status: 403 }
     )
   }
 
-  // Check monthly quota
-  const { count } = await serviceClient
+  await serviceClient
     .schema("usagentleads")
-    .from("api_usage_logs")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", keyRecord.user_id)
-    .gte("created_at", new Date(now.getFullYear(), now.getMonth(), 1).toISOString())
-    .lt("status_code", 400)
+    .from("api_keys")
+    .update({ last_used_at: new Date().toISOString() })
+    .eq("id", keyRecord.id)
 
-  if ((count ?? 0) >= MONTHLY_QUOTA) {
+  return { userId: keyRecord.user_id, apiKeyId: keyRecord.id }
+}
+
+export async function reserveApiUsage(
+  auth: AuthResult,
+  request: Request,
+  endpoint: string
+): Promise<UsageReservation | NextResponse> {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null
+  const userAgent = request.headers.get("user-agent") || null
+  const { data, error } = await createServiceClient()
+    .schema("usagentleads")
+    .rpc("reserve_api_usage", {
+      p_api_key_id: auth.apiKeyId,
+      p_user_id: auth.userId,
+      p_endpoint: endpoint,
+      p_ip_address: ip,
+      p_user_agent: userAgent,
+      p_monthly_limit: MONTHLY_QUOTA,
+    })
+
+  if (error) {
+    console.error("API usage reservation error:", error)
+    return NextResponse.json({ error: "Unable to reserve API quota" }, { status: 500 })
+  }
+
+  const reservation = Array.isArray(data) ? data[0] : data
+  if (!reservation?.allowed) {
     return NextResponse.json(
-      {
-        error: "Monthly API quota exceeded",
-        quota: { used: count, limit: MONTHLY_QUOTA },
-      },
+      { error: "Monthly API quota exceeded", quota: { used: reservation?.used ?? MONTHLY_QUOTA, limit: MONTHLY_QUOTA } },
       { status: 429 }
     )
   }
 
-  // Fire-and-forget: update last_used_at
-  serviceClient
-    .schema("usagentleads")
-    .from("api_keys")
-    .update({ last_used_at: now.toISOString() })
-    .eq("id", keyRecord.id)
-    .then(() => {})
+  return { logId: reservation.log_id, used: reservation.used }
+}
 
-  return { userId: keyRecord.user_id, apiKeyId: keyRecord.id }
+export async function finalizeApiUsage(logId: string, statusCode: number, responseTimeMs: number) {
+  const { error } = await createServiceClient()
+    .schema("usagentleads")
+    .from("api_usage_logs")
+    .update({ status_code: statusCode, response_time_ms: responseTimeMs })
+    .eq("id", logId)
+    .eq("status_code", 102)
+  if (error) console.error("API usage finalization error:", error)
 }
 
 export function getQuotaHeaders(used: number) {

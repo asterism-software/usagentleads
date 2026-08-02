@@ -37,7 +37,7 @@ export async function GET() {
   try {
     const session = await getStripe().billingPortal.sessions.create({
       customer: subscription.stripe_customer_id,
-      return_url: `${appUrl()}/dashboard`,
+      return_url: `${appUrl()}/dashboard/billing`,
     })
     return NextResponse.redirect(session.url)
   } catch (error) {
