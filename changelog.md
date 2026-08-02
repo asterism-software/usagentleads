@@ -2,6 +2,7 @@
 
 ## 2026-08-01
 - [x] add customer meta data
+- [ ] adjust pricing
 
 ## 2026-07-31
 - [x] refactor app pages
