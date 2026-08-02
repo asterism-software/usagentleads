@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-08-02
+- [x] add Google OAuth
+
 ## 2026-08-01
 - [x] add customer meta data
 - [ ] adjust pricing

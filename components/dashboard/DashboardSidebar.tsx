@@ -14,6 +14,7 @@ import {
   Key,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { getUserAvatarUrl } from "@/lib/auth-user"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 
@@ -47,6 +48,8 @@ export function DashboardSidebar({
   const [sub, setSub] = useState<Subscription | null>(null)
   const [userEmail, setUserEmail] = useState("")
   const [userName, setUserName] = useState("")
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null)
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [cancelledConfirm, setCancelledConfirm] = useState(false)
@@ -80,6 +83,8 @@ export function DashboardSidebar({
       if (data.user) {
         setUserEmail(data.user.email || "")
         setUserName(data.user.user_metadata?.full_name || "")
+        setUserAvatarUrl(getUserAvatarUrl(data.user.user_metadata))
+        setAvatarLoadFailed(false)
       }
     })
 
@@ -180,7 +185,7 @@ export function DashboardSidebar({
         }`}
       >
         <Link
-          href="/"
+          href="/dashboard"
           className={`flex items-center gap-2 text-[19px] font-semibold tracking-tight ${collapsed ? "hidden" : "flex"}`}
         >
           <LogoIcon className="h-6 w-6 text-accent" />
@@ -190,7 +195,7 @@ export function DashboardSidebar({
           </span>
         </Link>
         {collapsed && (
-          <Link href="/" title="USAgentLeads">
+          <Link href="/dashboard" title="USAgentLeads">
             <LogoIcon className="h-6 w-6 text-accent" />
           </Link>
         )}
@@ -214,7 +219,7 @@ export function DashboardSidebar({
           title={collapsed ? "All States" : undefined}
           className={`flex w-full items-center ${collapsed ? "justify-center" : "gap-2.5"} px-3 py-2.5 rounded-lg text-[15px] mb-0.5 transition-all duration-150 ${
             !activeState
-              ? "bg-accent-light text-accent font-medium border-l-2 border-accent -ml-px pl-[11px]"
+              ? "bg-accent-light text-accent font-medium"
               : "text-tertiary hover:text-ink hover:bg-subtle"
           }`}
         >
@@ -235,7 +240,7 @@ export function DashboardSidebar({
               title={collapsed ? state.name : undefined}
               className={`flex w-full items-center ${collapsed ? "justify-center" : "justify-between"} px-3 py-2 rounded-lg text-[15px] transition-all duration-150 ${
                 activeState === state.code
-                  ? "bg-accent-light text-accent font-medium border-l-2 border-accent -ml-px pl-[11px]"
+                  ? "bg-accent-light text-accent font-medium"
                   : "text-tertiary hover:text-ink hover:bg-subtle"
               }`}
             >
@@ -272,11 +277,26 @@ export function DashboardSidebar({
           title={collapsed ? (userName || userEmail) : undefined}
           className={`flex items-center w-full rounded-lg p-2.5 transition-colors hover:bg-subtle ${collapsed ? "justify-center" : "gap-3"}`}
         >
-          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-[13px] font-mono font-medium text-white">
-            {initials}
+          <span className="relative flex h-9 w-9 shrink-0">
+            {userAvatarUrl && !avatarLoadFailed ? (
+              // Provider avatars are dynamic user metadata, so they cannot use
+              // Next Image's static remote-host allowlist.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={userAvatarUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                onError={() => setAvatarLoadFailed(true)}
+                className="h-9 w-9 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-[13px] font-mono font-medium text-white">
+                {initials}
+              </span>
+            )}
             {sub && (
               <span
-                className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white ${
+                className={`absolute -bottom-0.5 -right-0.5 z-10 h-2.5 w-2.5 rounded-full border-2 border-white ${
                   statusColor === "warning"
                     ? "bg-warning"
                     : statusColor === "accent"
