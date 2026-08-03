@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-08-03
+- [x] add new logo
+
 ## 2026-08-02
 - [x] add Google OAuth
 - [x] fix dashboard sidebar
