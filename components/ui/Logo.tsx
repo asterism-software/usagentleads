@@ -1,29 +1,19 @@
-export function LogoIcon({
-  className = "h-6 w-6",
-  detailClassName = "fill-white stroke-white",
-}: {
-  className?: string
-  detailClassName?: string
-}) {
+import Image from "next/image"
+
+// Brand mark — renders /public/icon.svg directly so the source of truth stays
+// in one file. Use in the navbar and anywhere the full-color logo is needed.
+// SVGs are not optimized by the Next.js image optimizer, so `unoptimized` is
+// set to avoid unnecessary processing while still using next/image.
+export function LogoIcon({ className = "h-7 w-7" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+    <Image
+      src="/icon.svg"
+      alt=""
+      aria-hidden="true"
+      width={96}
+      height={96}
+      unoptimized
       className={className}
-    >
-      <path
-        d="M32 2C19.85 2 10 11.85 10 24c0 16.5 22 38 22 38s22-21.5 22-38C54 11.85 44.15 2 32 2z"
-        fill="currentColor"
-      />
-      <circle cx="32" cy="19" r="6" className={detailClassName} />
-      <path
-        d="M24 33c0-4.42 3.58-8 8-8s8 3.58 8 8"
-        className={detailClassName}
-        strokeWidth="4"
-        strokeLinecap="round"
-        fill="none"
-      />
-    </svg>
+    />
   )
 }

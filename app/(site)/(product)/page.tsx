@@ -52,9 +52,9 @@ const organizationSchema = {
   url: "https://www.usagentleads.com",
   logo: {
     "@type": "ImageObject",
-    url: "https://www.usagentleads.com/icon-512.png",
-    width: 512,
-    height: 512,
+    url: "https://www.usagentleads.com/icon.png",
+    width: 400,
+    height: 400,
   },
   image: "https://www.usagentleads.com/opengraph-image",
   description:

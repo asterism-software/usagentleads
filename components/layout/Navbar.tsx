@@ -108,7 +108,7 @@ export function Navbar() {
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 text-[19px] font-semibold tracking-tight">
-            <LogoIcon className="h-7 w-7 text-accent" />
+            <LogoIcon className="h-7 w-7" />
             <span>
               <span className="text-ink">USAgent</span>
               <span className="text-accent">Leads</span>
@@ -213,7 +213,7 @@ export function Navbar() {
           {/* Mobile header */}
           <div className="flex h-16 shrink-0 items-center justify-between px-4 sm:px-6 border-b border-border">
             <Link href="/" className="flex items-center gap-2 text-[19px] font-semibold tracking-tight" onClick={() => setMobileOpen(false)}>
-              <LogoIcon className="h-7 w-7 text-accent" />
+              <LogoIcon className="h-7 w-7" />
               <span>
                 <span className="text-ink">USAgent</span>
                 <span className="text-accent">Leads</span>

@@ -11,7 +11,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="mb-4 flex items-center gap-2 text-[19px] font-semibold tracking-tight w-fit">
-              <LogoIcon className="h-7 w-7 text-white" detailClassName="fill-ink stroke-ink" />
+              <LogoIcon className="h-7 w-7" />
               <span>
                 <span className="text-white">USAgent</span>
                 <span className="text-accent-mid">Leads</span>

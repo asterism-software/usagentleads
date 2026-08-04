@@ -80,7 +80,7 @@ function LoginContent() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <LogoIcon className="mx-auto mb-4 h-10 w-10 text-accent" />
+          <LogoIcon className="mx-auto mb-4 h-10 w-10" />
           <h1 className="text-[22px] font-semibold text-ink">Sign in to USAgentLeads</h1>
           <p className="mt-1 text-[14px] text-tertiary">
             Choose Google or receive a magic link by email

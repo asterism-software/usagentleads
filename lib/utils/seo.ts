@@ -203,7 +203,7 @@ export function generateArticleSchema(post: BlogPost) {
       name: "USAgentLeads",
       logo: {
         "@type": "ImageObject",
-        url: `${BASE_URL}/icon-512.png`,
+        url: `${BASE_URL}/icon.png`,
       },
     },
     mainEntityOfPage: {

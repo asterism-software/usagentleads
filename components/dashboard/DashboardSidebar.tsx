@@ -56,7 +56,7 @@ export function DashboardSidebar({
     <div className="flex h-full min-h-0 flex-col border-r border-border bg-white">
       <div className={`flex h-[65px] shrink-0 items-center border-b border-border ${collapsed ? "justify-center px-2" : "justify-between px-5"}`}>
         <Link href="/dashboard" onClick={onNavigate} className="flex min-w-0 items-center gap-2" aria-label="USAgentLeads dashboard">
-          <LogoIcon className="h-6 w-6 shrink-0 text-accent" />
+          <LogoIcon className="h-6 w-6 shrink-0" />
           {!collapsed && (
             <span className="truncate text-[19px] font-semibold tracking-tight">
               <span className="text-ink">USAgent</span><span className="text-accent">Leads</span>

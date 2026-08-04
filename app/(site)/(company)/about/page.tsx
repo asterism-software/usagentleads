@@ -83,7 +83,7 @@ const organizationSchema = {
   "@type": "Organization",
   name: "USAgentLeads",
   url: "https://www.usagentleads.com",
-  logo: "https://www.usagentleads.com/icon-512.png",
+  logo: "https://www.usagentleads.com/icon.png",
   description:
     "Verified real estate agent contact database covering all 50 US states. Sourced from official state licensing boards and public records.",
   areaServed: {
