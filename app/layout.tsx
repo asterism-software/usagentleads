@@ -86,7 +86,7 @@ export default function RootLayout({
         <ScrollRevealProvider />
         {children}
         <Toaster />
-        <GoogleAnalytics gaId="G-T91HEN5X72" />
+        <GoogleAnalytics gaId="G-3KDWCR1X74" />
       </body>
     </html>
   );
