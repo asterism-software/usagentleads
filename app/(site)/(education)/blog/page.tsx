@@ -23,21 +23,13 @@ export const metadata: Metadata = {
       "Actionable marketing strategies, email templates, and lead generation tips for real estate professionals.",
     url: "https://www.usagentleads.com/blog",
     type: "website",
-    images: [
-      {
-        url: "https://www.usagentleads.com/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "USAgentLeads Blog",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Real Estate Marketing Blog | USAgentLeads",
     description:
       "Actionable marketing strategies, email templates, and lead generation tips for real estate professionals.",
-    images: ["https://www.usagentleads.com/twitter-image"],
+    images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
 }
 

@@ -25,13 +25,12 @@ export const metadata: Metadata = {
     title: `Real Estate Agent Directory — Search Licensed Realtors by Name & State (${CURRENT_YEAR})`,
     description: "Search licensed real estate agents by name and state. Free to browse; download the full contact list as a CSV.",
     url: canonical,
-    images: [{ url: "https://www.usagentleads.com/opengraph-image", width: 1200, height: 630, alt: "US real estate agent directory" }],
   },
   twitter: {
     card: "summary_large_image",
     title: `Real Estate Agent Directory — Search Licensed Realtors by Name & State (${CURRENT_YEAR})`,
     description: "Search licensed real estate agents by name and state — free to browse.",
-    images: ["https://www.usagentleads.com/twitter-image"],
+    images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
 }
 

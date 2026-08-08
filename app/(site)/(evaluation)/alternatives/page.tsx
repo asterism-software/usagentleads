@@ -21,7 +21,6 @@ export const metadata: Metadata = {
       "Researched alternatives to ZoomInfo, Apollo, REDX, CoStar, and more — verified pricing and honest pros and cons.",
     url: `${BASE_URL}/alternatives`,
     type: "website",
-    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
 }
 

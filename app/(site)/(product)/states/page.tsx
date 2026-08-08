@@ -27,13 +27,12 @@ export const metadata: Metadata = {
     title: `Real Estate Agent Email Lists by State — 50 States (${CURRENT_YEAR})`,
     description: "Browse verified realtor email lists and agent databases for every US state. Download a complete list of real estate agents as a CSV from $49/state.",
     url: "https://www.usagentleads.com/states",
-    images: [{ url: "https://www.usagentleads.com/opengraph-image", width: 1200, height: 630, alt: "USAgentLeads - Real Estate Agent Contact Database" }],
   },
   twitter: {
     card: "summary_large_image",
     title: `Real Estate Agent Email Lists by State — 50 States (${CURRENT_YEAR})`,
     description: "Browse verified realtor email lists and agent databases for every US state from $49/state.",
-    images: ["https://www.usagentleads.com/twitter-image"],
+    images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
 }
 

@@ -46,20 +46,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       modifiedTime: meta.updatedAt || meta.date,
       authors: [meta.author],
       tags: meta.tags,
-      images: [
-        {
-          url: `https://www.usagentleads.com${meta.coverImage}`,
-          width: 1200,
-          height: 630,
-          alt: meta.title,
-        },
-      ],
     },
     twitter: {
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
-      images: [`https://www.usagentleads.com${meta.coverImage}`],
     },
   }
 }

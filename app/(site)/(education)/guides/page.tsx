@@ -22,7 +22,6 @@ export const metadata: Metadata = {
       "Step-by-step guides for importing your realtor email list CSV into any cold email tool, email marketing platform, or CRM.",
     url: `${BASE_URL}/guides`,
     type: "website",
-    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
 }
 

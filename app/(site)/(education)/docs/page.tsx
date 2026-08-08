@@ -34,13 +34,12 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "Real Estate Agent API | REST API Documentation | USAgentLeads",
       description: `Integrate ${countLabel} verified real estate agent contacts into your app via REST API. Simple authentication, state filtering, search, and paginated JSON responses.`,
       url: "https://www.usagentleads.com/docs",
-      images: [{ url: "https://www.usagentleads.com/opengraph-image", width: 1200, height: 630, alt: "USAgentLeads - Real Estate Agent Contact Database" }],
     },
     twitter: {
       card: "summary_large_image",
       title: "Real Estate Agent API | REST API Documentation",
       description: `Integrate ${countLabel} verified real estate agent contacts into your app via REST API.`,
-      images: ["https://www.usagentleads.com/twitter-image"],
+      images: ["https://www.usagentleads.com/opengraph-image.png"],
     },
   }
 }

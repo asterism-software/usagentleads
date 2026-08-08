@@ -23,14 +23,13 @@ export const metadata: Metadata = {
     description:
       "USAgentLeads provides verified real estate agent contact data for all 50 US states. Learn about our mission, data sourcing, and commitment to accuracy.",
     url: "https://www.usagentleads.com/about",
-    images: [{ url: "https://www.usagentleads.com/opengraph-image", width: 1200, height: 630, alt: "USAgentLeads - About Us" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "About Us | Who We Are & Why USAgentLeads Exists",
     description:
       "USAgentLeads provides verified real estate agent contact data for all 50 US states.",
-    images: ["https://www.usagentleads.com/twitter-image"],
+    images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
 }
 

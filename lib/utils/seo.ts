@@ -72,7 +72,7 @@ export function generateProductSchema(state: USState, liveCount?: number) {
     "@type": "Product",
     name: `${state.name} Realtor Email List & Contact Database ${CURRENT_YEAR}`,
     description: `Verified database of ${count}+ ${state.name} real estate agent emails and phone numbers. Download the complete realtor email list.`,
-    image: "https://www.usagentleads.com/opengraph-image",
+    image: "https://www.usagentleads.com/opengraph-image.png",
     brand: {
       "@type": "Brand",
       name: "USAgentLeads",

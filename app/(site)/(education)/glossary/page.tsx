@@ -20,7 +20,6 @@ export const metadata: Metadata = {
     description: "Plain-language definitions of key real estate industry terms.",
     url: `${BASE_URL}/glossary`,
     type: "website",
-    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
 }
 

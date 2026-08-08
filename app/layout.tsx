@@ -38,21 +38,13 @@ export const metadata: Metadata = {
     title: `Real Estate Agent Email List — 1.1M+ US Realtor Contacts`,
     description: `Buy a verified real estate agent email list for any US state. 1.1M+ realtor emails and phone numbers across all 50 states — instant CSV download from $49.`,
     url: "https://www.usagentleads.com",
-    images: [
-      {
-        url: "https://www.usagentleads.com/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "USAgentLeads - Real Estate Agent Contact Database",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Real Estate Agent Email List — 1.1M+ US Realtor Contacts",
     description:
       "Buy a verified real estate agent email list for any US state. 1.1M+ realtor emails and phone numbers across all 50 states — instant CSV download from $49.",
-    images: ["https://www.usagentleads.com/twitter-image"],
+    images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
   robots: { index: true, follow: true },
   alternates: {

@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     title: "Contact Us | USAgentLeads",
     description:
       "Get in touch with USAgentLeads. Questions about our real estate agent database, pricing, or data quality?",
-    images: ["https://www.usagentleads.com/twitter-image"],
+    images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
 }
 

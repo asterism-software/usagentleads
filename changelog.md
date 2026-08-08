@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-08-08
+- [x] upate opengraph and twitter image
+
 ## 2026-08-03
 - [x] add new logo
 

@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: `Articles by ${author.name} | USAgentLeads Blog`,
       description: `Read all blog posts by ${author.name}.`,
-      images: ["https://www.usagentleads.com/twitter-image"],
+      images: ["https://www.usagentleads.com/opengraph-image.png"],
     },
     robots: { index: false, follow: true },
   }

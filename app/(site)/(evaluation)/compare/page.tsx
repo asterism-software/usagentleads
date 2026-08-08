@@ -20,7 +20,6 @@ export const metadata: Metadata = {
     description: "Feature-by-feature comparisons with honest pros and cons.",
     url: `${BASE_URL}/compare`,
     type: "website",
-    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
 }
 

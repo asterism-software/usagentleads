@@ -14,7 +14,7 @@ const pricingProductSchema = {
   "@type": "Product",
   name: "USAgentLeads Real Estate Agent Database",
   description: `Complete US real estate agent contact database with ${TOTAL_AGENTS.toLocaleString()}+ verified contacts across all 50 states`,
-  image: "https://www.usagentleads.com/opengraph-image",
+  image: "https://www.usagentleads.com/opengraph-image.png",
   brand: { "@type": "Brand", name: "USAgentLeads" },
   offers: [
     {
@@ -149,13 +149,12 @@ export const metadata: Metadata = {
     description:
       "Realtor email lists from $49/state or $199 for all 50 states. 1.1M+ verified contacts, instant CSV delivery, no subscription.",
     url: "https://www.usagentleads.com/pricing",
-    images: [{ url: "https://www.usagentleads.com/opengraph-image", width: 1200, height: 630, alt: "USAgentLeads - Real Estate Agent Contact Database" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Pricing | Real Estate Agent Database from $49/State",
     description: "Verified real estate agent contact data starting at $49 per state or $199 for all 50 states. Instant CSV delivery.",
-    images: ["https://www.usagentleads.com/twitter-image"],
+    images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
 }
 

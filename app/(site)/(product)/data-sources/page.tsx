@@ -20,13 +20,12 @@ export const metadata: Metadata = {
     title: "Real Estate Agent Data Sources & Verification Methodology",
     description: "How USAgentLeads sources, cleans, verifies, and updates realtor contact data.",
     url: "https://www.usagentleads.com/data-sources",
-    images: [{ url: "https://www.usagentleads.com/opengraph-image", width: 1200, height: 630, alt: "USAgentLeads data sources" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Real Estate Agent Data Sources & Verification Methodology",
     description: "How USAgentLeads sources, cleans, verifies, and updates realtor contact data.",
-    images: ["https://www.usagentleads.com/twitter-image"],
+    images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
 }
 

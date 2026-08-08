@@ -66,6 +66,12 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        // Preserve the old dynamic image URL used by existing social crawlers.
+        source: "/twitter-image",
+        destination: "/opengraph-image.png",
+        permanent: true,
+      },
+      {
         source: "/:path*",
         has: [{ type: "host", value: "usagentleads.com" }],
         destination: "https://www.usagentleads.com/:path*",

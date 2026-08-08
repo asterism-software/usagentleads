@@ -34,7 +34,6 @@ export const metadata: Metadata = {
       "Find the right real estate agent contact database for your business. See how our data fits your outreach.",
     url: `${BASE_URL}/for`,
     type: "website",
-    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
 }
 

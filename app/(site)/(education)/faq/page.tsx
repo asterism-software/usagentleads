@@ -23,7 +23,6 @@ export const metadata: Metadata = {
       "Data sources, accuracy, delivery, refunds, compliance, and plan questions — answered.",
     url: `${BASE_URL}/faq`,
     type: "website",
-    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
 }
 

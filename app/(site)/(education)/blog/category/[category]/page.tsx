@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: `${category.name} for Real Estate | Blog | USAgentLeads`,
       description: `Articles about ${category.name.toLowerCase()} for real estate professionals and companies targeting agents.`,
-      images: ["https://www.usagentleads.com/twitter-image"],
+      images: ["https://www.usagentleads.com/opengraph-image.png"],
     },
     robots: { index: false, follow: true },
   }

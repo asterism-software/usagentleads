@@ -56,7 +56,7 @@ const organizationSchema = {
     width: 400,
     height: 400,
   },
-  image: "https://www.usagentleads.com/opengraph-image",
+  image: "https://www.usagentleads.com/opengraph-image.png",
   description:
     `USAgentLeads is a B2B data provider offering verified real estate agent email lists and realtor contact databases for all 50 US states. 888,809+ contacts with name, email, and phone. Current dataset refreshed in ${DATA_LAST_REFRESHED}.`,
   foundingDate: "2024",
