@@ -2,6 +2,7 @@
 
 ## 2026-08-08
 - [x] upate opengraph and twitter image
+- [x] reorganize footer navigation
 
 ## 2026-08-03
 - [x] add new logo

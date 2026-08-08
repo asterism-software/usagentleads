@@ -27,8 +27,11 @@ export const metadata: Metadata = {
   },
   description: `Buy a verified real estate agent email list for any US state. 1.1M+ realtor emails and phone numbers across all 50 states — instant CSV download from $49.`,
   icons: {
-    icon: [{ url: "/icon-32.png", sizes: "32x32", type: "image/png" }],
-    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+    icon: [
+      { url: "/favicon.ico?v=20260808", sizes: "any", type: "image/x-icon" },
+      { url: "/icon-32.png?v=20260808", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png?v=20260808", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/site.webmanifest",
   openGraph: {

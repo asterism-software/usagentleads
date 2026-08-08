@@ -2,14 +2,70 @@ import Link from "next/link"
 import { LogoIcon } from "@/components/ui/Logo"
 import { US_STATES } from "@/lib/utils/states"
 
+const footerSections = [
+  {
+    title: "Explore Data",
+    links: [
+      { href: "/states", label: "Browse States" },
+      { href: "/directory", label: "Agent Directory" },
+      { href: "/data-sources", label: "Data Sources" },
+    ],
+  },
+  {
+    title: "Solutions",
+    links: [
+      { href: "/pricing", label: "Pricing" },
+      { href: "/for", label: "Use Cases" },
+      { href: "/compare", label: "Compare" },
+      { href: "/alternatives", label: "Alternatives" },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { href: "/guides", label: "Import Guides" },
+      { href: "/faq", label: "FAQ" },
+      { href: "/glossary", label: "Glossary" },
+      { href: "/blog", label: "Blog" },
+      { href: "/docs", label: "API Docs" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { href: "/about", label: "About Us" },
+      { href: "/contact", label: "Contact Us" },
+      { href: "https://climate.stripe.com/vgZr1l", label: "Stripe Climate" },
+    ],
+  },
+  {
+    title: "Account",
+    links: [
+      { href: "/dashboard", label: "Dashboard" },
+      {
+        href: "https://billing.stripe.com/p/login/bJeeVe00f94z4lM14N9EI00",
+        label: "Manage Subscription",
+        external: true,
+      },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
+    ],
+  },
+]
+
 export function Footer() {
   return (
     <footer className="bg-ink text-white">
       <div className="mx-auto max-w-7xl px-4 pt-16 pb-10 sm:px-6 lg:px-8">
         {/* Top columns */}
-        <div className="grid gap-8 sm:gap-10 grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
           {/* Brand */}
-          <div>
+          <div className="lg:col-span-3">
             <Link href="/" className="mb-4 flex items-center gap-2 text-[19px] font-semibold tracking-tight w-fit">
               <LogoIcon className="h-7 w-7" />
               <span>
@@ -22,116 +78,35 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Data */}
-          <div>
-            <p className="text-[12px] font-mono uppercase tracking-wider text-gray-300 mb-4">Data</p>
-            <ul className="space-y-2.5">
-              <li>
-                <Link href="/states" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Browse States
-                </Link>
-              </li>
-              <li>
-                <Link href="/directory" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Agent Directory
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/for" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Use Cases
-                </Link>
-              </li>
-              <li>
-                <Link href="/compare" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Compare
-                </Link>
-              </li>
-              <li>
-                <Link href="/alternatives" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Alternatives
-                </Link>
-              </li>
-              <li>
-                <Link href="/guides" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Import Guides
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/glossary" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Glossary
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="/data-sources" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Data Sources
-                </Link>
-              </li>
-              <li>
-                <Link href="/docs" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  API Docs
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  About Us
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Account */}
-          <div>
-            <p className="text-[12px] font-mono uppercase tracking-wider text-gray-300 mb-4">Account</p>
-            <ul className="space-y-2.5">
-              <li>
-                <Link href="/dashboard" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <a href="https://billing.stripe.com/p/login/bJeeVe00f94z4lM14N9EI00" target="_blank" rel="noopener noreferrer nofollow" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Manage Subscription
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <p className="text-[12px] font-mono uppercase tracking-wider text-gray-300 mb-4">Legal</p>
-            <ul className="space-y-2.5">
-              <li>
-                <Link href="/privacy" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-[15px] text-gray-300 hover:text-white transition-colors">
-                  Contact Us
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <nav aria-label="Footer navigation" className="grid grid-cols-1 gap-x-8 gap-y-9 min-[400px]:grid-cols-2 md:grid-cols-3 lg:col-span-9">
+            {footerSections.map((section) => (
+              <div key={section.title}>
+                <p className="mb-4 text-[12px] font-mono uppercase tracking-wider text-gray-300">
+                  {section.title}
+                </p>
+                <ul className="space-y-2.5">
+                  {section.links.map((link) => (
+                    <li key={link.href}>
+                      {link.external ? (
+                        <a
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          className="text-[15px] text-gray-300 transition-colors hover:text-white"
+                        >
+                          {link.label}
+                        </a>
+                      ) : (
+                        <Link href={link.href} className="text-[15px] text-gray-300 transition-colors hover:text-white">
+                          {link.label}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
         </div>
 
         {/* Divider */}
