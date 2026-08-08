@@ -84,9 +84,10 @@ export function Navbar() {
   const primaryLinks = [
     { href: "/states", label: "Browse States" },
     { href: "/directory", label: "Agent Directory" },
+    { href: "/tools", label: "Free Tools" },
     { href: "/pricing", label: "Pricing" },
     { href: "/blog", label: "Blog" },
-    { href: "/docs", label: "API Docs" },
+    // { href: "/docs", label: "API Docs" },
   ]
 
   // The mobile overlay has room to spare, so it also surfaces Contact.
@@ -116,7 +117,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden items-center gap-1 lg:flex">
+          <div className="hidden items-center gap-1 xl:flex">
             {primaryLinks.map((link) => (
               <Link
                 key={link.href}

@@ -20,6 +20,13 @@ Key facts: 1,000,000+ contacts across all 50 states; fields are full name, email
 - [Pricing](https://www.usagentleads.com/pricing): All plans and one-time vs subscription options.
 - [Browse by State](https://www.usagentleads.com/states): Per-state agent counts and purchase links for all 50 states.
 - [Agent Directory](https://www.usagentleads.com/directory): Free, searchable public directory of agents.
+- [Free Tools](https://www.usagentleads.com/tools): Browser-based planning tools for businesses reaching real estate agents.
+- [Agent Outreach Campaign Planner](https://www.usagentleads.com/tools/agent-outreach-campaign-planner): Free tool to model selected-state email availability, outreach workload, funnel assumptions, and campaign economics.
+- [Cold Email Compliance Checker](https://www.usagentleads.com/tools/cold-email-compliance-checker): Browser-based review of common text-level CAN-SPAM flags in a draft; it is not a legal certification.
+- [Real Estate Email Subject Line Tester](https://www.usagentleads.com/tools/real-estate-email-subject-line-tester): Compare two agent-outreach drafts for length, compact previews, clarity prompts, and unresolved personalization tokens; it does not predict open rates.
+- [Email Domain Authentication Checker](https://www.usagentleads.com/tools/email-domain-authentication-checker): Inspect public SPF and DMARC DNS records for an outreach domain; it does not prove DKIM passing or inbox placement.
+- [Brokerage Recruiting ROI Calculator](https://www.usagentleads.com/tools/brokerage-recruiting-roi-calculator): Model retained recruits, annual company dollar, recruiting cost, ROI, and payback from your own brokerage assumptions.
+- [Agent Partnership Value Calculator](https://www.usagentleads.com/tools/agent-partnership-value-calculator): Model introductions, qualified opportunities, wins, and relationship-program contribution without calculating referral payments or fees.
 - [API Documentation](https://www.usagentleads.com/docs): Endpoints, authentication, and response format.
 - [Import Guides](https://www.usagentleads.com/guides): How to load the CSV into common email and CRM tools.
 - [Blog](https://www.usagentleads.com/blog): Guides on realtor outreach, marketing, and CRMs.

@@ -9,6 +9,7 @@ import { GLOSSARY_TERMS } from "@/lib/data/glossary"
 import { CONTENT_LAST_REVIEWED, SITE_URL } from "@/lib/utils/site"
 
 const BASE_URL = SITE_URL
+const TOOLS_LAST_MODIFIED = "2026-08-08"
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages: MetadataRoute.Sitemap = [
@@ -29,6 +30,48 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: CONTENT_LAST_REVIEWED,
       changeFrequency: "weekly",
       priority: 0.8,
+    },
+    {
+      url: `${BASE_URL}/tools`,
+      lastModified: TOOLS_LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/tools/agent-outreach-campaign-planner`,
+      lastModified: TOOLS_LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/tools/cold-email-compliance-checker`,
+      lastModified: TOOLS_LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/tools/real-estate-email-subject-line-tester`,
+      lastModified: TOOLS_LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/tools/email-domain-authentication-checker`,
+      lastModified: TOOLS_LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/tools/brokerage-recruiting-roi-calculator`,
+      lastModified: TOOLS_LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/tools/agent-partnership-value-calculator`,
+      lastModified: TOOLS_LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.7,
     },
     {
       url: `${BASE_URL}/pricing`,

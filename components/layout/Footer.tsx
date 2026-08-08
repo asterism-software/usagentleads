@@ -31,10 +31,24 @@ const footerSections = [
     ],
   },
   {
+    title: "Free Tools",
+    links: [
+      { href: "/tools", label: "All Free Tools" },
+      { href: "/tools/agent-outreach-campaign-planner", label: "Agent Outreach Planner" },
+      { href: "/tools/cold-email-compliance-checker", label: "Cold Email Compliance" },
+      { href: "/tools/real-estate-email-subject-line-tester", label: "Email Subject Line Tester" },
+      { href: "/tools/email-domain-authentication-checker", label: "Domain Authentication" },
+      { href: "/tools/brokerage-recruiting-roi-calculator", label: "Brokerage Recruiting ROI" },
+      { href: "/tools/agent-partnership-value-calculator", label: "Agent Partnership Value" },
+    ],
+  },
+  {
     title: "Company",
     links: [
       { href: "/about", label: "About Us" },
       { href: "/contact", label: "Contact Us" },
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
       { href: "https://climate.stripe.com/vgZr1l", label: "Stripe Climate" },
     ],
   },
@@ -47,13 +61,6 @@ const footerSections = [
         label: "Manage Subscription",
         external: true,
       },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { href: "/privacy", label: "Privacy Policy" },
-      { href: "/terms", label: "Terms of Service" },
     ],
   },
 ]

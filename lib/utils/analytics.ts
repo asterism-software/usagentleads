@@ -13,6 +13,12 @@ export type AnalyticsEvent =
   | "subscribe_button_clicked"
   | "free_sample_opened"
   | "free_sample_submitted"
+  | "agent_outreach_planner_started"
+  | "agent_outreach_planner_generated"
+  | "agent_outreach_planner_cta_clicked"
+  | "tool_started"
+  | "tool_completed"
+  | "tool_cta_clicked"
 
 export function track(event: AnalyticsEvent, properties?: Record<string, unknown>) {
   if (typeof window === "undefined") return
