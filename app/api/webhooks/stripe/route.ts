@@ -211,7 +211,7 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
   await syncCheckoutCustomerMetadata(session)
 }
 
-async function markCheckoutFailed(session: Stripe.Checkout.Session): Promise<void> {
+async function recordCheckoutFailure(session: Stripe.Checkout.Session): Promise<void> {
   if (session.mode === "subscription") {
     const userId = session.metadata?.user_id
     const attemptId = session.metadata?.checkout_attempt_id
@@ -231,10 +231,11 @@ async function markCheckoutFailed(session: Stripe.Checkout.Session): Promise<voi
 
   const checkoutMetadata = compactStripeMetadata(session.metadata)
 
+  // Checkout failure is attempt state, not fulfillment state. Keep the order
+  // pending while recording Stripe's final Session context for reconciliation.
   const { error } = await db()
     .from("purchases")
     .update({
-      status: "failed",
       stripe_checkout_session_id: session.id,
       stripe_payment_intent_id: objectId(session.payment_intent),
       stripe_customer_id: objectId(session.customer),
@@ -245,7 +246,8 @@ async function markCheckoutFailed(session: Stripe.Checkout.Session): Promise<voi
     })
     .eq("id", purchaseId)
     .eq("billing_provider", "stripe")
-  if (error) throw new Error(`Unable to mark purchase failed: ${error.message}`)
+    .eq("status", "pending")
+  if (error) throw new Error(`Unable to record failed purchase checkout: ${error.message}`)
 }
 
 async function customerEmail(customer: Stripe.Subscription["customer"]): Promise<string | null> {
@@ -403,7 +405,7 @@ async function processEvent(event: Stripe.Event): Promise<void> {
 
     case "checkout.session.async_payment_failed":
     case "checkout.session.expired":
-      await markCheckoutFailed(event.data.object as Stripe.Checkout.Session)
+      await recordCheckoutFailure(event.data.object as Stripe.Checkout.Session)
       return
 
     case "charge.refunded": {

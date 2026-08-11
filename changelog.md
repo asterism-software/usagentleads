@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-08-11
+- [x] [fix Stripe webhook processing for unsuccessful Checkout Sessions](docs/changelog/2026-08-11-stripe-webhook-failure-processing.md)
+
 ## 2026-08-08
 - [x] add free agent outreach campaign planner
 - [x] add cold-email compliance, subject-line, domain authentication, brokerage recruiting ROI, and agent partnership value tools

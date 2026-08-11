@@ -392,6 +392,58 @@ describe("POST /api/webhooks/stripe", () => {
     expect(mockUpdateCustomer).toHaveBeenCalledWith("cus_pending", { metadata })
   })
 
+  it.each([
+    "checkout.session.async_payment_failed",
+    "checkout.session.expired",
+  ])("records %s without writing an unsupported purchase status", async (eventType) => {
+    const metadata = {
+      ...CHECKOUT_CONTEXT_METADATA,
+      purchase_type: "state",
+      purchase_id: PURCHASE_ID,
+      state_code: "CA",
+    }
+    currentEvent = {
+      id: `evt_${eventType}`,
+      type: eventType,
+      data: {
+        object: {
+          id: "cs_unsuccessful",
+          mode: "payment",
+          metadata,
+          payment_intent: null,
+          customer: null,
+          customer_details: null,
+          customer_email: null,
+        },
+      },
+    }
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ received: true })
+    expect(purchaseUpdates).toHaveLength(1)
+    expect(purchaseUpdates[0].values).toEqual({
+      stripe_checkout_session_id: "cs_unsuccessful",
+      stripe_payment_intent_id: null,
+      stripe_customer_id: null,
+      guest_email: null,
+      metadata,
+    })
+    expect(purchaseUpdates[0].values).not.toHaveProperty("status")
+    expect(purchaseUpdates[0].query.eq).toHaveBeenNthCalledWith(1, "id", PURCHASE_ID)
+    expect(purchaseUpdates[0].query.eq).toHaveBeenNthCalledWith(
+      2,
+      "billing_provider",
+      "stripe"
+    )
+    expect(purchaseUpdates[0].query.eq).toHaveBeenNthCalledWith(3, "status", "pending")
+    expect(mockEventInsert).toHaveBeenCalledWith({
+      id: `evt_${eventType}`,
+      event_type: eventType,
+    })
+  })
+
   it("rejects a one-time Checkout Session whose Price is not allowlisted", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     currentEvent = {
