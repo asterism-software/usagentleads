@@ -26,9 +26,11 @@ export function sanitizeAuthReturnPath(
 
 export function buildAuthCallbackUrl(
   origin: string,
-  returnPath: string | null | undefined
+  returnPath: string | null | undefined,
+  posthogDistinctId?: string | null
 ): string {
   const callbackUrl = new URL("/auth/callback", origin)
   callbackUrl.searchParams.set("next", sanitizeAuthReturnPath(returnPath))
+  if (posthogDistinctId) callbackUrl.searchParams.set("ph", posthogDistinctId)
   return callbackUrl.toString()
 }

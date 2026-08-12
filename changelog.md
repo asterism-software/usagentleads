@@ -2,6 +2,7 @@
 
 ## 2026-08-12
 - [x] [fix discounted Full Database Stripe webhook fulfillment](docs/changelog/2026-08-12-discounted-full-database-webhook-fulfillment.md)
+- [x] [add PostHog one-time purchase tracking, revenue attribution dashboards, and an idempotent 180-day Stripe backfill](posthog-setup-report.md)
 
 ## 2026-08-11
 - [x] [fix Stripe webhook processing for unsuccessful Checkout Sessions](docs/changelog/2026-08-11-stripe-webhook-failure-processing.md)

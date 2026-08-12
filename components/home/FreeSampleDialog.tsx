@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { DownloadIcon, CheckCircle2Icon, Loader2Icon, FileSpreadsheetIcon } from "lucide-react"
-import { track } from "@/lib/utils/analytics"
+import { getPostHogDistinctId, track } from "@/lib/utils/analytics"
 
 interface FreeSampleDialogProps {
   /** Capture-point label stored with the lead, e.g. "home_hero" or "state_fl". */
@@ -42,7 +42,11 @@ export function FreeSampleDialog({
       const res = await fetch("/api/free-sample", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), source }),
+        body: JSON.stringify({
+          email: email.trim(),
+          source,
+          posthogDistinctId: getPostHogDistinctId(),
+        }),
       })
 
       if (!res.ok) {

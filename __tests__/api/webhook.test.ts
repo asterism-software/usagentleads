@@ -69,6 +69,7 @@ describe("POST /api/webhooks/stripe", () => {
   let mockSendSubscriptionCancelled: ReturnType<typeof vi.fn>
   let mockSendSubscriptionRenewed: ReturnType<typeof vi.fn>
   let mockSendPaymentFailed: ReturnType<typeof vi.fn>
+  let mockCaptureServerEvent: ReturnType<typeof vi.fn>
 
   beforeEach(async () => {
     vi.resetModules()
@@ -135,6 +136,7 @@ describe("POST /api/webhooks/stripe", () => {
     mockSendSubscriptionCancelled = vi.fn().mockResolvedValue(undefined)
     mockSendSubscriptionRenewed = vi.fn().mockResolvedValue(undefined)
     mockSendPaymentFailed = vi.fn().mockResolvedValue(undefined)
+    mockCaptureServerEvent = vi.fn()
 
     vi.doMock("@/lib/stripe/webhook", () => ({
       constructWebhookEvent: mockConstructWebhookEvent,
@@ -163,6 +165,22 @@ describe("POST /api/webhooks/stripe", () => {
       getStateByCode: vi.fn((code: string) =>
         code.toUpperCase() === "CA" ? { code: "CA", name: "California" } : undefined
       ),
+    }))
+    vi.doMock("@/lib/posthog-server", () => ({
+      captureServerEvent: mockCaptureServerEvent,
+      stripeAnalyticsDistinctId: (metadata: Record<string, string>, fallback: string) =>
+        metadata.user_id || metadata.posthog_distinct_id || fallback,
+      stripeAttributionProperties: (metadata: Record<string, string>) =>
+        Object.fromEntries(
+          [
+            "referrer",
+            "first_landing_page",
+            "attribution_source",
+            "attribution_medium",
+            "timezone",
+            "country",
+          ].flatMap((key) => metadata[key] ? [[key, metadata[key]]] : [])
+        ),
     }))
 
     const route = await import("@/app/api/webhooks/stripe/route")
@@ -418,6 +436,24 @@ describe("POST /api/webhooks/stripe", () => {
     expect(mockEventInsert).toHaveBeenCalledWith({
       id: "evt_full_database_discounted",
       event_type: "checkout.session.completed",
+    })
+    expect(mockCaptureServerEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "stripe_customer_created",
+        properties: expect.objectContaining({
+          $insert_id: "stripe:customer.created:cus_full_database_discounted",
+        }),
+      })
+    )
+    expect(mockCaptureServerEvent).toHaveBeenCalledWith({
+      distinctId: "stripe-checkout:cs_full_database_discounted",
+      event: "payment_succeeded",
+      properties: expect.objectContaining({
+        $insert_id: "stripe:payment.succeeded:checkout:cs_full_database_discounted",
+        gross_revenue_cents: 15_920,
+        is_first_payment: true,
+        is_trial_conversion: false,
+      }),
     })
   })
 
@@ -720,6 +756,22 @@ describe("POST /api/webhooks/stripe", () => {
       "attempt_id",
       CHECKOUT_ATTEMPT_ID
     )
+    expect(mockCaptureServerEvent).toHaveBeenCalledWith({
+      distinctId: USER_ID,
+      event: "subscription_activated",
+      properties: expect.objectContaining({
+        $insert_id: "stripe:subscription.created:sub_api",
+        is_trial: true,
+      }),
+    })
+    expect(mockCaptureServerEvent).toHaveBeenCalledWith({
+      distinctId: USER_ID,
+      event: "trial_started",
+      properties: expect.objectContaining({
+        $insert_id: "stripe:trial.started:sub_api",
+        trial_ends_at: new Date(trialEnd * 1_000).toISOString(),
+      }),
+    })
   })
 
   it("releases the matching claim when a subscription Checkout Session expires", async () => {
@@ -811,6 +863,14 @@ describe("POST /api/webhooks/stripe", () => {
       id: "evt_invoice_welcome",
       event_type: "invoice.paid",
     })
+    expect(mockCaptureServerEvent).toHaveBeenCalledWith({
+      distinctId: USER_ID,
+      event: "payment_succeeded",
+      properties: expect.objectContaining({
+        $insert_id: "stripe:payment.succeeded:invoice:in_welcome",
+        is_first_payment: false,
+      }),
+    })
   })
 
   it("uses the matched dashboard plan in a failed-payment email", async () => {
@@ -860,6 +920,14 @@ describe("POST /api/webhooks/stripe", () => {
       to: "subscriber@example.com",
       planName: "Pro Dashboard",
       idempotencyKey: "payment-failed:in_failed:2",
+    })
+    expect(mockCaptureServerEvent).toHaveBeenCalledWith({
+      distinctId: USER_ID,
+      event: "subscription_payment_failed",
+      properties: expect.objectContaining({
+        $insert_id: "stripe:payment.failed:in_failed:2",
+        attempt_count: 2,
+      }),
     })
   })
 

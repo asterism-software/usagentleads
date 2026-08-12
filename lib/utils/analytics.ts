@@ -9,7 +9,10 @@ import posthog from "posthog-js"
  */
 export type AnalyticsEvent =
   | "buy_button_clicked"
+  | "checkout_initiated"
   | "checkout_started"
+  | "sign_in_initiated"
+  | "magic_link_sent"
   | "subscribe_button_clicked"
   | "free_sample_opened"
   | "free_sample_submitted"
@@ -26,5 +29,14 @@ export function track(event: AnalyticsEvent, properties?: Record<string, unknown
     posthog.capture(event, properties)
   } catch {
     // Never let analytics break a checkout flow.
+  }
+}
+
+export function getPostHogDistinctId(): string | null {
+  if (typeof window === "undefined") return null
+  try {
+    return posthog.get_distinct_id() || null
+  } catch {
+    return null
   }
 }

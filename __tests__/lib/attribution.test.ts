@@ -3,6 +3,9 @@ import {
   FIRST_TOUCH_ATTRIBUTION_STORAGE_KEY,
   captureFirstTouchAttribution,
   getCheckoutAttribution,
+  deriveAttributionMedium,
+  deriveAttributionSource,
+  sanitizePostHogDistinctId,
 } from "@/lib/utils/attribution"
 
 function memoryStorage(initialValue: string | null = null) {
@@ -38,6 +41,22 @@ afterEach(() => {
 })
 
 describe("first-touch attribution", () => {
+  it("normalizes common acquisition sources and mediums", () => {
+    expect(deriveAttributionSource("https://www.google.com")).toBe("google")
+    expect(deriveAttributionMedium("google")).toBe("organic_search")
+    expect(deriveAttributionSource("direct")).toBe("direct")
+    expect(deriveAttributionMedium("direct")).toBe("direct")
+    expect(deriveAttributionSource("https://partner.example/path")).toBe("partner.example")
+    expect(deriveAttributionMedium("partner.example")).toBe("referral")
+  })
+
+  it("accepts bounded PostHog identifiers and rejects unsafe values", () => {
+    expect(sanitizePostHogDistinctId("018f6f6d-1234-7abc-9def-123456789abc")).toBe(
+      "018f6f6d-1234-7abc-9def-123456789abc"
+    )
+    expect(sanitizePostHogDistinctId("short")).toBeNull()
+    expect(sanitizePostHogDistinctId("bad id with spaces")).toBeNull()
+  })
   it("stores the referrer origin and bounded landing pathname as one record", () => {
     const storage = memoryStorage()
     const referrer = `https://www.google.com/search?${"q".repeat(600)}`
@@ -118,6 +137,17 @@ describe("first-touch attribution", () => {
       },
     })
     expect(storage.setItem).not.toHaveBeenCalled()
+  })
+
+  it("adds an explicitly supplied anonymous PostHog identity to checkout context", () => {
+    const storage = memoryStorage()
+    browserWith({ storage, referrer: "", pathname: "/pricing" })
+
+    expect(
+      getCheckoutAttribution("018f6f6d-1234-7abc-9def-123456789abc").attribution
+    ).toEqual(expect.objectContaining({
+      posthogDistinctId: "018f6f6d-1234-7abc-9def-123456789abc",
+    }))
   })
 
   it("falls back safely when localStorage and Intl are unavailable", () => {

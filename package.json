@@ -15,6 +15,7 @@
     "ingest:compass": "node scripts/ingest/compass.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "backfill:stripe-posthog": "node --env-file=.env.local scripts/backfill-stripe-posthog.mjs",
     "ingest:har": "node scripts/ingest/har.mjs",
     "ingest:csv": "node scripts/ingest/import-csv.mjs",
     "ingest:atproperties": "node scripts/ingest/atproperties.mjs",

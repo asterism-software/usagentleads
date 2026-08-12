@@ -3,7 +3,7 @@
 import { Loader2, ArrowRight } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
-import { track } from "@/lib/utils/analytics"
+import { getPostHogDistinctId, track } from "@/lib/utils/analytics"
 import { getCheckoutAttribution } from "@/lib/utils/attribution"
 
 export function BuyFullDBButton({ className }: { className?: string }) {
@@ -12,13 +12,17 @@ export function BuyFullDBButton({ className }: { className?: string }) {
   const handleBuy = async () => {
     setLoading(true)
     track("buy_button_clicked", { product: "full_database", price: 199 })
+    track("checkout_initiated", {
+      purchase_type: "full_database",
+      price_cents: 19900,
+    })
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           purchaseType: "full_database",
-          ...getCheckoutAttribution(),
+          ...getCheckoutAttribution(getPostHogDistinctId()),
         }),
       })
       const data = await res.json()

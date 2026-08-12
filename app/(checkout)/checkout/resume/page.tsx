@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { getCheckoutAttribution } from "@/lib/utils/attribution"
+import { getPostHogDistinctId } from "@/lib/utils/analytics"
 
 const VALID_PLANS = ["subscription", "subscription_api"] as const
 type Plan = (typeof VALID_PLANS)[number]
@@ -37,7 +38,10 @@ function ResumeContent() {
         const res = await fetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ purchaseType: plan, ...getCheckoutAttribution() }),
+          body: JSON.stringify({
+            purchaseType: plan,
+            ...getCheckoutAttribution(getPostHogDistinctId()),
+          }),
         })
         const data = await res.json()
         if (data.url) {

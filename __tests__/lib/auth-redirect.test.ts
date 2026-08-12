@@ -37,4 +37,16 @@ describe("buildAuthCallbackUrl", () => {
       "https://www.usagentleads.com/auth/callback?next=%2Fdashboard%3Fview%3Dsaved"
     )
   })
+
+  it("carries an anonymous PostHog identity through OAuth", () => {
+    expect(
+      buildAuthCallbackUrl(
+        "https://www.usagentleads.com",
+        "/dashboard",
+        "018f6f6d-1234-7abc-9def-123456789abc"
+      )
+    ).toBe(
+      "https://www.usagentleads.com/auth/callback?next=%2Fdashboard&ph=018f6f6d-1234-7abc-9def-123456789abc"
+    )
+  })
 })

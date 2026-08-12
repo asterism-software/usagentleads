@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/server"
 import { sendFreeSampleEmail } from "@/lib/resend/emails"
 import { rateLimit } from "@/lib/utils/rateLimit"
+import { createHash } from "crypto"
+import { captureServerEvent } from "@/lib/posthog-server"
+import { sanitizePostHogDistinctId } from "@/lib/utils/attribution"
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
@@ -27,7 +30,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Valid email required" }, { status: 400 })
   }
 
-  const { email: rawEmail, source: rawSource } = body as Record<string, unknown>
+  const {
+    email: rawEmail,
+    source: rawSource,
+    posthogDistinctId: rawPostHogDistinctId,
+  } = body as Record<string, unknown>
   const email =
     typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : ""
   // Optional capture-point label (e.g. "home_hero", "state_florida", "exit_intent").
@@ -35,6 +42,7 @@ export async function POST(request: NextRequest) {
   const source = typeof rawSource === "string"
     ? rawSource.trim().toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 40) || null
     : null
+  const posthogDistinctId = sanitizePostHogDistinctId(rawPostHogDistinctId)
 
   // Cap length before the regex: the address also becomes a rate-limit key and
   // a stored row, and an unbounded string is a cheap way to abuse both.
@@ -74,6 +82,16 @@ export async function POST(request: NextRequest) {
     await sendFreeSampleEmail({
       to: email,
       downloadUrl: signedUrlData.signedUrl,
+    })
+
+    const leadId = createHash("sha256").update(email).digest("hex")
+    captureServerEvent({
+      distinctId: posthogDistinctId || `sample-lead:${leadId.slice(0, 32)}`,
+      event: "lead_captured",
+      properties: {
+        $insert_id: `sample-lead:${leadId}`,
+        source: source || "unknown",
+      },
     })
 
     return NextResponse.json({ success: true })

@@ -10,6 +10,7 @@ import {
   sanitizeAuthReturnPath,
 } from "@/lib/auth-redirect"
 import { createClient } from "@/lib/supabase/client"
+import { getPostHogDistinctId, track } from "@/lib/utils/analytics"
 
 export default function LoginPage() {
   return (
@@ -32,13 +33,18 @@ function LoginContent() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true)
     setError("")
+    track("sign_in_initiated", { method: "google" })
 
     try {
       const supabase = createClient()
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: buildAuthCallbackUrl(window.location.origin, next),
+          redirectTo: buildAuthCallbackUrl(
+            window.location.origin,
+            next,
+            getPostHogDistinctId()
+          ),
         },
       })
 
@@ -56,18 +62,24 @@ function LoginContent() {
     e.preventDefault()
     setLoading(true)
     setError("")
+    track("sign_in_initiated", { method: "magic_link" })
 
     try {
       const res = await fetch("/api/auth/send-magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, next }),
+        body: JSON.stringify({
+          email,
+          next,
+          posthogDistinctId: getPostHogDistinctId(),
+        }),
       })
 
       if (!res.ok) {
         setError("Something went wrong. Please try again.")
       } else {
         setSent(true)
+        track("magic_link_sent", { method: "magic_link" })
       }
     } catch {
       setError("Something went wrong. Please try again.")

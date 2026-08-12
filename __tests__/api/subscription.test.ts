@@ -23,6 +23,7 @@ describe("/api/subscription local Stripe sync", () => {
   let mockDbUpdate: ReturnType<typeof vi.fn>
   let updateQueries: AwaitableQuery[]
   let mockRateLimit: ReturnType<typeof vi.fn>
+  let mockCaptureServerEvent: ReturnType<typeof vi.fn>
 
   beforeEach(async () => {
     vi.resetModules()
@@ -39,6 +40,7 @@ describe("/api/subscription local Stripe sync", () => {
     mockStripeUpdate = vi.fn()
     updateQueries = []
     mockRateLimit = vi.fn().mockResolvedValue({ success: true, remaining: 4 })
+    mockCaptureServerEvent = vi.fn()
     mockDbUpdate = vi.fn(() => {
       const query = awaitableResult({ data: null, error: localUpdateError })
       updateQueries.push(query)
@@ -71,6 +73,9 @@ describe("/api/subscription local Stripe sync", () => {
       getStripe: vi.fn(() => ({ subscriptions: { update: mockStripeUpdate } })),
     }))
     vi.doMock("@/lib/utils/rateLimit", () => ({ rateLimit: mockRateLimit }))
+    vi.doMock("@/lib/posthog-server", () => ({
+      captureServerEvent: mockCaptureServerEvent,
+    }))
 
     const route = await import("@/app/api/subscription/route")
     DELETE = route.DELETE
@@ -107,6 +112,16 @@ describe("/api/subscription local Stripe sync", () => {
       updated_at: expect.any(String),
     })
     expect(updateQueries[0].eq).toHaveBeenCalledWith("user_id", USER_ID)
+    expect(mockCaptureServerEvent).toHaveBeenCalledWith({
+      distinctId: USER_ID,
+      event: "subscription_cancel_requested",
+      properties: {
+        $insert_id: "stripe:subscription.cancel-requested:sub_test:2026-07-31T12:00:00.000Z",
+        billing_provider: "stripe",
+        subscription_id: "sub_test",
+        previous_status: "active",
+      },
+    })
   })
 
   it("returns syncing when Stripe accepts resume but the local update fails", async () => {

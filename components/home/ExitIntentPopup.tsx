@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { DownloadIcon, MailIcon, Loader2Icon } from "lucide-react"
-import { track } from "@/lib/utils/analytics"
+import { getPostHogDistinctId, track } from "@/lib/utils/analytics"
 
 const STORAGE_KEY = "exit-intent-shown"
 
@@ -68,7 +68,11 @@ export function ExitIntentPopup() {
       const res = await fetch("/api/free-sample", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), source: "exit_intent" }),
+        body: JSON.stringify({
+          email: email.trim(),
+          source: "exit_intent",
+          posthogDistinctId: getPostHogDistinctId(),
+        }),
       })
 
       if (!res.ok) {

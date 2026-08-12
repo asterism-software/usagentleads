@@ -12,6 +12,16 @@ import { STRIPE_PLANS, type PurchaseType } from "@/lib/billing/plans"
 import { isValidStateCode } from "@/lib/utils/security"
 import { rateLimit } from "@/lib/utils/rateLimit"
 import { getCountryCodeForTimezone } from "@/lib/utils/timezone"
+import {
+  deriveAttributionMedium,
+  deriveAttributionSource,
+  sanitizePostHogDistinctId,
+} from "@/lib/utils/attribution"
+import {
+  captureServerEvent,
+  stripeAnalyticsDistinctId,
+  stripeAttributionProperties,
+} from "@/lib/posthog-server"
 import { z } from "zod"
 
 const checkoutSchema = z.object({
@@ -75,6 +85,9 @@ function buildCheckoutMetadata(
   const attribution = attributionRecord(rawAttribution)
   const timezone = normalizedMetadataValue(attribution.timezone, "unknown", 100)
   const plan = STRIPE_PLANS[purchaseType]
+  const referrer = normalizedReferrer(attribution.referrer)
+  const attributionSource = deriveAttributionSource(referrer)
+  const posthogDistinctId = sanitizePostHogDistinctId(attribution.posthogDistinctId)
 
   return {
     purchase_type: purchaseType,
@@ -82,12 +95,15 @@ function buildCheckoutMetadata(
     ip: normalizedMetadataValue(ip, "unknown", 100),
     timezone,
     country: getCountryCodeForTimezone(timezone) || "unknown",
-    referrer: normalizedReferrer(attribution.referrer),
+    referrer,
     first_landing_page: normalizedMetadataValue(
       attribution.firstLandingPage,
       "/",
       500
     ),
+    attribution_source: attributionSource,
+    attribution_medium: deriveAttributionMedium(attributionSource),
+    ...(posthogDistinctId ? { posthog_distinct_id: posthogDistinctId } : {}),
     plan_name: plan.name,
     plan_price: (plan.amount / 100).toFixed(2),
     plan_price_cents: String(plan.amount),
@@ -423,6 +439,23 @@ export async function POST(request: Request) {
         stripeCustomerId,
         successPageToken,
         subscriptionExpiresAt: subscriptionAttemptExpiresAt,
+      })
+      const eventMetadata = compactStripeMetadata(metadata)
+      captureServerEvent({
+        distinctId: stripeAnalyticsDistinctId(
+          eventMetadata,
+          `checkout:${metadata.checkout_attempt_id}`
+        ),
+        event: "checkout_session_created",
+        properties: {
+          $insert_id: `stripe:checkout.session.created:${checkout.id}`,
+          billing_provider: "stripe",
+          checkout_session_id: checkout.id,
+          purchase_type: purchaseType,
+          plan_name: metadata.plan_name,
+          plan_price_cents: metadata.plan_price_cents,
+          ...stripeAttributionProperties(eventMetadata),
+        },
       })
       if (subscriptionAttemptId && subscriptionUserId) {
         const { data: savedAttempt, error: attemptUpdateError } = await serviceDb()

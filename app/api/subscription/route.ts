@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { getStripe } from "@/lib/stripe/client"
 import { rateLimit } from "@/lib/utils/rateLimit"
 import { isSameOriginRequest } from "@/lib/utils/security"
+import { captureServerEvent } from "@/lib/posthog-server"
 
 const db = () => createServiceClient().schema("usagentleads")
 
@@ -89,6 +90,17 @@ export async function DELETE(request: Request) {
     console.error("Stripe subscription cancellation error:", error)
     return NextResponse.json({ error: "Failed to cancel subscription" }, { status: 500 })
   }
+
+  captureServerEvent({
+    distinctId: user.id,
+    event: "subscription_cancel_requested",
+    properties: {
+      $insert_id: `stripe:subscription.cancel-requested:${subscription.stripe_subscription_id}:${subscription.updated_at}`,
+      billing_provider: "stripe",
+      subscription_id: subscription.stripe_subscription_id,
+      previous_status: subscription.status,
+    },
+  })
 
   const { error: updateError } = await db()
     .from("subscriptions")

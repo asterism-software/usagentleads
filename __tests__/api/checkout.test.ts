@@ -63,6 +63,7 @@ describe("POST /api/checkout", () => {
   let mockDeletePurchaseEq: ReturnType<typeof vi.fn>
   let mockSubscriptionMaybeSingle: ReturnType<typeof vi.fn>
   let mockRateLimit: ReturnType<typeof vi.fn>
+  let mockCaptureServerEvent: ReturnType<typeof vi.fn>
   let mockAttemptInsert: ReturnType<typeof vi.fn>
   let mockAttemptSelect: ReturnType<typeof vi.fn>
   let mockAttemptUpdate: ReturnType<typeof vi.fn>
@@ -102,6 +103,7 @@ describe("POST /api/checkout", () => {
     mockDeletePurchase = vi.fn(() => ({ eq: mockDeletePurchaseEq }))
     mockSubscriptionMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null })
     mockRateLimit = vi.fn().mockResolvedValue({ success: true, remaining: 9 })
+    mockCaptureServerEvent = vi.fn()
 
     attemptInsertResults = []
     attemptSelectResults = []
@@ -169,6 +171,22 @@ describe("POST /api/checkout", () => {
       expireCheckoutSession: mockExpireCheckoutSession,
     }))
     vi.doMock("@/lib/utils/rateLimit", () => ({ rateLimit: mockRateLimit }))
+    vi.doMock("@/lib/posthog-server", () => ({
+      captureServerEvent: mockCaptureServerEvent,
+      stripeAnalyticsDistinctId: (metadata: Record<string, string>, fallback: string) =>
+        metadata.user_id || metadata.posthog_distinct_id || fallback,
+      stripeAttributionProperties: (metadata: Record<string, string>) =>
+        Object.fromEntries(
+          [
+            "referrer",
+            "first_landing_page",
+            "attribution_source",
+            "attribution_medium",
+            "timezone",
+            "country",
+          ].flatMap((key) => metadata[key] ? [[key, metadata[key]]] : [])
+        ),
+    }))
     vi.doMock("@/lib/supabase/server", () => ({
       createClient: vi.fn(async () => ({ auth: { getUser: mockGetUser } })),
       createServiceClient: vi.fn(() => ({
@@ -278,6 +296,8 @@ describe("POST /api/checkout", () => {
         country: "US",
         referrer: "https://www.google.com",
         first_landing_page: "/pricing",
+        attribution_source: "google",
+        attribution_medium: "organic_search",
         plan_name: "Full Database",
         plan_price: "199.00",
         plan_price_cents: "19900",
@@ -298,6 +318,16 @@ describe("POST /api/checkout", () => {
     })
     expect(checkout.metadata).not.toHaveProperty("page_token")
     expect(mockAttemptInsert).not.toHaveBeenCalled()
+    expect(mockCaptureServerEvent).toHaveBeenCalledWith({
+      distinctId: expect.stringMatching(/^checkout:/),
+      event: "checkout_session_created",
+      properties: expect.objectContaining({
+        $insert_id: "stripe:checkout.session.created:cs_test_123",
+        purchase_type: "full_database",
+        attribution_source: "google",
+        first_landing_page: "/pricing",
+      }),
+    })
   })
 
   it("normalizes a lowercase state code before persistence and Stripe metadata", async () => {
@@ -346,6 +376,8 @@ describe("POST /api/checkout", () => {
         country: "US",
         referrer: "https://www.google.com",
         first_landing_page: "/pricing",
+        attribution_source: "google",
+        attribution_medium: "organic_search",
         plan_name: "Pro API",
         plan_price: "79.00",
         plan_price_cents: "7900",

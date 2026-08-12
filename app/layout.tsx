@@ -3,6 +3,7 @@ import { Poppins, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ScrollRevealProvider } from "@/components/layout/ScrollRevealProvider";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { PostHogIdentify } from "@/components/posthog-identify";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -79,6 +80,7 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased bg-page text-ink">
         <ScrollRevealProvider />
+        <PostHogIdentify />
         {children}
         <Toaster />
         <GoogleAnalytics gaId="G-3KDWCR1X74" />

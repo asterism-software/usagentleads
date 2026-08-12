@@ -3,7 +3,7 @@
 import { Loader2, ArrowRight } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
-import { track } from "@/lib/utils/analytics"
+import { getPostHogDistinctId, track } from "@/lib/utils/analytics"
 import { getCheckoutAttribution } from "@/lib/utils/attribution"
 
 interface BuyStateButtonProps {
@@ -18,6 +18,12 @@ export function BuyStateButton({ stateCode, stateName, className }: BuyStateButt
   const handleBuy = async () => {
     setLoading(true)
     track("buy_button_clicked", { product: "state", state_code: stateCode, state_name: stateName, price: 49 })
+    track("checkout_initiated", {
+      purchase_type: "state",
+      state_code: stateCode,
+      state_name: stateName,
+      price_cents: 4900,
+    })
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -25,7 +31,7 @@ export function BuyStateButton({ stateCode, stateName, className }: BuyStateButt
         body: JSON.stringify({
           purchaseType: "state",
           stateCode,
-          ...getCheckoutAttribution(),
+          ...getCheckoutAttribution(getPostHogDistinctId()),
         }),
       })
       const data = await res.json()

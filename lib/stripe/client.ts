@@ -34,6 +34,9 @@ export interface CheckoutMetadata {
   country?: string
   referrer?: string
   first_landing_page?: string
+  attribution_source?: string
+  attribution_medium?: string
+  posthog_distinct_id?: string
   plan_name?: string
   plan_price?: string
   plan_price_cents?: string

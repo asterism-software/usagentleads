@@ -14,6 +14,11 @@ import { constructWebhookEvent } from "@/lib/stripe/webhook"
 import { isValidUUID } from "@/lib/utils/security"
 import { SITE_URL } from "@/lib/utils/site"
 import { getStateByCode } from "@/lib/utils/states"
+import {
+  captureServerEvent,
+  stripeAnalyticsDistinctId,
+  stripeAttributionProperties,
+} from "@/lib/posthog-server"
 
 export const runtime = "nodejs"
 
@@ -100,6 +105,24 @@ async function syncCheckoutCustomerMetadata(
   await getStripe().customers.update(customerId, { metadata })
 }
 
+function captureStripeCustomerCreated(session: Stripe.Checkout.Session): void {
+  const customerId = objectId(session.customer)
+  if (!customerId) return
+  const metadata = compactStripeMetadata(session.metadata)
+  captureServerEvent({
+    distinctId: stripeAnalyticsDistinctId(metadata, `stripe-customer:${customerId}`),
+    event: "stripe_customer_created",
+    properties: {
+      $insert_id: `stripe:customer.created:${customerId}`,
+      billing_provider: "stripe",
+      stripe_customer_id: customerId,
+      checkout_session_id: session.id,
+      purchase_type: metadata.purchase_type,
+      ...stripeAttributionProperties(metadata),
+    },
+  })
+}
+
 async function fulfillCheckout(sessionId: string): Promise<void> {
   const session = await getStripe().checkout.sessions.retrieve(sessionId, {
     expand: ["line_items.data.price"],
@@ -111,7 +134,10 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
       throw new Error(`Checkout Session ${session.id} has no subscription`)
     }
     const synced = await syncSubscription(subscriptionId)
-    if (synced) await syncCheckoutCustomerMetadata(session)
+    if (synced) {
+      await syncCheckoutCustomerMetadata(session)
+      captureStripeCustomerCreated(session)
+    }
     return
   }
   if (session.mode !== "payment") return
@@ -161,6 +187,7 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
     throw new Error(`Checkout Session ${session.id} has an invalid state code`)
   }
   const checkoutMetadata = compactStripeMetadata(session.metadata)
+  captureStripeCustomerCreated(session)
   if (!paymentIsComplete) {
     // Delayed payment methods create the Customer at Checkout completion, even
     // though fulfillment waits for checkout.session.async_payment_succeeded.
@@ -190,6 +217,36 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
   if (error || !purchase) {
     throw new Error(`Unable to fulfill purchase ${purchaseId}: ${error?.message || "not found"}`)
   }
+  const taxCents = session.total_details?.amount_tax || 0
+  const discountCents = session.total_details?.amount_discount || 0
+  const amountPaidCents = session.amount_total || 0
+  const grossRevenueCents = Math.max(0, amountPaidCents - taxCents)
+  captureServerEvent({
+    distinctId: stripeAnalyticsDistinctId(
+      checkoutMetadata,
+      `stripe-checkout:${session.id}`
+    ),
+    event: "payment_succeeded",
+    properties: {
+      $insert_id: `stripe:payment.succeeded:checkout:${session.id}`,
+      $revenue: grossRevenueCents / 100,
+      $currency: (session.currency || "usd").toUpperCase(),
+      billing_provider: "stripe",
+      checkout_session_id: session.id,
+      stripe_customer_id: objectId(session.customer),
+      payment_intent_id: objectId(session.payment_intent),
+      purchase_type: purchaseType,
+      amount_paid_cents: amountPaidCents,
+      gross_revenue_cents: grossRevenueCents,
+      subtotal_cents: session.amount_subtotal || 0,
+      discount_cents: discountCents,
+      tax_cents: taxCents,
+      total_cents: amountPaidCents,
+      is_first_payment: amountPaidCents > 0,
+      is_trial_conversion: false,
+      ...stripeAttributionProperties(checkoutMetadata),
+    },
+  })
 
   if (!purchase.fulfillment_email_sent_at) {
     const productName = purchaseType === "state" ? state?.name || stateCode || "State" : "Full USA"
@@ -268,6 +325,8 @@ interface SyncedSubscription {
   email: string | null
   periodEnd: string | null
   wasCancelAtPeriodEnd: boolean
+  userId: string
+  metadata: Record<string, string>
 }
 
 async function syncSubscription(subscriptionId: string): Promise<SyncedSubscription | null> {
@@ -343,6 +402,8 @@ async function syncSubscription(subscriptionId: string): Promise<SyncedSubscript
     email: await customerEmail(subscription.customer),
     periodEnd: period.end,
     wasCancelAtPeriodEnd: existing?.cancel_at_period_end === true,
+    userId,
+    metadata: checkoutMetadata,
   }
 }
 
@@ -355,6 +416,47 @@ async function handleSubscriptionEvent(event: Stripe.Event): Promise<void> {
   const previous = event.data.previous_attributes as Partial<Stripe.Subscription> | undefined
   const justScheduledCancellation =
     synced.subscription.cancel_at_period_end && previous?.cancel_at_period_end === false
+
+  const baseProperties = {
+    billing_provider: "stripe",
+    stripe_customer_id: objectId(synced.subscription.customer),
+    subscription_id: synced.subscription.id,
+    purchase_type: synced.purchaseType,
+    ...stripeAttributionProperties(synced.metadata),
+  }
+  if (event.type === "customer.subscription.created") {
+    const isTrial = synced.subscription.status === "trialing"
+    captureServerEvent({
+      distinctId: synced.userId,
+      event: "subscription_activated",
+      properties: {
+        ...baseProperties,
+        $insert_id: `stripe:subscription.created:${synced.subscription.id}`,
+        is_trial: isTrial,
+      },
+    })
+    if (isTrial) {
+      captureServerEvent({
+        distinctId: synced.userId,
+        event: "trial_started",
+        properties: {
+          ...baseProperties,
+          $insert_id: `stripe:trial.started:${synced.subscription.id}`,
+          trial_ends_at: toIso(synced.subscription.trial_end),
+        },
+      })
+    }
+  }
+  if (previous?.status === "trialing" && synced.subscription.status === "active") {
+    captureServerEvent({
+      distinctId: synced.userId,
+      event: "trial_converted",
+      properties: {
+        ...baseProperties,
+        $insert_id: `stripe:trial.converted:${synced.subscription.id}`,
+      },
+    })
+  }
 
   if (
     synced.email &&
@@ -374,6 +476,81 @@ async function handleInvoice(invoice: Stripe.Invoice, paid: boolean): Promise<vo
 
   const synced = await syncSubscription(subscriptionId)
   if (!synced) return
+  const currency = (invoice.currency || "usd").toUpperCase()
+  const customerId = objectId(invoice.customer) || objectId(synced.subscription.customer)
+  const baseProperties = {
+    billing_provider: "stripe",
+    stripe_customer_id: customerId,
+    subscription_id: subscriptionId,
+    invoice_id: invoice.id,
+    purchase_type: synced.purchaseType,
+    billing_reason: invoice.billing_reason,
+    currency,
+    ...stripeAttributionProperties(synced.metadata),
+  }
+
+  if (!paid) {
+    captureServerEvent({
+      distinctId: synced.userId,
+      event: "subscription_payment_failed",
+      properties: {
+        ...baseProperties,
+        $insert_id: `stripe:payment.failed:${invoice.id}:${invoice.attempt_count || 0}`,
+        amount_due_cents: invoice.amount_due || 0,
+        attempt_count: invoice.attempt_count || 0,
+      },
+    })
+  } else {
+    const taxCents = (invoice.total_taxes || []).reduce(
+      (total, tax) => total + tax.amount,
+      0
+    )
+    const discountCents = (invoice.total_discount_amounts || []).reduce(
+      (total, discount) => total + discount.amount,
+      0
+    )
+    const amountPaidCents = invoice.amount_paid || 0
+    const grossRevenueCents = Math.max(0, amountPaidCents - taxCents)
+    const isTrialConversion = Boolean(
+      amountPaidCents > 0 &&
+      synced.subscription.trial_end &&
+      invoice.billing_reason === "subscription_cycle" &&
+      Math.abs(invoice.created - synced.subscription.trial_end) < 24 * 60 * 60
+    )
+    const isFirstPayment = Boolean(
+      amountPaidCents > 0 &&
+      (invoice.billing_reason === "subscription_create" || isTrialConversion)
+    )
+    captureServerEvent({
+      distinctId: synced.userId,
+      event: "payment_succeeded",
+      properties: {
+        ...baseProperties,
+        $insert_id: `stripe:payment.succeeded:invoice:${invoice.id}`,
+        $revenue: grossRevenueCents / 100,
+        $currency: currency,
+        amount_paid_cents: amountPaidCents,
+        gross_revenue_cents: grossRevenueCents,
+        subtotal_cents: invoice.subtotal || 0,
+        discount_cents: discountCents,
+        tax_cents: taxCents,
+        total_cents: invoice.total || amountPaidCents,
+        is_first_payment: isFirstPayment,
+        is_trial_conversion: isTrialConversion,
+      },
+    })
+    if (isTrialConversion) {
+      captureServerEvent({
+        distinctId: synced.userId,
+        event: "trial_converted",
+        properties: {
+          ...baseProperties,
+          $insert_id: `stripe:trial.converted:${subscriptionId}`,
+        },
+      })
+    }
+  }
+
   const email = invoice.customer_email || synced.email
   if (!email) return
 

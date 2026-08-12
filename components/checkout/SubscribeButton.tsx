@@ -4,7 +4,7 @@ import { Loader2, ArrowRight } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
-import { track } from "@/lib/utils/analytics"
+import { getPostHogDistinctId, track } from "@/lib/utils/analytics"
 import { getCheckoutAttribution } from "@/lib/utils/attribution"
 
 export function SubscribeButton({
@@ -21,6 +21,7 @@ export function SubscribeButton({
   const handleSubscribe = async () => {
     setLoading(true)
     track("subscribe_button_clicked", { plan: purchaseType })
+    track("checkout_initiated", { purchase_type: purchaseType })
     try {
       const supabase = createClient()
       const {
@@ -40,7 +41,7 @@ export function SubscribeButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           purchaseType,
-          ...getCheckoutAttribution(),
+          ...getCheckoutAttribution(getPostHogDistinctId()),
         }),
       })
       const data = await res.json()
