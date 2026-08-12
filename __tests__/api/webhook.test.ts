@@ -285,6 +285,7 @@ describe("POST /api/webhooks/stripe", () => {
         plan_price_cents: "4900",
       },
       line_items: { data: [{ price: { id: STRIPE_PLANS.state.priceId }, quantity: 1 }] },
+      amount_subtotal: STRIPE_PLANS.state.amount,
       amount_total: STRIPE_PLANS.state.amount - 1_000,
       currency: "usd",
       customer_details: { email: "buyer@example.com" },
@@ -356,6 +357,70 @@ describe("POST /api/webhooks/stripe", () => {
     })
   })
 
+  it("fulfills a discounted Full Database purchase", async () => {
+    currentEvent = {
+      id: "evt_full_database_discounted",
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_full_database_discounted" } },
+    }
+    mockRetrieveSession.mockResolvedValueOnce({
+      id: "cs_full_database_discounted",
+      mode: "payment",
+      payment_status: "paid",
+      metadata: {
+        ...CHECKOUT_CONTEXT_METADATA,
+        purchase_type: "full_database",
+        checkout_attempt_id: CHECKOUT_ATTEMPT_ID,
+        purchase_id: PURCHASE_ID,
+        plan_name: "Full Database",
+        plan_price: "199.00",
+        plan_price_cents: "19900",
+      },
+      line_items: {
+        data: [{ price: { id: STRIPE_PLANS.full_database.priceId }, quantity: 1 }],
+      },
+      amount_subtotal: STRIPE_PLANS.full_database.amount,
+      amount_total: 15_920,
+      currency: "usd",
+      customer_details: { email: "buyer@example.com" },
+      customer_email: null,
+      payment_intent: "pi_full_database_discounted",
+      customer: "cus_full_database_discounted",
+    })
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ received: true })
+    expect(purchaseUpdates[0].values).toEqual(
+      expect.objectContaining({
+        guest_email: "buyer@example.com",
+        purchase_type: "full_database",
+        state_code: null,
+        stripe_checkout_session_id: "cs_full_database_discounted",
+        stripe_payment_intent_id: "pi_full_database_discounted",
+        stripe_customer_id: "cus_full_database_discounted",
+        amount_paid: 15_920,
+        currency: "usd",
+        status: "completed",
+      })
+    )
+    expect(mockSendDownloadEmail).toHaveBeenCalledWith({
+      to: "buyer@example.com",
+      downloadUrl: expect.stringContaining("/api/download?token=download-token"),
+      productName: "Full USA",
+      purchaseType: "full_database",
+      idempotencyKey: "download:cs_full_database_discounted",
+    })
+    expect(purchaseUpdates[1].values).toEqual({
+      fulfillment_email_sent_at: expect.any(String),
+    })
+    expect(mockEventInsert).toHaveBeenCalledWith({
+      id: "evt_full_database_discounted",
+      event_type: "checkout.session.completed",
+    })
+  })
+
   it("enriches a Checkout-created customer while a delayed payment is pending", async () => {
     currentEvent = {
       id: "evt_checkout_pending",
@@ -379,6 +444,7 @@ describe("POST /api/webhooks/stripe", () => {
       line_items: {
         data: [{ price: { id: STRIPE_PLANS.full_database.priceId }, quantity: 1 }],
       },
+      amount_subtotal: STRIPE_PLANS.full_database.amount,
       amount_total: STRIPE_PLANS.full_database.amount,
       currency: "usd",
       customer_details: { email: "buyer@example.com" },
@@ -457,6 +523,7 @@ describe("POST /api/webhooks/stripe", () => {
       payment_status: "paid",
       metadata: { purchase_id: PURCHASE_ID },
       line_items: { data: [{ price: { id: "price_not_owned_by_this_app" }, quantity: 1 }] },
+      amount_subtotal: STRIPE_PLANS.full_database.amount,
       amount_total: STRIPE_PLANS.full_database.amount,
       currency: "usd",
       customer_details: { email: "buyer@example.com" },
@@ -496,6 +563,7 @@ describe("POST /api/webhooks/stripe", () => {
       payment_status: "paid",
       metadata: { purchase_id: PURCHASE_ID },
       line_items: { data: lineItems },
+      amount_subtotal: STRIPE_PLANS.full_database.amount,
       amount_total: STRIPE_PLANS.full_database.amount,
       currency: "usd",
       customer_details: { email: "buyer@example.com" },
@@ -505,6 +573,54 @@ describe("POST /api/webhooks/stripe", () => {
 
     expect(response.status).toBe(500)
     expect(mockPurchaseUpdate).not.toHaveBeenCalled()
+    expect(mockEventInsert).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    {
+      label: "subtotal does not match the allowlisted Price",
+      amountSubtotal: STRIPE_PLANS.full_database.amount - 1,
+      amountTotal: STRIPE_PLANS.full_database.amount - 1,
+    },
+    {
+      label: "total exceeds the undiscounted subtotal",
+      amountSubtotal: STRIPE_PLANS.full_database.amount,
+      amountTotal: STRIPE_PLANS.full_database.amount + 1,
+    },
+    {
+      label: "total is negative",
+      amountSubtotal: STRIPE_PLANS.full_database.amount,
+      amountTotal: -1,
+    },
+  ])("rejects a one-time Checkout Session when $label", async ({
+    amountSubtotal,
+    amountTotal,
+  }) => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    currentEvent = {
+      id: "evt_bad_amount",
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_bad_amount" } },
+    }
+    mockRetrieveSession.mockResolvedValueOnce({
+      id: "cs_bad_amount",
+      mode: "payment",
+      payment_status: "paid",
+      metadata: { purchase_id: PURCHASE_ID },
+      line_items: {
+        data: [{ price: { id: STRIPE_PLANS.full_database.priceId }, quantity: 1 }],
+      },
+      amount_subtotal: amountSubtotal,
+      amount_total: amountTotal,
+      currency: "usd",
+      customer_details: { email: "buyer@example.com" },
+    })
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(500)
+    expect(mockPurchaseUpdate).not.toHaveBeenCalled()
+    expect(mockSendDownloadEmail).not.toHaveBeenCalled()
     expect(mockEventInsert).not.toHaveBeenCalled()
   })
 

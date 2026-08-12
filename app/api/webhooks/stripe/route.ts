@@ -138,9 +138,14 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
   }
 
   const plan = STRIPE_PLANS[purchaseType]
-  const amountIsValid = purchaseType === "state"
-    ? session.amount_total !== null && session.amount_total >= 0 && session.amount_total <= plan.amount
-    : session.amount_total === plan.amount
+  // Checkout promotion codes apply before amount_total is calculated. Validate
+  // the undiscounted subtotal against our allowlisted Price, then allow Stripe
+  // to reduce the paid total with a legitimate promotion (including 100% off).
+  const amountIsValid =
+    session.amount_subtotal === plan.amount &&
+    session.amount_total !== null &&
+    session.amount_total >= 0 &&
+    session.amount_total <= session.amount_subtotal
   if (session.currency !== "usd" || !amountIsValid) {
     throw new Error(`Checkout Session ${session.id} has an unexpected amount`)
   }
