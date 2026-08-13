@@ -2,6 +2,7 @@
 
 ## 2026-08-13
 - [x] [deliver the Full Database as dynamically sized, Excel-safe CSV parts](docs/changelog/2026-08-13-excel-safe-full-database-downloads.md)
+- [x] resend the affected Full Database customer a fresh 48-hour link to the balanced two-part ZIP
 
 ## 2026-08-12
 - [x] [fix discounted Full Database Stripe webhook fulfillment](docs/changelog/2026-08-12-discounted-full-database-webhook-fulfillment.md)

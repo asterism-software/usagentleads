@@ -57,4 +57,11 @@ export.
 - Token preservation when Storage cannot create a signed URL.
 - Full Database and State Pack delivery-email format copy.
 
+## Customer recovery
+
+- Sent the affected buyer a replacement email with a fresh 48-hour signed link
+  to the verified balanced two-part ZIP.
+- Resend accepted the replacement message with provider ID
+  `3e259ee4-5007-4380-8f38-9bcaf0ed916e`.
+
 No database migration is required.
