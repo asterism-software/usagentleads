@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-08-13
+- [x] [deliver the Full Database as dynamically sized, Excel-safe CSV parts](docs/changelog/2026-08-13-excel-safe-full-database-downloads.md)
+
 ## 2026-08-12
 - [x] [fix discounted Full Database Stripe webhook fulfillment](docs/changelog/2026-08-12-discounted-full-database-webhook-fulfillment.md)
 - [x] [add PostHog one-time purchase tracking, revenue attribution dashboards, and an idempotent 180-day Stripe backfill](posthog-setup-report.md)

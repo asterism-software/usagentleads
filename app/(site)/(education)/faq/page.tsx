@@ -40,7 +40,7 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
       items: [
         {
           question: "What exactly do I get when I buy?",
-          answer: `A standard UTF-8 CSV file with four columns — name, email, phone, and state — covering ${count}+ licensed real estate agents. It opens in Excel or Google Sheets and imports into any CRM or email tool without reformatting.`,
+          answer: `UTF-8 CSV data with four columns — name, email, phone, and state — covering ${count}+ licensed real estate agents. State Packs are delivered as one CSV. The Full Database is a ZIP with numbered CSV parts kept below Excel's worksheet row limit. The files import into Excel, Google Sheets, CRMs, and email tools without reformatting.`,
           link: { href: "/guides", label: "See import guides for popular tools" },
         },
         {

@@ -167,7 +167,7 @@ const comparisonRows = [
   { label: "API access", state: false, full: false, pro: false, proApi: true },
   { label: "API requests/mo", state: false, full: false, pro: false, proApi: "10,000" },
   { label: "Account required", state: false, full: false, pro: "Email", proApi: "Email" },
-  { label: "Delivery", state: "Email CSV", full: "Email CSV", pro: "Instant", proApi: "Instant" },
+  { label: "Delivery", state: "Email CSV", full: "Email ZIP", pro: "Instant", proApi: "Instant" },
 ]
 
 function renderCell(val: boolean | string) {
@@ -205,7 +205,7 @@ const pricingFAQs = [
   {
     question: "What's the difference between the Full Database and Pro Dashboard?",
     answer:
-      "The Full Database ($199 one-time) gives you a single CSV download of all 1.1M+ contacts. The Pro Dashboard ($49/month) gives you a searchable, filterable interface to browse agents in-app without downloading a file. Choose CSV if you want the data in your own tools; choose Pro if you prefer a web interface.",
+      "The Full Database ($199 one-time) gives you a ZIP download with numbered, Excel-compatible CSV parts covering all 1.1M+ contacts. The Pro Dashboard ($49/month) gives you a searchable, filterable interface to browse agents in-app without downloading files. Choose CSV files if you want the data in your own tools; choose Pro if you prefer a web interface.",
   },
   {
     question: "Should I buy state packs or the full database?",
@@ -246,7 +246,7 @@ const marketComparisonRows = [
 ]
 
 const includedItems = [
-  { title: "Four clean columns", detail: "name, email, phone, state — UTF-8 CSV that opens in Excel, Google Sheets, or any CRM" },
+  { title: "Four clean columns", detail: "name, email, phone, state — UTF-8 CSV files sized for Excel, Google Sheets, or any CRM" },
   { title: "All records for what you bought", detail: "No credit meters, reveal limits, or per-contact charges — a state pack is the whole state" },
   { title: "Instant email delivery", detail: "Download link arrives within minutes of payment, guest checkout, no account needed" },
   { title: "Phone numbers included", detail: "Over 90% of records carry a phone number at no extra cost" },

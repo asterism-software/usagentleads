@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { isAuthorizedCron } from "@/lib/utils/cronAuth"
-import { gzipSync } from "zlib"
 import { createServiceClient } from "@/lib/supabase/server"
 import { createLeadsClient } from "@/lib/supabase/leads"
 import { US_STATES } from "@/lib/utils/states"
 import { cleanName, isValidName } from "@/lib/utils/clean-name"
+import {
+  buildExcelSafeCsvArchive,
+  FULL_DATABASE_ZIP_PATH,
+  type CsvDocument,
+} from "@/lib/csv/excel-safe-archive"
 
 const STATE_NAME_TO_CODE = new Map(
   US_STATES.map((s) => [s.name, s.code])
@@ -71,7 +75,7 @@ function buildCSV(rows: { name: string | null; email: string; phone: string | nu
  * Modes (all require CRON_SECRET auth):
  *   No params        → returns list of state codes to process
  *   ?state=AL        → generates CSV for one state, uploads to storage
- *   ?combine=true    → reads all state CSVs from storage, merges into full CSV
+ *   ?combine=true    → reads all state CSVs and creates an Excel-safe ZIP archive
  */
 export async function GET(request: NextRequest) {
   if (!isAuthorizedCron(request)) {
@@ -85,7 +89,7 @@ export async function GET(request: NextRequest) {
     const supabase = createServiceClient() // Supabase: Storage + state_count
     const leads = createLeadsClient()      // self-hosted: the leads table
 
-    // ?combine=true → merge all state CSVs into a single CSV (memory-efficient)
+    // ?combine=true → package state CSVs into dynamically sized Excel-safe parts
     if (combine === "true") {
       const { data: files, error: listError } = await supabase.storage
         .from("agent-csvs")
@@ -93,11 +97,11 @@ export async function GET(request: NextRequest) {
 
       if (listError) throw listError
 
-      const csvFiles = (files || []).filter((f) => f.name.endsWith(".csv"))
+      const csvFiles = (files || [])
+        .filter((f) => f.name.endsWith(".csv"))
+        .sort((a, b) => a.name.localeCompare(b.name))
 
-      // Stream-concatenate CSVs without parsing rows into memory
-      const chunks: string[] = [CSV_HEADERS.join(",")]
-      let totalRows = 0
+      const documents: CsvDocument[] = []
 
       for (const file of csvFiles) {
         const { data, error } = await supabase.storage
@@ -106,28 +110,15 @@ export async function GET(request: NextRequest) {
 
         if (error) throw new Error(`Failed to download ${file.name}: ${error.message}`)
 
-        const text = await data.text()
-        // Find first newline to skip header, append the rest
-        const firstNewline = text.indexOf("\n")
-        if (firstNewline === -1) continue
-        const body = text.slice(firstNewline + 1).trimEnd()
-        if (!body) continue
-        chunks.push(body)
-        // Count rows by counting newlines + 1
-        let count = 1
-        for (let i = 0; i < body.length; i++) {
-          if (body[i] === "\n") count++
-        }
-        totalRows += count
+        documents.push({ fileName: file.name, csv: await data.text() })
       }
 
-      const combinedCSV = chunks.join("\n")
-      const compressed = gzipSync(Buffer.from(combinedCSV, "utf-8"))
+      const { archive, parts, totalRows } = buildExcelSafeCsvArchive(documents)
 
       const { error: uploadError } = await supabase.storage
         .from("agent-csvs")
-        .upload("full/usa_agents_full.csv.gz", compressed, {
-          contentType: "application/gzip",
+        .upload(FULL_DATABASE_ZIP_PATH, archive, {
+          contentType: "application/zip",
           upsert: true,
         })
 
@@ -137,7 +128,8 @@ export async function GET(request: NextRequest) {
         success: true,
         files: csvFiles.length,
         totalRows,
-        compressedBytes: compressed.length,
+        parts,
+        compressedBytes: archive.length,
       })
     }
 

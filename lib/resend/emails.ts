@@ -179,7 +179,9 @@ export async function sendDownloadEmail({
   purchaseType,
   idempotencyKey,
 }: SendDownloadEmailParams) {
-  const fileFormat = "CSV"
+  const isFullDatabase = purchaseType === "full_database"
+  const fileFormat = isFullDatabase ? "ZIP archive with CSV parts" : "CSV"
+  const downloadLabel = isFullDatabase ? "Download Your Files" : "Download Your CSV"
   const subject = `Your ${productName} Real Estate Agent Data is Ready`
 
   const body = `
@@ -189,7 +191,7 @@ export async function sendDownloadEmail({
       Your purchase is confirmed! Your <strong>${escapeHtml(productName)}</strong> real estate agent data is ready for download.
     </p>
 
-    ${primaryButton(downloadUrl, `Download Your ${fileFormat}`)}
+    ${primaryButton(downloadUrl, downloadLabel)}
 
     <p style="color: #dc2626; font-weight: 600; font-size: 14px; text-align: center; margin: 0 0 24px 0;">
       This link expires in 48 hours and can only be used once.
@@ -204,6 +206,12 @@ export async function sendDownloadEmail({
         <tr><td style="padding: 3px 0;">State</td></tr>
       </table>
     `)}
+
+    ${isFullDatabase ? infoBox(`
+      <p style="margin: 0; font-size: 14px; color: #1e3a5f;">
+        Excel limits each worksheet to 1,048,576 rows, so the Full U.S. Database is provided as a ZIP archive with numbered CSV parts. Extract the ZIP and open each part separately. Every part includes the same column headers.
+      </p>
+    `) : ""}
 
     <p style="color: #64748b; font-size: 13px; margin: 0;">
       File format: ${escapeHtml(fileFormat)} (opens in Excel, Google Sheets, or any CRM)

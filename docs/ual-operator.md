@@ -101,7 +101,10 @@ Ingestion adapters in `scripts/ingest/` clean and upsert data into the Hetzner
 
 1. Call `/api/cron/update-state-counts`.
 2. Call `/api/cron/generate-csvs` once for the state worklist, once per state with
-   `?state=XX`, and finally with `?combine=true`.
+   `?state=XX`, and finally with `?combine=true`. The combine step builds
+   `full/usa_agents_full.zip` with as many numbered CSV parts as needed, capped
+   at 1,000,000 data rows per part so every file opens safely in Excel. Rows are
+   distributed as evenly as possible across the calculated number of parts.
 3. Run `node scripts/sync-state-counts.mjs` and commit the regenerated constants.
 
 The GitHub Actions workflows run on these schedules:
@@ -109,7 +112,7 @@ The GitHub Actions workflows run on these schedules:
 | Workflow | Schedule | Purpose |
 |---|---|---|
 | `update-state-counts.yml` | Monday 02:00 UTC | Refresh Supabase `state_count` from the leads database |
-| `generate-csvs.yml` | Monday 03:00 UTC | Rebuild state CSVs and the combined database archive |
+| `generate-csvs.yml` | Monday 03:00 UTC | Rebuild state CSVs and the Excel-safe multipart database ZIP |
 | `indexnow.yml` | Daily 07:00 UTC | Submit site URLs to IndexNow |
 
 All three support `workflow_dispatch` for an operator-triggered run after a

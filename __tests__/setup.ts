@@ -39,6 +39,13 @@ vi.mock("next/server", () => {
     static json(data: unknown, init?: { status?: number; headers?: Record<string, string> }) {
       return new MockNextResponse(JSON.stringify(data), init)
     }
+
+    static redirect(url: string | URL, status = 307) {
+      return new MockNextResponse(null, {
+        status,
+        headers: { location: url.toString() },
+      })
+    }
   }
 
   return { NextResponse: MockNextResponse }

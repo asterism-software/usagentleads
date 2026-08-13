@@ -62,7 +62,7 @@ jobs:
 
           echo "All state CSVs generated successfully"
 
-      - name: Combine into full database CSV
+      - name: Build Excel-safe full database ZIP
         run: |
           response=$(curl -s -w "\n%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
@@ -77,4 +77,5 @@ jobs:
           fi
 
           total=$(echo "$body" | jq -r '.totalRows // 0')
-          echo "Full CSV generated — $total total rows"
+          parts=$(echo "$body" | jq -r '.parts | length')
+          echo "Full database ZIP generated — $total total rows in $parts CSV part(s)"

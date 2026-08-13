@@ -63,7 +63,7 @@ const statesFAQs = [
   },
   {
     question: "Do you offer a realtor database for every US state?",
-    answer: "Yes. Every one of the 50 US states has its own realtor email list and agent database available for instant download at $49. Need several states? The Full Database bundles all 50 states and 1,100,000+ real estate agents into a single CSV for $199.",
+    answer: "Yes. Every one of the 50 US states has its own realtor email list and agent database available for instant download at $49. Need several states? The Full Database bundles all 50 states and 1,100,000+ real estate agents into an Excel-safe ZIP of numbered CSV parts for $199.",
   },
 ]
 
