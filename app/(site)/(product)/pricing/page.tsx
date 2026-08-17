@@ -8,6 +8,7 @@ import { AnswerBox } from "@/components/seo/AnswerBox"
 import { getDatabaseTotals } from "@/lib/supabase/server"
 import { TOTAL_AGENTS } from "@/lib/utils/states"
 import { generateBreadcrumbSchema, generateFAQSchema } from "@/lib/utils/seo"
+import { SUBSCRIPTION_PLANS_VISIBLE } from "@/lib/billing/plans"
 
 const pricingProductSchema = {
   "@context": "https://schema.org",
@@ -20,7 +21,7 @@ const pricingProductSchema = {
     {
       "@type": "Offer",
       name: "State Pack",
-      price: "49.00",
+      price: "99.00",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
       url: "https://www.usagentleads.com/states",
@@ -48,7 +49,7 @@ const pricingProductSchema = {
     {
       "@type": "Offer",
       name: "Full Database",
-      price: "199.00",
+      price: "399.00",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
       url: "https://www.usagentleads.com/pricing",
@@ -73,7 +74,7 @@ const pricingProductSchema = {
         returnFees: "https://schema.org/FreeReturn",
       },
     },
-    {
+    ...(SUBSCRIPTION_PLANS_VISIBLE ? [{
       "@type": "Offer",
       name: "Pro Dashboard",
       price: "49.00",
@@ -128,14 +129,14 @@ const pricingProductSchema = {
         returnMethod: "https://schema.org/ReturnByMail",
         returnFees: "https://schema.org/FreeReturn",
       },
-    },
+    }] : []),
   ],
 }
 
 export const metadata: Metadata = {
-  title: "Pricing 2026 — Real Estate Agent Database from $49/State",
+  title: "Pricing 2026 — Real Estate Agent Database from $99/State",
   description:
-    "2026 realtor email lists from $49/state or $199 for all 50 states. 1.1M+ verified contacts, instant CSV delivery, no subscription. Free sample available.",
+    "2026 realtor email lists from $99/state or $399 for all 50 states. 1.1M+ verified contacts, instant CSV delivery, no subscription. Free sample available.",
   alternates: {
     canonical: "https://www.usagentleads.com/pricing",
     languages: {
@@ -145,21 +146,21 @@ export const metadata: Metadata = {
   },
   openGraph: {
     locale: "en_US",
-    title: "Pricing — Real Estate Agent Database from $49/State",
+    title: "Pricing — Real Estate Agent Database from $99/State",
     description:
-      "Realtor email lists from $49/state or $199 for all 50 states. 1.1M+ verified contacts, instant CSV delivery, no subscription.",
+      "Realtor email lists from $99/state or $399 for all 50 states. 1.1M+ verified contacts, instant CSV delivery, no subscription.",
     url: "https://www.usagentleads.com/pricing",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pricing | Real Estate Agent Database from $49/State",
-    description: "Verified real estate agent contact data starting at $49 per state or $199 for all 50 states. Instant CSV delivery.",
+    title: "Pricing | Real Estate Agent Database from $99/State",
+    description: "Verified real estate agent contact data starting at $99 per state or $399 for all 50 states. Instant CSV delivery.",
     images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
 }
 
 const comparisonRows = [
-  { label: "Price", state: "$49/state", full: "$199", pro: "$49/mo", proApi: "$79/mo" },
+  { label: "Price", state: "$99/state", full: "$399", pro: "$49/mo", proApi: "$79/mo" },
   { label: "All 50 states", state: false, full: true, pro: false, proApi: false },
   { label: "CSV download", state: true, full: true, pro: false, proApi: false },
   { label: "Dashboard access", state: false, full: false, pro: true, proApi: true },
@@ -180,12 +181,12 @@ const pricingFAQs = [
   {
     question: "Is there a free sample?",
     answer:
-      "Yes. You can download a free sample of 500 agent contacts before purchasing — no account needed. The Pro Dashboard and Pro API plans don't include a free trial, but every plan is covered by our 30-day money-back guarantee, so you can try it risk-free.",
+      "Yes. You can download a free sample of 500 agent contacts before purchasing — no account needed. Every purchase is covered by our 30-day money-back guarantee, so you can buy risk-free.",
   },
   {
     question: "Do I need to create an account to buy?",
     answer:
-      "No. State packs and the full database are guest checkouts — just enter your email at checkout and we send the download link. The Pro Dashboard and Pro API plans require an email to create your account.",
+      "No. State packs and the full database are guest checkouts — just enter your email at checkout and we send the download link.",
   },
   {
     question: "What payment methods do you accept?",
@@ -200,22 +201,23 @@ const pricingFAQs = [
   {
     question: "How is the data delivered?",
     answer:
-      "CSV purchases (State Pack and Full Database) are delivered instantly via email as a download link. Pro Dashboard and Pro API access is activated immediately after signup.",
+      "State Pack and Full Database purchases are delivered instantly via email as a download link.",
   },
   {
     question: "What's the difference between the Full Database and Pro Dashboard?",
     answer:
-      "The Full Database ($199 one-time) gives you a ZIP download with numbered, Excel-compatible CSV parts covering all 1.1M+ contacts. The Pro Dashboard ($49/month) gives you a searchable, filterable interface to browse agents in-app without downloading files. Choose CSV files if you want the data in your own tools; choose Pro if you prefer a web interface.",
+      "The Full Database ($399 one-time) gives you a ZIP download with numbered, Excel-compatible CSV parts covering all 1.1M+ contacts. The Pro Dashboard ($49/month) gives you a searchable, filterable interface to browse agents in-app without downloading files. Choose CSV files if you want the data in your own tools; choose Pro if you prefer a web interface.",
+    subscriptionOnly: true,
   },
   {
     question: "Should I buy state packs or the full database?",
     answer:
-      "Simple math: state packs are $49 each, so at four or more states the $199 full database is already cheaper — and it covers all 50, so expanding into new markets later costs nothing extra.",
+      "State packs are $99 each. If you need five or more states, the $399 full database costs less than stacking packs — and it covers all 50, so expanding into new markets later costs nothing extra.",
   },
   {
     question: "What does this work out to per contact?",
     answer:
-      "The full database is $199 for 1,100,000+ contacts — a fraction of a cent each. For comparison, credit-based prospecting tools commonly charge from roughly $0.10 to $0.50+ per revealed contact at their published rates.",
+      "The full database is $399 for 1,100,000+ contacts — a fraction of a cent each. For comparison, credit-based prospecting tools commonly charge from roughly $0.10 to $0.50+ per revealed contact at their published rates.",
   },
   {
     question: "Do phone numbers cost extra?",
@@ -230,14 +232,14 @@ const pricingFAQs = [
   {
     question: "Will I get an invoice or receipt?",
     answer:
-      "Yes. Stripe emails a receipt for each purchase, and subscription invoices are available anytime from the Stripe billing portal.",
+      "Yes. Stripe emails a receipt for each purchase.",
   },
-]
+].filter((faq) => SUBSCRIPTION_PLANS_VISIBLE || !("subscriptionOnly" in faq && faq.subscriptionOnly))
 
 // Competitor pricing verified against vendor pricing pages and third-party
 // pricing guides, July 2026. Quote-based products use reported ranges.
 const marketComparisonRows = [
-  { provider: "USAgentLeads — Full Database", price: "$199 one-time", model: "Flat rate, 1.1M+ agent contacts, yours permanently", isUs: true },
+  { provider: "USAgentLeads — Full Database", price: "$399 one-time", model: "Flat rate, 1.1M+ agent contacts, yours permanently", isUs: true },
   { provider: "ZoomInfo", price: "Reported from ~$14,995/yr", model: "Quote-only annual contracts, credit-limited exports" },
   { provider: "Data Axle Genie", price: "Reported $99–299/mo", model: "12-month contract, lead caps with overage charges" },
   { provider: "UpLead", price: "From $99/mo", model: "Credit-based (~170 credits/mo at entry tier)" },
@@ -283,13 +285,13 @@ export default async function PricingPage() {
           <p className="label-eyebrow">Pricing</p>
           <h1 className="section-heading">Simple, Transparent Pricing</h1>
           <p className="section-sub max-w-xl">
-            Buy a one-time CSV download, or subscribe for always-current data. No hidden fees.
+            Buy a one-time CSV download and keep it forever. No subscription or hidden fees.
           </p>
         </div>
 
         <div className="max-w-3xl mx-auto mb-14">
           <AnswerBox>
-            USAgentLeads costs $49 one-time per state or $199 one-time for all 50 states ({TOTAL_AGENTS.toLocaleString()}+ real estate agent contacts as an instant CSV download). Optional subscriptions: Pro Dashboard at $49/month (searchable web interface) and Pro API at $79/month (10,000 requests/month). There are no contracts, no per-contact credits, and every purchase carries a 30-day money-back guarantee.
+            USAgentLeads costs $99 one-time per state or $399 one-time for all 50 states ({TOTAL_AGENTS.toLocaleString()}+ real estate agent contacts as an instant CSV download). There are no subscriptions, contracts, or per-contact credits, and every purchase carries a 30-day money-back guarantee.
           </AnswerBox>
         </div>
 
@@ -309,14 +311,14 @@ export default async function PricingPage() {
               <tr>
                 <th aria-hidden="true" className="bg-white" />
                 <th colSpan={2} className="text-center text-ink border-l border-border">One-time downloads</th>
-                <th colSpan={2} className="text-center text-ink border-l border-border">Monthly subscriptions</th>
+                {SUBSCRIPTION_PLANS_VISIBLE && <th colSpan={2} className="text-center text-ink border-l border-border">Monthly subscriptions</th>}
               </tr>
               <tr>
                 <th className="text-left">Feature</th>
                 <th className="text-center">State Pack</th>
                 <th className="text-center bg-accent-light/50">Full Database</th>
-                <th className="text-center">Pro Dashboard</th>
-                <th className="text-center">Pro API</th>
+                {SUBSCRIPTION_PLANS_VISIBLE && <th className="text-center">Pro Dashboard</th>}
+                {SUBSCRIPTION_PLANS_VISIBLE && <th className="text-center">Pro API</th>}
               </tr>
             </thead>
             <tbody>
@@ -325,8 +327,8 @@ export default async function PricingPage() {
                   <td className="text-[14px] text-ink font-medium">{row.label}</td>
                   <td className="text-center">{renderCell(row.state)}</td>
                   <td className="text-center bg-accent-light/30">{renderCell(row.full)}</td>
-                  <td className="text-center">{renderCell(row.pro)}</td>
-                  <td className="text-center">{renderCell(row.proApi)}</td>
+                  {SUBSCRIPTION_PLANS_VISIBLE && <td className="text-center">{renderCell(row.pro)}</td>}
+                  {SUBSCRIPTION_PLANS_VISIBLE && <td className="text-center">{renderCell(row.proApi)}</td>}
                 </tr>
               ))}
             </tbody>

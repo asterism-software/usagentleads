@@ -12,13 +12,13 @@ const testimonials = [
   {
     name: "Jessica M.",
     role: "Mortgage Loan Officer",
-    text: "I bought the Florida state pack and had it in my CRM within 10 minutes. Already booked 3 meetings from my first outreach campaign. The $49 price point made it a no-brainer.",
+    text: "I bought the Florida state pack and had it in my CRM within 10 minutes. Already booked 3 meetings from my first outreach campaign. The $99 price point made it a no-brainer.",
     rating: 5,
   },
   {
     name: "Kevin L.",
     role: "PropTech Founder",
-    text: "The full database at $199 is incredible value. We've used other providers charging $500+ for less data. CSV format works perfectly with our marketing stack.",
+    text: "The full database at $399 is incredible value. We've used other providers charging $500+ for less data. CSV format works perfectly with our marketing stack.",
     rating: 5,
   },
 ]

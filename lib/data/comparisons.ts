@@ -29,8 +29,8 @@ export const COMPETITORS: readonly Competitor[] = [
     features: [
       { feature: "Purpose", us: "Contact real estate agents", them: "Find expired/FSBO homeowner leads" },
       { feature: "Data Type", us: "Agent emails, phones, names", them: "Homeowner contact info" },
-      { feature: "Pricing", us: "$199 one-time (all states)", them: "$50-200/month subscription" },
-      { feature: "Per-State Option", us: "$49/state", them: "Zone-based pricing" },
+      { feature: "Pricing", us: "$399 one-time (all states)", them: "$50-200/month subscription" },
+      { feature: "Per-State Option", us: "$99/state", them: "Zone-based pricing" },
       { feature: "Contract Required", us: false, them: true },
       { feature: "Instant Download", us: true, them: false },
       { feature: "CRM-Ready CSV", us: true, them: "Proprietary format" },
@@ -78,7 +78,7 @@ export const COMPETITORS: readonly Competitor[] = [
       { feature: "Focus", us: "Agent contact data (all 50 states)", them: "Commercial RE analytics + agent metrics" },
       { feature: "Agent Emails", us: true, them: "Limited" },
       { feature: "Agent Phone Numbers", us: true, them: "Limited" },
-      { feature: "Pricing", us: "$199 one-time", them: "$300-1,000+/month" },
+      { feature: "Pricing", us: "$399 one-time", them: "$300-1,000+/month" },
       { feature: "Contract", us: "None", them: "Annual contract typical" },
       { feature: "Setup Time", us: "Instant download", them: "Sales process + onboarding" },
       { feature: "Production Data", us: false, them: true },
@@ -112,7 +112,7 @@ export const COMPETITORS: readonly Competitor[] = [
       },
       {
         question: "Why would I choose USAgentLeads over CoStar?",
-        answer: "If your goal is outreach — emailing or calling agents to sell a product or service — you don't need CoStar's analytics. USAgentLeads gives you the contact data at $199 instead of $300+/month.",
+        answer: "If your goal is outreach — emailing or calling agents to sell a product or service — you don't need CoStar's analytics. USAgentLeads gives you the contact data at $399 one-time instead of an ongoing enterprise subscription.",
       },
     ],
   },
@@ -126,10 +126,10 @@ export const COMPETITORS: readonly Competitor[] = [
     features: [
       { feature: "Focus", us: "Real estate agents only", them: "All B2B contacts" },
       { feature: "Real Estate Agent Coverage", us: "1,100,000+ verified", them: "Partial (not specialized)" },
-      { feature: "Pricing", us: "$199 one-time", them: "$15,000-30,000+/year" },
+      { feature: "Pricing", us: "$399 one-time", them: "$15,000-30,000+/year" },
       { feature: "Contract", us: "None", them: "Annual minimum" },
       { feature: "Data Export", us: "Unlimited CSV download", them: "Credit-based exports" },
-      { feature: "Per-State Purchase", us: "$49/state", them: "Not available" },
+      { feature: "Per-State Purchase", us: "$99/state", them: "Not available" },
       { feature: "Enrichment Data", us: "Name, email, phone, state", them: "Full company + contact profiles" },
       { feature: "Intent Data", us: false, them: true },
     ],
@@ -146,7 +146,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "CRM integrations and workflow automation",
     ],
     verdict:
-      "If your sales team sells to many industries and needs a full B2B intelligence platform, ZoomInfo justifies its cost. But if you specifically target real estate agents, paying $15K+/year for ZoomInfo makes no sense when USAgentLeads covers 1,100,000+ agents for a one-time $199. The specialized database has better agent coverage at a fraction of the cost.",
+      "If your sales team sells to many industries and needs a full B2B intelligence platform, ZoomInfo justifies its cost. But if you specifically target real estate agents, paying $15K+/year for ZoomInfo makes no sense when USAgentLeads covers 1,100,000+ agents for a one-time $399. The specialized database has better agent coverage at a fraction of the cost.",
     keywords: [
       "ZoomInfo vs USAgentLeads",
       "ZoomInfo alternative for real estate",
@@ -161,7 +161,7 @@ export const COMPETITORS: readonly Competitor[] = [
       },
       {
         question: "Can I use both USAgentLeads and ZoomInfo?",
-        answer: "Absolutely. Many companies use ZoomInfo for general B2B prospecting and USAgentLeads specifically for real estate agent outreach. At $199 one-time, it's a negligible addition to your data stack.",
+        answer: "Absolutely. Many companies use ZoomInfo for general B2B prospecting and USAgentLeads specifically for real estate agent outreach. At $399 one-time, it remains a small addition to an enterprise data stack.",
       },
     ],
   },
@@ -175,10 +175,10 @@ export const COMPETITORS: readonly Competitor[] = [
     features: [
       { feature: "Focus", us: "Real estate agents only", them: "All B2B contacts" },
       { feature: "Agent Coverage", us: "1,100,000+ verified", them: "Partial — not specialized" },
-      { feature: "Pricing", us: "$199 one-time", them: "$49-99/month per user" },
+      { feature: "Pricing", us: "$399 one-time", them: "$49-99/month per user" },
       { feature: "Email Sequencing", us: false, them: true },
       { feature: "Data Export", us: "Unlimited CSV", them: "Credit-limited" },
-      { feature: "Per-State Purchase", us: "$49/state", them: "Not available" },
+      { feature: "Per-State Purchase", us: "$99/state", them: "Not available" },
       { feature: "Contract", us: "None", them: "Monthly or annual" },
       { feature: "Free Tier", us: "No (one-time purchase)", them: "Yes (limited)" },
     ],
@@ -195,7 +195,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "Chrome extension for LinkedIn prospecting",
     ],
     verdict:
-      "Apollo is a great all-in-one prospecting tool, but its real estate agent coverage has gaps because it isn't specialized. If you already use Apollo for email sequences, buy the agent data from USAgentLeads for $199 and import it into Apollo — you get the best of both worlds: specialized data plus Apollo's workflow tools.",
+      "Apollo is a great all-in-one prospecting tool, but its real estate agent coverage has gaps because it isn't specialized. If you already use Apollo for email sequences, buy the agent data from USAgentLeads for $399 and import it into Apollo — you get the best of both worlds: specialized data plus Apollo's workflow tools.",
     keywords: [
       "Apollo.io vs USAgentLeads",
       "Apollo alternative for real estate",
@@ -222,8 +222,8 @@ export const COMPETITORS: readonly Competitor[] = [
     description:
       "RealtyAgentLists is a direct competitor selling real estate agent contact databases. Both services offer similar data — here's how they compare on pricing, data quality, and overall value.",
     features: [
-      { feature: "Full US Database", us: "$199", them: "$249-499+" },
-      { feature: "Per-State Pricing", us: "$49", them: "$30-50" },
+      { feature: "Full US Database", us: "$399", them: "$249-499+" },
+      { feature: "Per-State Pricing", us: "$99", them: "$30-50" },
       { feature: "Agent Count", us: "1,100,000+", them: "Varies" },
       { feature: "Instant Download", us: true, them: true },
       { feature: "CSV Format", us: true, them: true },
@@ -232,7 +232,7 @@ export const COMPETITORS: readonly Competitor[] = [
       { feature: "Money-Back Guarantee", us: true, them: "Varies" },
     ],
     ourAdvantages: [
-      "Consistently lower pricing — $199 vs $249+ for full database",
+      "Flat $399 pricing for the complete full database",
       "No account required to purchase",
       "Phone numbers included at no extra charge",
       "Transparent pricing with no upsells",
@@ -271,8 +271,8 @@ export const COMPETITORS: readonly Competitor[] = [
     features: [
       { feature: "Purpose", us: "Contact real estate agents", them: "Homeowner/farm data for agents" },
       { feature: "Data Type", us: "Agent emails, phones, names", them: "Homeowner contact records" },
-      { feature: "Pricing", us: "$199 one-time (all states)", them: "Reported ~$119.95 + $99.95 setup (starter)" },
-      { feature: "Best-Rate Plans", us: "$49/state one-time", them: "$995–1,590/year (reported)" },
+      { feature: "Pricing", us: "$399 one-time (all states)", them: "Reported ~$119.95 + $99.95 setup (starter)" },
+      { feature: "Best-Rate Plans", us: "$99/state one-time", them: "$995–1,590/year (reported)" },
       { feature: "Setup Fee", us: false, them: "Reported $99.95 (starter)" },
       { feature: "Download Caps", us: false, them: "2,000/month on starter (reported)" },
       { feature: "Instant Download", us: true, them: false },
@@ -319,12 +319,12 @@ export const COMPETITORS: readonly Competitor[] = [
       "UpLead is a credit-based B2B prospecting database known for its 95% accuracy guarantee. It covers every industry — but you pay per revealed contact. If your target market is US real estate agents, here's how the economics compare.",
     features: [
       { feature: "Focus", us: "Real estate agents only", them: "All B2B contacts" },
-      { feature: "Pricing Model", us: "$199 one-time, unlimited use", them: "Credits: from $99/mo (170 credits)" },
-      { feature: "Cost Per Contact", us: "Fraction of a cent (1M for $199)", them: "~$0.44–0.50 per reveal (reported)" },
+      { feature: "Pricing Model", us: "$399 one-time, unlimited use", them: "Credits: from $99/mo (170 credits)" },
+      { feature: "Cost Per Contact", us: "Fraction of a cent (1M for $399)", them: "~$0.44–0.50 per reveal (reported)" },
       { feature: "Credits Expire", us: false, them: "Typically monthly (reported)" },
       { feature: "Accuracy Guarantee", us: "30-day money-back guarantee", them: "95% with credit refunds" },
       { feature: "Free Option", us: "Free 500-contact sample", them: "7-day trial (5 credits)" },
-      { feature: "Per-State Purchase", us: "$49/state", them: false },
+      { feature: "Per-State Purchase", us: "$99/state", them: false },
       { feature: "Agent Coverage", us: "1,100,000+ licensed agents", them: "Partial — not specialized" },
     ],
     ourAdvantages: [
@@ -340,7 +340,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "Real-time email verification at reveal time",
     ],
     verdict:
-      "UpLead is a solid choice for multi-industry prospecting where you hand-pick contacts and want verified accuracy per reveal. But at reported rates near $0.44–0.50 per contact, building a large real estate agent list through credits costs thousands. USAgentLeads delivers the entire 1M-agent dataset for $199 — buy the list here, and keep a credit tool for other industries.",
+      "UpLead is a solid choice for multi-industry prospecting where you hand-pick contacts and want verified accuracy per reveal. But at reported rates near $0.44–0.50 per contact, building a large real estate agent list through credits costs thousands. USAgentLeads delivers the entire 1M-agent dataset for $399 — buy the list here, and keep a credit tool for other industries.",
     keywords: [
       "UpLead vs USAgentLeads",
       "UpLead alternative for real estate",
@@ -355,7 +355,7 @@ export const COMPETITORS: readonly Competitor[] = [
       },
       {
         question: "How much would 1,100,000 contacts cost on UpLead?",
-        answer: "At reported per-credit economics of roughly $0.44–0.50 per contact, revealing 1,100,000 contacts would cost well into six figures — and UpLead doesn't specialize in licensed real estate agents. USAgentLeads sells the full agent dataset for $199 one-time.",
+        answer: "At reported per-credit economics of roughly $0.44–0.50 per contact, revealing 1,100,000 contacts would cost well into six figures — and UpLead doesn't specialize in licensed real estate agents. USAgentLeads sells the full agent dataset for $399 one-time.",
       },
     ],
   },
@@ -368,12 +368,12 @@ export const COMPETITORS: readonly Competitor[] = [
       "Lusha is a per-user prospecting tool with credit-based contact reveals and a free plan. It's built for reps looking up contacts one at a time — not for buying complete vertical datasets. Here's how it compares when your market is US real estate agents.",
     features: [
       { feature: "Focus", us: "Real estate agents only", them: "All B2B contacts" },
-      { feature: "Pricing Model", us: "$199 one-time", them: "Per user: free (40 credits/mo) to $37+/user/mo" },
+      { feature: "Pricing Model", us: "$399 one-time", them: "Per user: free (40 credits/mo) to $37+/user/mo" },
       { feature: "Email Reveal Cost", us: "Included — no credits", them: "1 credit" },
       { feature: "Phone Reveal Cost", us: "Included — no credits", them: "10 credits (current published rate)" },
       { feature: "Bulk List Purchase", us: true, them: false },
       { feature: "Free Option", us: "Free 500-contact sample", them: "Free plan (40 credits/mo)" },
-      { feature: "Per-State Purchase", us: "$49/state", them: false },
+      { feature: "Per-State Purchase", us: "$99/state", them: false },
       { feature: "Contract", us: "None", them: "Monthly or annual per seat" },
     ],
     ourAdvantages: [
@@ -389,7 +389,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "Useful for enriching individual records on demand",
     ],
     verdict:
-      "Lusha works well for reps spot-checking contacts across industries. But its credit model — especially 10 credits per phone number at current published rates — makes vertical list building expensive. If you need the real estate agent vertical wholesale, buy the dataset once for $199 and skip the credit meter entirely.",
+      "Lusha works well for reps spot-checking contacts across industries. But its credit model — especially 10 credits per phone number at current published rates — makes vertical list building expensive. If you need the real estate agent vertical wholesale, buy the dataset once for $399 and skip the credit meter entirely.",
     keywords: [
       "Lusha vs USAgentLeads",
       "Lusha alternative for real estate",
@@ -404,7 +404,7 @@ export const COMPETITORS: readonly Competitor[] = [
       },
       {
         question: "Which is better for a small team?",
-        answer: "If your team occasionally looks up contacts across many industries, Lusha's free or Starter plans are convenient. If the team's pipeline is real estate agents, one $199 purchase gives everyone the full dataset with no per-seat cost.",
+        answer: "If your team occasionally looks up contacts across many industries, Lusha's free or Starter plans are convenient. If the team's pipeline is real estate agents, one $399 purchase gives everyone the full dataset with no per-seat cost.",
       },
     ],
   },
@@ -417,18 +417,18 @@ export const COMPETITORS: readonly Competitor[] = [
       "BookYourData sells B2B email lists on a pay-as-you-go credit model — reported at roughly $0.10–0.40 per contact depending on volume, with credits that never expire. It's a legitimate list vendor across many industries. Here's how it stacks up for real estate agent data specifically.",
     features: [
       { feature: "Focus", us: "Real estate agents only", them: "All industries" },
-      { feature: "Pricing Model", us: "$199 flat (all 50 states)", them: "Pay-as-you-go: ~$0.10–0.40/contact (reported)" },
-      { feature: "Entry Price", us: "$49 (one state)", them: "$99 for 250 credits (reported)" },
-      { feature: "Cost for 1M Contacts", us: "$199", them: "Five to six figures at reported per-contact rates" },
+      { feature: "Pricing Model", us: "$399 flat (all 50 states)", them: "Pay-as-you-go: ~$0.10–0.40/contact (reported)" },
+      { feature: "Entry Price", us: "$99 (one state)", them: "$99 for 250 credits (reported)" },
+      { feature: "Cost for 1M Contacts", us: "$399", them: "Five to six figures at reported per-contact rates" },
       { feature: "Credits Expire", us: "N/A — no credits", them: "Never (reported)" },
       { feature: "Phone Numbers", us: "Included (90%+ of records)", them: "Varies by list" },
       { feature: "Instant Download", us: true, them: true },
       { feature: "Contract", us: "None", them: "None" },
     ],
     ourAdvantages: [
-      "Flat $199 for the complete agent dataset vs per-contact pricing",
+      "Flat $399 for the complete agent dataset vs per-contact pricing",
       "Specialized real estate agent coverage from licensing and listing sources",
-      "$49 per-state packs for targeted regional campaigns",
+      "$99 per-state packs for targeted regional campaigns",
       "30-day money-back guarantee",
     ],
     theirAdvantages: [
@@ -438,7 +438,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "No subscription either — both are commitment-free",
     ],
     verdict:
-      "BookYourData and USAgentLeads share a philosophy: no subscriptions, pay for data once. The difference is economics at scale. Hand-picking a few hundred targeted contacts across industries? BookYourData's model fits. Buying an entire vertical — every licensed US real estate agent — costs a flat $199 here versus per-contact pricing that would run orders of magnitude higher.",
+      "BookYourData and USAgentLeads share a philosophy: no subscriptions, pay for data once. The difference is economics at scale. Hand-picking a few hundred targeted contacts across industries? BookYourData's model fits. Buying an entire vertical — every licensed US real estate agent — costs a flat $399 here versus per-contact pricing that would run orders of magnitude higher.",
     keywords: [
       "BookYourData vs USAgentLeads",
       "BookYourData alternative",
@@ -466,7 +466,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "Data Axle Genie (formerly Salesgenie) is a subscription list-building platform over Data Axle's business and consumer databases, reported at $99–299/month on 12-month contracts. Here's how it compares when the list you need is US real estate agents.",
     features: [
       { feature: "Focus", us: "Real estate agents only", them: "General business + consumer lists" },
-      { feature: "Pricing", us: "$199 one-time", them: "Reported $99–299/mo, 12-month contract" },
+      { feature: "Pricing", us: "$399 one-time", them: "Reported $99–299/mo, 12-month contract" },
       { feature: "Contract", us: "None", them: "12-month term (reported)" },
       { feature: "Early Termination", us: "N/A", them: "Reported 50% early-termination fee" },
       { feature: "Lead Caps / Overages", us: "None — full dataset included", them: "Reported caps with overage charges" },
@@ -487,7 +487,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "Established data provider (Data Axle)",
     ],
     verdict:
-      "Data Axle Genie suits businesses that continuously build varied local lists — restaurants one month, dentists the next — and want light campaign tooling attached. Third-party guides note the real cost usually lands above sticker once overages and add-ons stack on the 12-month contract. If the list you need is real estate agents, a $199 one-time dataset makes the subscription hard to justify.",
+      "Data Axle Genie suits businesses that continuously build varied local lists — restaurants one month, dentists the next — and want light campaign tooling attached. Third-party guides note the real cost usually lands above sticker once overages and add-ons stack on the 12-month contract. If the list you need is real estate agents, a $399 one-time dataset makes the subscription hard to justify.",
     keywords: [
       "Data Axle Genie vs USAgentLeads",
       "Salesgenie alternative",
@@ -502,7 +502,7 @@ export const COMPETITORS: readonly Competitor[] = [
       },
       {
         question: "What's the real cost difference over a year?",
-        answer: "At reported Genie pricing of $99–299/month on a 12-month contract, a year runs $1,188–3,588 before overages and add-ons — versus $199 one-time for the full USAgentLeads database. Third-party guides also report a 50% early-termination fee on Genie contracts.",
+        answer: "At reported Genie pricing of $99–299/month on a 12-month contract, a year runs $1,188–3,588 before overages and add-ons — versus $399 one-time for the full USAgentLeads database. Third-party guides also report a 50% early-termination fee on Genie contracts.",
       },
     ],
   },
@@ -515,7 +515,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "Seamless.AI is an AI-driven contact search platform with a free tier and reported entry pricing around $147/month — with upper tiers quote-only. It searches for contacts on demand; USAgentLeads sells a finished dataset. Here's the comparison for real estate agent outreach.",
     features: [
       { feature: "Focus", us: "Real estate agents only", them: "All B2B contacts" },
-      { feature: "Pricing", us: "$199 one-time", them: "Reported ~$147/mo entry; Pro quote-only" },
+      { feature: "Pricing", us: "$399 one-time", them: "Reported ~$147/mo entry; Pro quote-only" },
       { feature: "Pricing Transparency", us: "Published flat rates", them: "Upper tiers require a sales quote" },
       { feature: "Credit Model", us: "None", them: "Credits consumed per lookup (reported)" },
       { feature: "Failed Lookups", us: "N/A — fixed dataset", them: "Reportedly still consume credits" },
@@ -536,7 +536,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "List-building automation add-ons available",
     ],
     verdict:
-      "Seamless.AI fits teams prospecting many industries who value AI-assisted discovery and accept credit-metered economics — though user reports note credits burn on unsuccessful lookups and renewals require 60-day notice. For the real estate agent vertical, there's nothing to discover: the licensed-agent universe is a known dataset, and buying it outright for $199 is simpler and cheaper.",
+      "Seamless.AI fits teams prospecting many industries who value AI-assisted discovery and accept credit-metered economics — though user reports note credits burn on unsuccessful lookups and renewals require 60-day notice. For the real estate agent vertical, there's nothing to discover: the licensed-agent universe is a known dataset, and buying it outright for $399 is simpler and cheaper.",
     keywords: [
       "Seamless.AI vs USAgentLeads",
       "Seamless.AI alternative",
@@ -551,7 +551,7 @@ export const COMPETITORS: readonly Competitor[] = [
       },
       {
         question: "Which is cheaper for agent outreach at scale?",
-        answer: "For bulk real estate agent outreach, a flat $199 for 1,100,000+ contacts is far cheaper than credit-metered plans reported around $147/month at entry. Credit models suit selective, cross-industry prospecting rather than whole-vertical campaigns.",
+        answer: "For bulk real estate agent outreach, a flat $399 for 1,100,000+ contacts is far cheaper than credit-metered plans reported around $147/month at entry. Credit models suit selective, cross-industry prospecting rather than whole-vertical campaigns.",
       },
     ],
   },

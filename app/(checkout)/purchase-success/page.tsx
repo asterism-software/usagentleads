@@ -156,11 +156,11 @@ function PurchaseSuccessContent() {
       </div>
 
       {/* Post-purchase upsell: a state buyer is the hottest full-database prospect.
-          Shown only after a confirmed state purchase; priced at the standard $199. */}
+          Shown only after a confirmed state purchase; priced at the standard $399. */}
       {showStateUpsell && (
         <div className="card w-full border-2 border-accent/30 p-7 text-left shadow-lg">
           <p className="label-eyebrow mb-1">Complete your coverage</p>
-          <h2 className="text-[19px] font-semibold text-ink">Get all 50 states for $199</h2>
+          <h2 className="text-[19px] font-semibold text-ink">Get all 50 states for $399</h2>
           <p className="mt-2 text-[14px] text-body leading-relaxed">
             You just unlocked one state. The Full Database bundles all 50 states and 1.1M+ verified
             contacts into a single CSV — same instant delivery, no account needed.

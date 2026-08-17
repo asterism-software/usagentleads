@@ -147,7 +147,7 @@ export default async function OGImage({ params }: { params: Promise<{ state: str
               <div style={{ width: 1, height: 47, background: "#C9CDD6" }} />
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 <span style={{ color: "#0F1623", fontSize: 18, fontWeight: 700 }}>Name · Email · Phone</span>
-                <span style={{ color: "#4B5563", fontSize: 15 }}>CRM-ready fields · $49 one-time</span>
+                <span style={{ color: "#4B5563", fontSize: 15 }}>CRM-ready fields · $99 one-time</span>
               </div>
             </div>
           </div>

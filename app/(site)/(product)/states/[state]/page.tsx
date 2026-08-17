@@ -175,7 +175,7 @@ export default async function StatePage({ params }: Props) {
               </p>
 
               <AnswerBox>
-                The {state.name} realtor email list from USAgentLeads contains {agentCount.toLocaleString()} verified real estate agent contacts — {totalEmails.toLocaleString()} email addresses and {totalPhones.toLocaleString()} phone numbers — for $49 one-time. It downloads instantly as a CRM-ready CSV (columns: name, email, phone, state), no subscription, with a 30-day money-back guarantee. Data last refreshed {DATA_LAST_REFRESHED}.
+                The {state.name} realtor email list from USAgentLeads contains {agentCount.toLocaleString()} verified real estate agent contacts — {totalEmails.toLocaleString()} email addresses and {totalPhones.toLocaleString()} phone numbers — for $99 one-time. It downloads instantly as a CRM-ready CSV (columns: name, email, phone, state), no subscription, with a 30-day money-back guarantee. Data last refreshed {DATA_LAST_REFRESHED}.
               </AnswerBox>
 
               {/* Mobile CTA */}
@@ -511,7 +511,7 @@ function PurchaseCard({ stateCode, stateName, agentCount }: { stateCode: string;
 
       <div className="flex items-baseline gap-1.5 mb-1">
         <span className="font-mono text-[20px] sm:text-[24px] font-medium text-muted line-through decoration-muted/60 decoration-2">$99</span>
-        <span className="font-mono text-[36px] sm:text-[48px] font-semibold text-ink leading-none">$49</span>
+        <span className="font-mono text-[36px] sm:text-[48px] font-semibold text-ink leading-none">$99</span>
         <span className="text-tertiary text-[15px]">one-time</span>
       </div>
       <p className="text-[14px] text-body mb-6">

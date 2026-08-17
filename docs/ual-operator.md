@@ -18,14 +18,14 @@ logs, API keys, usage logs, state counts, and sample leads live in Supabase.
 ## Stripe billing
 
 The pricing catalog is intentionally defined in
-`components/pricing/PlanGroups.tsx`. Its public Stripe Price IDs are committed with
+`lib/billing/plans.ts`. Its public Stripe Price IDs are committed with
 the plan copy and act as the checkout allowlist; do not move them into environment
 variables.
 
 | Plan | Price | Stripe Price ID | Access |
 |---|---:|---|---|
-| State Pack | $49 one-time | `price_1TzG2WItJWsYAnxnoeufOAnM` | One state CSV |
-| Full Database | $199 one-time | `price_1TzG2fItJWsYAnxnC2ZYm6AP` | All-state CSV archive |
+| State Pack | $99 one-time | `price_1U5NQ1ItJWsYAnxnyFSsLmBG` | One state CSV |
+| Full Database | $399 one-time | `price_1U5NQ8ItJWsYAnxnbrvaXD0d` | All-state CSV archive |
 | Pro Dashboard | $49/month | `price_1TzG2tItJWsYAnxnlVVNJgPc` | Searchable dashboard |
 | Pro API | $79/month | `price_1TzG32ItJWsYAnxnBI0j2xQn` | Dashboard plus API, 10,000 requests/month |
 

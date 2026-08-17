@@ -578,8 +578,8 @@ export async function sendNurtureFinal({ to, coupon }: { to: string; coupon?: Nu
 
     ${infoBox(`
       <table style="width: 100%; font-size: 14px; color: #334155;">
-        <tr><td style="padding: 3px 0;">Single state &mdash; $49 CSV download</td></tr>
-        <tr><td style="padding: 3px 0;">All 50 states &mdash; $199, ${countLabel} verified contacts</td></tr>
+        <tr><td style="padding: 3px 0;">Single state &mdash; $99 CSV download</td></tr>
+        <tr><td style="padding: 3px 0;">All 50 states &mdash; $399, ${countLabel} verified contacts</td></tr>
         <tr><td style="padding: 3px 0;">Instant delivery &middot; no account &middot; 30-day money-back guarantee</td></tr>
       </table>
     `)}

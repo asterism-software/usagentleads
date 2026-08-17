@@ -16,6 +16,7 @@ import { StatsCTA } from "@/components/home/StatsCTA"
 import { getDatabaseTotals, getStateCountMap } from "@/lib/supabase/server"
 import { getAllPosts } from "@/lib/blog"
 import { DATA_LAST_REFRESHED, SUPPORT_EMAIL } from "@/lib/utils/site"
+import { SUBSCRIPTION_PLANS_VISIBLE } from "@/lib/billing/plans"
 
 // Below-the-fold client components — split into their own chunks so the initial
 // page bundle stays small. SSR is preserved (default ssr: true).
@@ -37,7 +38,7 @@ const websiteSchema = {
   url: "https://www.usagentleads.com",
   inLanguage: "en-US",
   description:
-    `Verified real estate agent email list and contact database covering all 50 US states. 888,809+ realtor contacts with name, email, and phone — instant CSV download or REST API. Current dataset refreshed in ${DATA_LAST_REFRESHED}.`,
+    `Verified real estate agent email list and contact database covering all 50 US states. 888,809+ realtor contacts with name, email, and phone — instant CSV download. Current dataset refreshed in ${DATA_LAST_REFRESHED}.`,
   publisher: {
     "@id": "https://www.usagentleads.com/#organization",
   },
@@ -92,7 +93,7 @@ const organizationSchema = {
       "@type": "Offer",
       name: "State Pack",
       description: "Single state real estate agent email list CSV download",
-      price: "49.00",
+      price: "99.00",
       priceCurrency: "USD",
       url: "https://www.usagentleads.com/states",
     },
@@ -100,11 +101,11 @@ const organizationSchema = {
       "@type": "Offer",
       name: "Full Database",
       description: "All 50 states, 1.1M+ real estate agent contacts CSV download",
-      price: "199.00",
+      price: "399.00",
       priceCurrency: "USD",
       url: "https://www.usagentleads.com/pricing",
     },
-    {
+    ...(SUBSCRIPTION_PLANS_VISIBLE ? [{
       "@type": "Offer",
       name: "Pro Dashboard",
       description: "Searchable web interface to browse and filter 1.1M+ real estate agents",
@@ -131,7 +132,7 @@ const organizationSchema = {
         billingDuration: "P1M",
       },
       url: "https://www.usagentleads.com/docs",
-    },
+    }] : []),
   ],
 }
 
@@ -158,7 +159,7 @@ export default async function Home() {
       <UseCases />
       <PricingCards totalCount={totalCount} totalEmails={totalEmails} totalPhones={totalPhones} />
       <RecentOrders />
-      <ApiSection />
+      {SUBSCRIPTION_PLANS_VISIBLE && <ApiSection />}
       <CompetitorComparison />
       <Testimonials />
       <LatestPosts posts={latestPosts} />

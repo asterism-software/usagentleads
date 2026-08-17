@@ -57,9 +57,9 @@ See the table further down.
   database and PostgREST service do.
 - **Checkout:** `POST /api/checkout` creates a fresh Stripe-hosted Checkout Session
   from one of the four allowlisted Price IDs committed in
-  `components/pricing/PlanGroups.tsx`: State Pack $49
-  (`price_1TzG2WItJWsYAnxnoeufOAnM`), Full Database $199
-  (`price_1TzG2fItJWsYAnxnC2ZYm6AP`), Pro Dashboard $49/month
+  `lib/billing/plans.ts`: State Pack $99
+  (`price_1U5NQ1ItJWsYAnxnyFSsLmBG`), Full Database $399
+  (`price_1U5NQ8ItJWsYAnxnbrvaXD0d`), Pro Dashboard $49/month
   (`price_1TzG2tItJWsYAnxnlVVNJgPc`), and Pro API $79/month
   (`price_1TzG32ItJWsYAnxnBI0j2xQn`). These public IDs are not environment secrets.
   A short-lived Supabase claim ensures each signed-in user has at most one payable

@@ -94,29 +94,15 @@ export async function getStateCountMap(): Promise<Record<string, number>> {
 // RECENT PURCHASES (social proof)
 // =====================
 
-/** A completed purchase reduced to a privacy-safe shape. Raw email never leaves the server. */
+/** A completed purchase reduced to anonymous product and location context. */
 export type RecentOrder = {
   product: string
   location: string | null
-  maskedEmail: string
-  amountUsd: number
-  createdAt: string
 }
 
 type PurchaseRow = {
   purchase_type: "state" | "full_database" | "subscription"
   state_code: string | null
-  amount_paid: number
-  created_at: string
-  guest_email: string | null
-}
-
-/** Mask an email to its first letter + domain, e.g. "john@gmail.com" -> "j•••@gmail.com". */
-function maskEmail(email: string | null): string {
-  if (!email) return "A verified buyer"
-  const [local, domain] = email.split("@")
-  if (!local || !domain) return "A verified buyer"
-  return `${local[0]}•••@${domain}`
 }
 
 /** Human label for the product purchased. */
@@ -133,11 +119,15 @@ function productLabel(type: PurchaseRow["purchase_type"], stateCode: string | nu
  */
 export async function getRecentPurchases(limit = 6): Promise<RecentOrder[]> {
   const supabase = createServiceClient()
+  // Do not surface purchases immediately. A delay makes individual transactions
+  // harder to correlate with a specific customer or checkout event.
+  const eligibleBefore = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
   const { data } = await supabase
     .schema("usagentleads")
     .from("purchases")
-    .select("purchase_type, state_code, amount_paid, created_at, guest_email")
+    .select("purchase_type, state_code")
     .eq("status", "completed")
+    .lte("created_at", eligibleBefore)
     .order("created_at", { ascending: false })
     .limit(limit)
 
@@ -147,9 +137,6 @@ export async function getRecentPurchases(limit = 6): Promise<RecentOrder[]> {
     location: row.purchase_type === "state" && row.state_code
       ? getStateByCode(row.state_code)?.name ?? null
       : null,
-    maskedEmail: maskEmail(row.guest_email),
-    amountUsd: Math.round(row.amount_paid / 100),
-    createdAt: row.created_at,
   }))
 }
 

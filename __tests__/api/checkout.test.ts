@@ -299,8 +299,8 @@ describe("POST /api/checkout", () => {
         attribution_source: "google",
         attribution_medium: "organic_search",
         plan_name: "Full Database",
-        plan_price: "199.00",
-        plan_price_cents: "19900",
+        plan_price: "399.00",
+        plan_price_cents: "39900",
         currency: "usd",
       },
     })

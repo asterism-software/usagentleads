@@ -29,7 +29,7 @@ This map prevents the homepage, state directory, state pages, and blog posts fro
 ## Cannibalization Rules
 
 - Do not make blog posts target the exact transactional phrase that belongs to `/` or `/states/[state]`.
-- Use "buy", "CSV", "$49", "database", and state names mainly on transactional pages.
+- Use "buy", "CSV", "$99", "database", and state names mainly on transactional pages.
 - Use "how to", "free", "lookup", "compare", "compliance", and "strategy" mainly on blog pages.
 - The state directory should target "by state" queries, not national "real estate agent email list" head terms.
 - State pages should not target "all states" or "full database"; they should stay focused on one state.

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { generateFAQSchema } from "@/lib/utils/seo"
 import { TOTAL_AGENTS } from "@/lib/utils/states"
 import { DATA_LAST_REFRESHED } from "@/lib/utils/site"
+import { SUBSCRIPTION_PLANS_VISIBLE } from "@/lib/billing/plans"
 import { Plus } from "lucide-react"
 
 function getFaqs(totalCount: number) {
@@ -33,11 +34,13 @@ function getFaqs(totalCount: number) {
       question: "What is the Pro Dashboard subscription?",
       answer:
         `For $49/month, you get access to an in-app browser where you can search and filter all ${countLabel} agents by state, name, or email. No CSV download — this tier is designed for teams that need a searchable interface.`,
+      subscriptionOnly: true,
     },
     {
       question: "Can I cancel my subscription anytime?",
       answer:
         "Yes. You can cancel from the Stripe billing portal at any time with no penalties or questions.",
+      subscriptionOnly: true,
     },
     {
       question: "Is the data compliant for outreach?",
@@ -49,7 +52,7 @@ function getFaqs(totalCount: number) {
       answer:
         "Standard UTF-8 CSV. Opens directly in Excel, Google Sheets, or any CRM that accepts CSV import.",
     },
-  ]
+  ].filter((faq) => SUBSCRIPTION_PLANS_VISIBLE || !("subscriptionOnly" in faq && faq.subscriptionOnly))
 }
 
 function FAQItem({ question, answer, id }: { question: string; answer: string; id: string }) {

@@ -95,7 +95,7 @@ export function Navbar() {
 
   const initials = user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || "U"
 
-  const agentCountLabel = totalCount > 0 ? formatAgentCount(totalCount) : "500K+"
+  const agentCountLabel = totalCount > 0 ? formatAgentCount(totalCount) : "1M+"
 
   return (
     <>
@@ -191,7 +191,7 @@ export function Navbar() {
                   href="/pricing"
                   className="btn-primary text-[14px] px-5 py-2.5 font-medium"
                 >
-                  Get {agentCountLabel} Agents — <span className="font-bold">$199</span>
+                  Get {agentCountLabel} Agents — <span className="font-bold">$399</span>
                 </Link>
               </>
             )}
@@ -317,7 +317,7 @@ export function Navbar() {
                   onClick={() => setMobileOpen(false)}
                   className="btn-primary text-[16px] px-7 py-2.5 font-semibold"
                 >
-                  Get {agentCountLabel} Agents — <span className="font-bold">$199</span>
+                  Get {agentCountLabel} Agents — <span className="font-bold">$399</span>
                 </Link>
               </div>
             )}

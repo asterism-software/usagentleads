@@ -1,23 +1,21 @@
 # USAgentLeads
 
-> USAgentLeads is a verified real estate agent contact database covering all 50 US states. It provides 1,000,000+ agent contacts with name, email, phone, and state — available as instant CSV downloads or via a REST API.
+> USAgentLeads is a verified real estate agent contact database covering all 50 US states. It provides 1,000,000+ agent contacts with name, email, phone, and state as instant CSV downloads.
 
 USAgentLeads is a B2B data provider specializing in real estate agent contact information. The database is compiled from public sources including state licensing records, MLS listings, Zillow, Realtor.com, and major brokerage sites, then verified for accuracy. The dataset is refreshed on a regular cycle (current dataset: July 2026). It serves coaches, SaaS/PropTech companies, mortgage lenders, marketing agencies, brokerages, lead generation companies, home services businesses, insurance agencies, real estate photographers, and moving companies that need to reach licensed real estate professionals.
 
-Key facts: 1,000,000+ contacts across all 50 states; fields are full name, email, phone, and state; 90%+ email deliverability; phone numbers on roughly 40% of records; delivered as CSV (download) or JSON (API); 30-day money-back guarantee; not affiliated with NAR or any MLS. Support: support@usagentleads.com.
+Key facts: 1,000,000+ contacts across all 50 states; fields are full name, email, phone, and state; 90%+ email deliverability; phone numbers on roughly 40% of records; delivered as CSV downloads; 30-day money-back guarantee; not affiliated with NAR or any MLS. Support: support@usagentleads.com.
 
 ## Products & Pricing
 
-- [State Pack](https://www.usagentleads.com/states): $49 one-time per state. A single state's agent list as a CSV. Instant delivery, guest checkout, no account required.
-- [Full Database](https://www.usagentleads.com/pricing): $199 one-time. All 50 states, 1,000,000+ contacts in one CSV. Beats stacking state packs at 4+ states.
-- [Pro Dashboard](https://www.usagentleads.com/pricing): $49/month. Searchable web interface to browse and filter every agent by state, name, or email. No CSV export. Cancel anytime.
-- [Pro API](https://www.usagentleads.com/docs): $79/month. REST API access to query the full database (state filter, search, paginated JSON). Includes 10,000 requests/month.
+- [State Pack](https://www.usagentleads.com/states): $99 one-time per state. A single state's agent list as a CSV. Instant delivery, guest checkout, no account required.
+- [Full Database](https://www.usagentleads.com/pricing): $399 one-time. All 50 states, 1,000,000+ contacts in one CSV. Beats stacking state packs at 5+ states.
 - [Free Sample](https://www.usagentleads.com): Free 500-contact sample CSV to evaluate data quality. No account or credit card required.
 
 ## Key Pages
 
 - [Homepage](https://www.usagentleads.com): Product overview, free sample, and pricing.
-- [Pricing](https://www.usagentleads.com/pricing): All plans and one-time vs subscription options.
+- [Pricing](https://www.usagentleads.com/pricing): One-time State Pack and Full Database options.
 - [Browse by State](https://www.usagentleads.com/states): Per-state agent counts and purchase links for all 50 states.
 - [Agent Directory](https://www.usagentleads.com/directory): Free, searchable public directory of agents.
 - [Free Tools](https://www.usagentleads.com/tools): Browser-based planning tools for businesses reaching real estate agents.
@@ -96,15 +94,6 @@ Key facts: 1,000,000+ contacts across all 50 states; fields are full name, email
 - [Import into Close CRM](https://www.usagentleads.com/guides/import-leads-into-close-crm)
 - [Import into HubSpot](https://www.usagentleads.com/blog/import-real-estate-contacts-hubspot)
 - [Import into Salesforce](https://www.usagentleads.com/blog/import-agent-contacts-salesforce)
-
-## API Overview
-
-- [API Documentation](https://www.usagentleads.com/docs): Full reference for the REST API.
-- Base URL: `https://www.usagentleads.com/api/v1`
-- Authentication: API key via the `X-API-Key` header.
-- Endpoints: `GET /agents` (list/search/filter) and `GET /agents/:id` (single agent).
-- Filtering: by state (two-letter code) and search by name or email; JSON responses with pagination.
-- Rate limit: 10,000 requests/month on the Pro API plan.
 
 ## Optional
 

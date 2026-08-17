@@ -5,13 +5,14 @@ import { generateBreadcrumbSchema, generateFAQSchema } from "@/lib/utils/seo"
 import { TOTAL_AGENTS } from "@/lib/utils/states"
 import { DATA_LAST_REFRESHED, DATA_SOURCES, SUPPORT_EMAIL } from "@/lib/utils/site"
 import { ChevronRight, ArrowRight } from "lucide-react"
+import { SUBSCRIPTION_PLANS_VISIBLE } from "@/lib/billing/plans"
 
 const BASE_URL = "https://www.usagentleads.com"
 
 export const metadata: Metadata = {
   title: "FAQ — Real Estate Agent Database Questions Answered 2026",
   description:
-    "Every question buyers ask before purchasing a realtor email list: data sources, accuracy, delivery, refunds, compliance, per-state vs full database, Pro Dashboard, and API.",
+    "Every question buyers ask before purchasing a realtor email list: data sources, accuracy, delivery, refunds, compliance, and per-state vs full database pricing.",
   alternates: {
     canonical: `${BASE_URL}/faq`,
     languages: { "en-US": `${BASE_URL}/faq`, "x-default": `${BASE_URL}/faq` },
@@ -30,11 +31,18 @@ interface FAQItem {
   question: string
   answer: string
   link?: { href: string; label: string }
+  subscriptionOnly?: boolean
 }
 
-function buildCategories(): { name: string; items: FAQItem[] }[] {
+interface FAQCategory {
+  name: string
+  items: FAQItem[]
+  subscriptionOnly?: boolean
+}
+
+function buildCategories(): FAQCategory[] {
   const count = TOTAL_AGENTS.toLocaleString()
-  return [
+  const categories: FAQCategory[] = [
     {
       name: "About the Data",
       items: [
@@ -60,7 +68,7 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
         {
           question: "Do you have data for my specific state?",
           answer:
-            "Yes — all 50 US states are covered, each available as an individual $49 state pack. Every state page shows the live agent count for that state before you buy.",
+            "Yes — all 50 US states are covered, each available as an individual $99 state pack. Every state page shows the live agent count for that state before you buy.",
           link: { href: "/states", label: "Browse all 50 states with live counts" },
         },
         {
@@ -82,12 +90,12 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
         {
           question: "Do I need to create an account?",
           answer:
-            "Not for CSV purchases. State packs and the full database are guest checkouts — enter your email at checkout and the download link arrives by email. Only the Pro Dashboard and Pro API subscriptions require an account.",
+            "No. State packs and the full database are guest checkouts — enter your email at checkout and the download link arrives by email.",
         },
         {
           question: "How fast is delivery?",
           answer:
-            "Instant. Your download link is emailed within minutes of payment confirmation. Subscriptions activate immediately after signup.",
+            "Instant. Your download link is emailed within minutes of payment confirmation.",
         },
         {
           question: "What payment methods do you accept?",
@@ -102,7 +110,7 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
         {
           question: "Should I buy a state pack or the full database?",
           answer:
-            "Buy states individually at $49 if you target 1–3 markets. At 4+ states the $199 full database is cheaper than stacking packs — and it includes every state, so expansion later costs nothing.",
+            "Buy states individually at $99 if you target up to four markets. At five or more states, the $399 full database is cheaper than stacking packs — and it includes every state, so expansion later costs nothing.",
           link: { href: "/pricing", label: "Compare all plans" },
         },
       ],
@@ -113,7 +121,7 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
         {
           question: "Is this a subscription?",
           answer:
-            "CSV purchases are one-time — pay once, keep the data. The optional Pro Dashboard ($49/mo) and Pro API ($79/mo) are monthly subscriptions for teams that want a searchable interface or programmatic access instead of a static file.",
+            "No. State packs and the full database are one-time CSV purchases — pay once and keep the data.",
         },
         {
           question: "What's your refund policy?",
@@ -124,10 +132,11 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
           question: "How do I cancel a Pro subscription?",
           answer:
             "From the Stripe billing portal, anytime, with no penalties. Access continues through the end of the paid period.",
+          subscriptionOnly: true,
         },
         {
           question: "What does the data cost per contact?",
-          answer: `The $199 full database includes ${count}+ contacts — a fraction of a cent per contact. Credit-based platforms commonly charge $0.10–0.50+ per revealed contact, which is why bulk vertical data is sold flat-rate.`,
+          answer: `The $399 full database includes ${count}+ contacts — a fraction of a cent per contact. Credit-based platforms commonly charge $0.10–0.50+ per revealed contact, which is why bulk vertical data is sold flat-rate.`,
           link: { href: "/alternatives", label: "See researched pricing comparisons" },
         },
       ],
@@ -166,6 +175,7 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
     },
     {
       name: "Pro Dashboard & API",
+      subscriptionOnly: true,
       items: [
         {
           question: "What is the Pro Dashboard?",
@@ -185,6 +195,13 @@ function buildCategories(): { name: string; items: FAQItem[] }[] {
       ],
     },
   ]
+
+  return categories
+    .filter((category) => SUBSCRIPTION_PLANS_VISIBLE || !category.subscriptionOnly)
+    .map((category) => ({
+      ...category,
+      items: category.items.filter((item) => SUBSCRIPTION_PLANS_VISIBLE || !item.subscriptionOnly),
+    }))
 }
 
 export default function FAQPage() {
@@ -220,12 +237,12 @@ export default function FAQPage() {
               Questions, Answered
             </h1>
             <p className="text-[15px] sm:text-[17px] text-tertiary mb-10">
-              Everything buyers actually ask before purchasing — about the data, delivery, refunds, compliance, and the Pro plans. Can&apos;t find your question?{" "}
+              Everything buyers actually ask before purchasing — about the data, delivery, refunds, and compliance. Can&apos;t find your question?{" "}
               <Link href="/contact" className="text-accent hover:underline">Ask us directly</Link>.
             </p>
 
             <AnswerBox label="In Short">
-              USAgentLeads sells a verified database of {TOTAL_AGENTS.toLocaleString()}+ licensed US real estate agents — name, email, phone, and state — as an instant CSV download for $49 per state or $199 one-time for all 50 states. Data is compiled from public licensing and listing sources, delivery is instant via email with guest checkout, and every purchase has a 30-day money-back guarantee.
+              USAgentLeads sells a verified database of {TOTAL_AGENTS.toLocaleString()}+ licensed US real estate agents — name, email, phone, and state — as an instant CSV download for $99 per state or $399 one-time for all 50 states. Data is compiled from public licensing and listing sources, delivery is instant via email with guest checkout, and every purchase has a 30-day money-back guarantee.
             </AnswerBox>
 
             {/* Category quick-nav */}

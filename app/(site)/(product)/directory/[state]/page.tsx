@@ -80,7 +80,7 @@ export default async function StateDirectoryPage({ params }: Props) {
     },
     {
       question: `Is the ${state.name} real estate agent directory free?`,
-      answer: `Yes — searching and browsing the ${state.name} agent directory is completely free. Contact details (email and phone) are masked in the free directory; the complete, unmasked ${state.name} realtor list is available as a CSV download for $49.`,
+      answer: `Yes — searching and browsing the ${state.name} agent directory is completely free. Contact details (email and phone) are masked in the free directory; the complete, unmasked ${state.name} realtor list is available as a CSV download for $99.`,
     },
     {
       question: `How many real estate agents are in ${state.name}?`,
@@ -209,7 +209,7 @@ export default async function StateDirectoryPage({ params }: Props) {
                   href={`/states/${state.slug}`}
                   className="btn-primary shrink-0 justify-center px-6 py-3 text-[15px]"
                 >
-                  Get {state.name} List — $49
+                  Get {state.name} List — $99
                 </Link>
               </div>
             </div>

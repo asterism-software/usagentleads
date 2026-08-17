@@ -17,12 +17,12 @@ export function BuyStateButton({ stateCode, stateName, className }: BuyStateButt
 
   const handleBuy = async () => {
     setLoading(true)
-    track("buy_button_clicked", { product: "state", state_code: stateCode, state_name: stateName, price: 49 })
+    track("buy_button_clicked", { product: "state", state_code: stateCode, state_name: stateName, price: 99 })
     track("checkout_initiated", {
       purchase_type: "state",
       state_code: stateCode,
       state_name: stateName,
-      price_cents: 4900,
+      price_cents: 9900,
     })
     try {
       const res = await fetch("/api/checkout", {
@@ -36,7 +36,7 @@ export function BuyStateButton({ stateCode, stateName, className }: BuyStateButt
       })
       const data = await res.json()
       if (data.url) {
-        track("checkout_started", { product: "state", state_code: stateCode, price: 49 })
+        track("checkout_started", { product: "state", state_code: stateCode, price: 99 })
         window.location.href = data.url
         return
       }

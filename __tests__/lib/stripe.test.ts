@@ -17,8 +17,8 @@ const ATTRIBUTION_METADATA = {
   referrer: "https://www.google.com",
   first_landing_page: "/pricing",
   plan_name: "Full Database",
-  plan_price: "199.00",
-  plan_price_cents: "19900",
+  plan_price: "399.00",
+  plan_price_cents: "39900",
   currency: "usd",
 }
 

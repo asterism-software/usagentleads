@@ -139,15 +139,18 @@ pull prod env with the Vercel CLI before hitting live endpoints.
                                                        URL valid 5 minutes
 ```
 
-Four products, all defined in [components/pricing/PlanGroups.tsx](components/pricing/PlanGroups.tsx)
+Four products, all defined in [lib/billing/plans.ts](lib/billing/plans.ts)
 with their public Stripe Price IDs. Those IDs are deliberately committed beside
 the displayed plans and double as the server-side checkout allowlist; they are not
 environment variables or secrets.
 
+The subscription products remain implemented for existing customers and a future
+relaunch, but `SUBSCRIPTION_PLANS_VISIBLE` keeps them off public pricing surfaces.
+
 | Plan | Price | Stripe Price ID | Grants |
 |---|---:|---|---|
-| State Pack | $49 one-time | `price_1TzG2WItJWsYAnxnoeufOAnM` | One state CSV |
-| Full Database | $199 one-time | `price_1TzG2fItJWsYAnxnC2ZYm6AP` | Gzipped CSV of all ~1.16M contacts |
+| State Pack | $99 one-time | `price_1U5NQ1ItJWsYAnxnyFSsLmBG` | One state CSV |
+| Full Database | $399 one-time | `price_1U5NQ8ItJWsYAnxnbrvaXD0d` | Gzipped CSV of all ~1.16M contacts |
 | Pro Dashboard | $49/mo | `price_1TzG2tItJWsYAnxnlVVNJgPc` | Searchable in-app agent browser |
 | Pro API | $79/mo | `price_1TzG32ItJWsYAnxnBI0j2xQn` | `/api/v1/agents`, 10k requests/month |
 
@@ -430,7 +433,7 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" \
 ```
 
 Then, in a browser: a state page renders live counts, the free-sample dialog delivers
-an email, and a real $49 checkout produces a purchase row plus a working download
+an email, and a real $99 checkout produces a purchase row plus a working download
 link. Stripe Dashboard's webhook delivery log is the fastest place to confirm
 fulfillment; a signature mismatch returns `400 Invalid signature` at the endpoint.
 

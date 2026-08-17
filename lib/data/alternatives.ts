@@ -30,7 +30,7 @@ export interface AlternativesPage {
 const US_OPTION_BASE = {
   name: "USAgentLeads",
   isUs: true as const,
-  pricing: "$49 per state or $199 one-time for all 50 states",
+  pricing: "$99 per state or $399 one-time for all 50 states",
 }
 
 export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
@@ -42,7 +42,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
     intro:
       "ZoomInfo is the biggest name in B2B contact data, but it doesn't publish pricing — reported list prices start around $14,995/year for the Professional tier, and third-party pricing guides report most teams end up spending $30,000–60,000/year once seats and credits are added. If that's more platform than you need, here are six alternatives — starting with the specialized option for teams that only target real estate agents.",
     answerBox:
-      "The best ZoomInfo alternative depends on what you're replacing. For US real estate agent data specifically, USAgentLeads delivers 1,100,000+ licensed agent contacts for $199 one-time — versus reported ZoomInfo contracts from about $14,995/year. For multi-industry prospecting with outreach tooling, Apollo.io (free tier; paid from ~$49/user/month annual) is the most common downgrade path, with UpLead and Lusha as credit-based mid-market options.",
+      "The best ZoomInfo alternative depends on what you're replacing. For US real estate agent data specifically, USAgentLeads delivers 1,100,000+ licensed agent contacts for $399 one-time — versus reported ZoomInfo contracts from about $14,995/year. For multi-industry prospecting with outreach tooling, Apollo.io (free tier; paid from ~$49/user/month annual) is the most common downgrade path, with UpLead and Lusha as credit-based mid-market options.",
     whySwitch: [
       {
         title: "Quote-only pricing and annual contracts",
@@ -72,7 +72,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
         description:
           "A specialized database of 1,100,000+ licensed US real estate agent contacts — name, email, phone, and state — covering all 50 states. One-time purchase, unlimited use, instant CSV download. No seats, no credits, no contract.",
         pros: [
-          "$199 one-time vs five-figure annual contracts",
+          "$399 one-time vs five-figure annual contracts",
           "No credit system — download everything you paid for",
           "Specialized real estate agent coverage from public licensing and listing sources",
           "Guest checkout, instant delivery, 30-day money-back guarantee",
@@ -176,7 +176,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
       {
         question: "What's the cheapest ZoomInfo alternative for real estate agent contacts?",
         answer:
-          "For real estate agents specifically, USAgentLeads is $199 one-time for 1,100,000+ contacts across all 50 states — versus reported ZoomInfo contracts starting around $14,995/year. General-purpose alternatives like Apollo (free tier) or Lusha (free plan) are cheap to start but meter access through monthly credits.",
+          "For real estate agents specifically, USAgentLeads is $399 one-time for 1,100,000+ contacts across all 50 states — versus reported ZoomInfo contracts starting around $14,995/year. General-purpose alternatives like Apollo (free tier) or Lusha (free plan) are cheap to start but meter access through monthly credits.",
       },
       {
         question: "Do these alternatives have the same data ZoomInfo has?",
@@ -198,7 +198,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
     intro:
       "Apollo.io bundles a big B2B database with sequencing and a dialer, with plans from free to $119/user/month (annual). It's a strong all-rounder — but credits expire monthly, phone reveals cost roughly 8x more than emails, and vertical coverage has gaps. Here are six alternatives depending on what's driving you away.",
     answerBox:
-      "For real estate agent outreach, the strongest Apollo alternative is a specialized dataset: USAgentLeads sells all 1,100,000+ licensed US agent contacts for $199 one-time, with no credits or per-seat fees — and the CSV imports back into Apollo if you keep it for sequencing. For general B2B prospecting, UpLead (95% accuracy guarantee, from $99/month) and Hunter.io (email finding, from $34/month annual) lead the credit-based field, while ZoomInfo is the quote-only enterprise upgrade.",
+      "For real estate agent outreach, the strongest Apollo alternative is a specialized dataset: USAgentLeads sells all 1,100,000+ licensed US agent contacts for $399 one-time, with no credits or per-seat fees — and the CSV imports back into Apollo if you keep it for sequencing. For general B2B prospecting, UpLead (95% accuracy guarantee, from $99/month) and Hunter.io (email finding, from $34/month annual) lead the credit-based field, while ZoomInfo is the quote-only enterprise upgrade.",
     whySwitch: [
       {
         title: "Credits expire every billing cycle",
@@ -228,7 +228,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
         description:
           "1,100,000+ licensed US real estate agent contacts compiled from public licensing and listing sources. One flat purchase, no per-user fees, no credits — download the CSV and import it into Apollo or any other tool. Many teams keep Apollo for sequencing and buy the agent data here.",
         pros: [
-          "One-time $199 for all 50 states — no seats or credits",
+          "One-time $399 for all 50 states — no seats or credits",
           "Phone numbers included at no extra cost (90%+ of records)",
           "Deeper licensed-agent coverage than general B2B databases",
           "Works alongside Apollo — import the CSV and sequence there",
@@ -334,7 +334,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
       {
         question: "Which alternative is cheapest overall?",
         answer:
-          "It depends on volume. For a handful of lookups, free tiers (Apollo, Lusha, Hunter) cost nothing. For bulk real estate agent lists, $199 one-time for 1,100,000+ contacts works out to a fraction of a cent per contact — cheaper than any credit-based plan by orders of magnitude.",
+          "It depends on volume. For a handful of lookups, free tiers (Apollo, Lusha, Hunter) cost nothing. For bulk real estate agent lists, $399 one-time for 1,100,000+ contacts works out to a fraction of a cent per contact — cheaper than any credit-based plan by orders of magnitude.",
       },
     ],
   },
@@ -346,7 +346,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
     intro:
       "REDX sells homeowner seller leads — expireds, FSBOs, GeoLeads — to real estate agents, with individual lead types from around $50–130/month and bundles from $199–349/month. The right alternative depends on which side of the market you're on: agents prospecting homeowners have several dedicated options, while businesses trying to reach agents themselves need a different kind of database entirely.",
     answerBox:
-      "Agents prospecting homeowners should shortlist Vulcan7 (reported ~$359/month, premium dialer-first suite), Espresso Agent (published pricing from $249/month, no long-term commitment), or Landvoice (budget bundles reported from $87/month). If you're a business trying to reach agents themselves — coaching, lending, recruiting, software — REDX was never the right tool: USAgentLeads sells 1,100,000+ licensed agent contacts for $199 one-time.",
+      "Agents prospecting homeowners should shortlist Vulcan7 (reported ~$359/month, premium dialer-first suite), Espresso Agent (published pricing from $249/month, no long-term commitment), or Landvoice (budget bundles reported from $87/month). If you're a business trying to reach agents themselves — coaching, lending, recruiting, software — REDX was never the right tool: USAgentLeads sells 1,100,000+ licensed agent contacts for $399 one-time.",
     whySwitch: [
       {
         title: "Costs stack per lead type",
@@ -371,9 +371,9 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
         description:
           "A different tool for a different job: 1,100,000+ licensed agent contacts across all 50 states, for coaches, lenders, brokerages recruiting, and SaaS companies that sell to agents. If you came to REDX looking for a way to contact agents themselves, this is the direct answer.",
         pros: [
-          "One-time $199 for every state — no subscription",
+          "One-time $399 for every state — no subscription",
           "Agent emails and phones, ready for any CRM or email tool",
-          "Per-state packs at $49 for local campaigns",
+          "Per-state packs at $99 for local campaigns",
           "Instant CSV download, 30-day money-back guarantee",
         ],
         cons: [
@@ -493,7 +493,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
     intro:
       "Cole Realty Resource (from Cole Information) is a long-running list service best known for neighborhood farming data, with reported pricing from about $119.95 plus a $99.95 setup fee for the starter tier, up to $995–1,590/year for unlimited-download plans. Whether you want cheaper farm data, expired leads, or a completely different kind of list — realtor contacts instead of homeowner records — here are the alternatives.",
     answerBox:
-      "For homeowner prospecting, the closest Cole Realty Resource replacements are REDX (lead types from ~$50–130/month with the Vortex CRM included), Landvoice (plans reported from $87/month), and PropStream (property-data prospecting from $99/month). If what you actually need is a list of real estate agents rather than homeowners, USAgentLeads is the specialized option: 1,100,000+ licensed agent contacts, $199 one-time, no setup fees or download caps.",
+      "For homeowner prospecting, the closest Cole Realty Resource replacements are REDX (lead types from ~$50–130/month with the Vortex CRM included), Landvoice (plans reported from $87/month), and PropStream (property-data prospecting from $99/month). If what you actually need is a list of real estate agents rather than homeowners, USAgentLeads is the specialized option: 1,100,000+ licensed agent contacts, $399 one-time, no setup fees or download caps.",
     whySwitch: [
       {
         title: "Setup fees and annual plans",
@@ -516,7 +516,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
         ...US_OPTION_BASE,
         bestFor: "Reaching licensed real estate agents themselves",
         description:
-          "If the list you actually need is real estate agents — for recruiting, coaching offers, lending partnerships, or software sales — this is the specialized option: 1,100,000+ agent contacts across all 50 states, $199 one-time, no setup fees or download caps.",
+          "If the list you actually need is real estate agents — for recruiting, coaching offers, lending partnerships, or software sales — this is the specialized option: 1,100,000+ agent contacts across all 50 states, $399 one-time, no setup fees or download caps.",
         pros: [
           "No setup fee, no subscription, no download caps",
           "All 50 states for less than Cole's reported starter tier + setup",
@@ -610,7 +610,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
       {
         question: "Which alternative has no subscription at all?",
         answer:
-          "USAgentLeads is the only one-time purchase on this list — $49 per state or $199 for all 50 states, with no recurring billing. PropStream, REDX, Landvoice, and Data Axle Genie are all subscriptions.",
+          "USAgentLeads is the only one-time purchase on this list — $99 per state or $399 for all 50 states, with no recurring billing. PropStream, REDX, Landvoice, and Data Axle Genie are all subscriptions.",
       },
     ],
   },
@@ -622,7 +622,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
     intro:
       "CoStar is the enterprise standard for commercial real estate intelligence — and priced like it. Pricing is custom and unpublished; third-party analyses report an average around $15,000/year, basic access reports in the $500–2,000/month range, and a median around $40,000/year for full-suite licenses. If that doesn't match your budget or your use case, here are five alternatives by need.",
     answerBox:
-      "For commercial listings and comps, Crexi is the leading lower-cost CoStar alternative — its marketplace is free, and users report Intelligence access around $1,200/year. For property-level research, PropStream starts at a published $99/month. And if the job is simply reaching real estate agents, USAgentLeads covers 1,100,000+ licensed agent contacts for $199 one-time with no enterprise contract or sales process.",
+      "For commercial listings and comps, Crexi is the leading lower-cost CoStar alternative — its marketplace is free, and users report Intelligence access around $1,200/year. For property-level research, PropStream starts at a published $99/month. And if the job is simply reaching real estate agents, USAgentLeads covers 1,100,000+ licensed agent contacts for $399 one-time with no enterprise contract or sales process.",
     whySwitch: [
       {
         title: "Opaque, negotiated pricing",
@@ -645,7 +645,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
         ...US_OPTION_BASE,
         bestFor: "Outreach to residential real estate agents",
         description:
-          "If the job is contacting agents — recruiting, partnerships, or selling services — you don't need a CRE intelligence platform. 1,100,000+ licensed agent contacts, $199 one-time, instant CSV.",
+          "If the job is contacting agents — recruiting, partnerships, or selling services — you don't need a CRE intelligence platform. 1,100,000+ licensed agent contacts, $399 one-time, instant CSV.",
         pros: [
           "About 1% of the cost of reported entry CoStar spend",
           "No sales process — buy and download in minutes",
@@ -730,7 +730,7 @@ export const ALTERNATIVES_PAGES: readonly AlternativesPage[] = [
       {
         question: "What's the cheapest CoStar alternative?",
         answer:
-          "It depends on the use case. For agent outreach, USAgentLeads is $199 one-time. For CRE listings and comps, Crexi has a free marketplace tier with paid intelligence reported around $1,200/year by users. For property research, PropStream starts at $99/month.",
+          "It depends on the use case. For agent outreach, USAgentLeads is $399 one-time. For CRE listings and comps, Crexi has a free marketplace tier with paid intelligence reported around $1,200/year by users. For property research, PropStream starts at $99/month.",
       },
       {
         question: "Does any alternative include agent production data like CoStar/BrokerMetrics?",

@@ -8,7 +8,7 @@ export function PricingCards({ totalCount, totalEmails, totalPhones }: { totalCo
           <p className="label-eyebrow">Pricing</p>
           <h2 className="section-heading">Simple, Transparent Pricing</h2>
           <p className="section-sub max-w-xl">
-            Buy a one-time CSV download, or subscribe for always-current data. No hidden fees.
+            Buy a one-time CSV download and keep it forever. No subscription or hidden fees.
           </p>
         </div>
 

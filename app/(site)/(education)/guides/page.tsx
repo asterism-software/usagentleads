@@ -137,7 +137,7 @@ export default function GuidesIndex() {
             {/* CTA */}
             <div className="card p-5 sm:p-7 border-accent/30 border-2 text-center">
               <p className="text-[15px] text-body mb-4">
-                Don&apos;t have the data yet? 1,100,000+ verified agent contacts, $49/state or $199 for all 50.
+                Don&apos;t have the data yet? 1,100,000+ verified agent contacts, $99/state or $399 for all 50.
               </p>
               <Link href="/states" className="btn-primary inline-flex items-center gap-2">
                 Browse State Data

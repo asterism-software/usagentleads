@@ -21,7 +21,7 @@ export function StateCard({
             <span className="inline-flex h-7 min-w-9 items-center justify-center rounded-md border border-accent-mid bg-accent-light px-2 font-mono text-[12px] font-semibold text-accent">
               {state.code}
             </span>
-            <span className="text-[12px] font-mono uppercase tracking-wider text-muted">$49 CSV</span>
+            <span className="text-[12px] font-mono uppercase tracking-wider text-muted">$99 CSV</span>
           </div>
           <h3 className="text-[17px] font-semibold leading-tight text-ink">{state.name}</h3>
           <p className="mt-1 text-[13px] font-medium text-tertiary">Realtor Email List</p>

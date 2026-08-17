@@ -68,7 +68,7 @@ Nabeel here, from USAgentLeads. Quick note — the database just passed a big mi
 
 The newest additions came from complete state licensing data for Michigan and Virginia, along with refreshed records across the rest of the country. Every record has the same four clean fields: full name, email, phone, and state.
 
-If you've been meaning to try the data, now is a good time — a single state is $49 and the full 1M+ database is $199, both instant CSV downloads backed by a 30-day money-back guarantee:
+If you've been meaning to try the data, now is a good time — a single state is $99 and the full 1M+ database is $399, both instant CSV downloads backed by a 30-day money-back guarantee:
 
 ${SITE_URL}/pricing
 
@@ -89,7 +89,7 @@ function htmlBody(email) {
 ${p("Hi there,")}
 ${p("Nabeel here, from USAgentLeads. Quick note &mdash; the database just passed a big milestone: <strong>over 1,000,000 verified real estate agent contacts</strong>, covering all 50 states plus Washington, DC.")}
 ${p("The newest additions came from complete state licensing data for Michigan and Virginia, along with refreshed records across the rest of the country. Every record has the same four clean fields: full name, email, phone, and state.")}
-${p(`If you've been meaning to try the data, now is a good time &mdash; a single state is $49 and the full 1M+ database is $199, both instant CSV downloads backed by a 30-day money-back guarantee: <a href="${SITE_URL}/pricing" style="color:#1D4ED8;">usagentleads.com/pricing</a>`)}
+${p(`If you've been meaning to try the data, now is a good time &mdash; a single state is $99 and the full 1M+ database is $399, both instant CSV downloads backed by a 30-day money-back guarantee: <a href="${SITE_URL}/pricing" style="color:#1D4ED8;">usagentleads.com/pricing</a>`)}
 ${p("And if you've already purchased from us: thank you &mdash; you helped get it to a million. If there's a state, field, or format you wish we covered, just hit reply. I read every response.")}
 ${p("&mdash; Nabeel<br>Founder, USAgentLeads")}
 <p style="margin:28px 0 0 0;padding-top:16px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;">

@@ -79,7 +79,7 @@ export function HeroSection({
                 Browse by State <ArrowRight size={16} />
               </Link>
               <Link href="/pricing" className="btn-outline px-7 py-3.5 text-[15px] sm:text-[16px] sm:px-8">
-                Full Database — <span className="font-mono"><span className="text-tertiary line-through decoration-tertiary/50 mr-1.5">$399</span>$199</span>
+                Full Database — <span className="font-mono">$399</span>
               </Link>
             </div>
 

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { BadgeCheck, X } from "lucide-react"
 import type { RecentOrder } from "@/lib/supabase/server"
-import { timeAgo } from "@/lib/utils/time"
 
 const FIRST_DELAY = 3500 // show shortly after the visitor lands
 const VISIBLE_MS = 4000 // how long each toast stays up
@@ -94,19 +93,15 @@ export function RecentOrdersToastClient({ orders }: { orders: RecentOrder[] }) {
           </span>
 
           <span className="min-w-0 flex-1">
-            <span className="flex items-baseline justify-between gap-2">
-              <span className="text-[14px] font-semibold text-ink truncate">{order.product}</span>
-              <span className="font-mono text-[14px] font-semibold text-ink whitespace-nowrap">
-                ${order.amountUsd}
-              </span>
+            <span className="block text-[14px] font-semibold text-ink truncate">
+              {order.product}
             </span>
-            <span className="mt-0.5 block text-[12px] text-tertiary truncate">
-              {order.maskedEmail}
-              {order.location ? ` · ${order.location}` : ""}
+            <span className="mt-0.5 block text-[12px] text-tertiary">
+              {order.location ? `A customer in ${order.location}` : "A customer"} · Purchased recently
             </span>
             <span className="mt-1 flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wide text-accent">
               <BadgeCheck size={12} aria-hidden="true" />
-              Verified order · {timeAgo(order.createdAt)}
+              Verified purchase
             </span>
           </span>
         </Link>

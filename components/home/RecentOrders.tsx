@@ -1,6 +1,5 @@
 import { BadgeCheck } from "lucide-react"
 import { getRecentPurchases, getPurchaseStats } from "@/lib/supabase/server"
-import { timeAgo } from "@/lib/utils/time"
 
 /** Compact count for the headline, e.g. 2_666_427 -> "2.6M". */
 function compact(n: number): string {
@@ -36,23 +35,14 @@ export async function RecentOrders() {
               <div className="flex items-center justify-between gap-3">
                 <span className="inline-flex items-center gap-1.5 text-[12px] font-mono uppercase tracking-wide text-accent">
                   <BadgeCheck size={15} aria-hidden="true" />
-                  Verified order
-                </span>
-                <span className="text-[12px] font-mono text-tertiary whitespace-nowrap">
-                  {timeAgo(o.createdAt)}
+                  Verified purchase
                 </span>
               </div>
 
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="text-[15px] font-semibold text-ink">{o.product}</p>
-                <p className="font-mono text-[15px] font-semibold text-ink whitespace-nowrap">
-                  ${o.amountUsd}
-                </p>
-              </div>
+              <p className="text-[15px] font-semibold text-ink">{o.product}</p>
 
-              <p className="text-[13px] text-tertiary truncate">
-                {o.maskedEmail}
-                {o.location ? ` · ${o.location}` : ""}
+              <p className="text-[13px] text-tertiary">
+                {o.location ? `A customer in ${o.location}` : "A customer"} · Purchased recently
               </p>
             </li>
           ))}

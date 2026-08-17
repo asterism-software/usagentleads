@@ -16,7 +16,7 @@ export function generateStateMetadata(state: USState, cities?: string[]): Metada
   const shortCount = formatAgentCount(state.agentCount)
   const cityText = cities?.length ? ` Covers ${cities.slice(0, 2).join(", ")} and more.` : ""
   const title = `${state.name} Realtor Email List & Real Estate Database (${CURRENT_YEAR})`
-  const rawDesc = `Download the ${state.name} realtor email list & real estate agent database — ${count}+ verified agent emails and phone numbers. Complete list of ${state.name} real estate agents, instant CSV, $49.${cityText}`
+  const rawDesc = `Download the ${state.name} realtor email list & real estate agent database — ${count}+ verified agent emails and phone numbers. Complete list of ${state.name} real estate agents, instant CSV, $99.${cityText}`
   return {
     title: { absolute: title },
     description: trimDescription(rawDesc),
@@ -79,7 +79,7 @@ export function generateProductSchema(state: USState, liveCount?: number) {
     },
     offers: {
       "@type": "Offer",
-      price: "49.00",
+      price: "99.00",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
       url: `https://www.usagentleads.com/states/${state.slug}`,
@@ -161,7 +161,7 @@ export function generateDatasetSchema(state: USState, liveCount?: number) {
     ],
     offers: {
       "@type": "Offer",
-      price: "49.00",
+      price: "99.00",
       priceCurrency: "USD",
     },
   }

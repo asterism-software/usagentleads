@@ -196,7 +196,7 @@ export default async function GuidePage({ params }: Props) {
             {/* CTA */}
             <div className="card p-5 sm:p-7 border-accent/30 border-2 mb-12 text-center">
               <p className="text-[15px] text-body mb-4">
-                Need the data first? 1,100,000+ verified agent contacts as a ready-to-import CSV. $49/state or $199 for all 50.
+                Need the data first? 1,100,000+ verified agent contacts as a ready-to-import CSV. $99/state or $399 for all 50.
               </p>
               <Link href="/states" className="btn-primary inline-flex items-center gap-2">
                 Get the Agent List

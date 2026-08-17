@@ -2,8 +2,8 @@ import { getRecentPurchases } from "@/lib/supabase/server"
 import { RecentOrdersToastClient } from "./RecentOrdersToastClient"
 
 /**
- * Server wrapper: fetches the privacy-safe recent orders and hands them to the
- * client toast. Only masked fields (RecentOrder) cross to the client — never raw rows.
+ * Server wrapper: fetches anonymous recent-order context for the client toast.
+ * Only product and state cross to the browser — never customer, price, or timing data.
  */
 export async function RecentOrdersToast() {
   const orders = await getRecentPurchases(8)

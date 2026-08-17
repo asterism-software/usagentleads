@@ -14,7 +14,7 @@ import { DATA_LAST_REFRESHED, DATA_SOURCES } from "@/lib/utils/site"
 export const metadata: Metadata = {
   title: { absolute: `Real Estate Agent Email Lists by State — 50 States (${CURRENT_YEAR})` },
   description:
-    "Real estate agent email lists by state — download a verified realtor email list, agent database, and full list of real estate agents for any of the 50 US states. CSV from $49.",
+    "Real estate agent email lists by state — download a verified realtor email list, agent database, and full list of real estate agents for any of the 50 US states. CSV from $99.",
   alternates: {
     canonical: "https://www.usagentleads.com/states",
     languages: {
@@ -25,13 +25,13 @@ export const metadata: Metadata = {
   openGraph: {
     locale: "en_US",
     title: `Real Estate Agent Email Lists by State — 50 States (${CURRENT_YEAR})`,
-    description: "Browse verified realtor email lists and agent databases for every US state. Download a complete list of real estate agents as a CSV from $49/state.",
+    description: "Browse verified realtor email lists and agent databases for every US state. Download a complete list of real estate agents as a CSV from $99/state.",
     url: "https://www.usagentleads.com/states",
   },
   twitter: {
     card: "summary_large_image",
     title: `Real Estate Agent Email Lists by State — 50 States (${CURRENT_YEAR})`,
-    description: "Browse verified realtor email lists and agent databases for every US state from $49/state.",
+    description: "Browse verified realtor email lists and agent databases for every US state from $99/state.",
     images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
 }
@@ -47,7 +47,7 @@ const statesFAQs = [
   },
   {
     question: "What's the difference between a state pack and the full database?",
-    answer: "A state pack ($49) gives you a CSV for a single state. The Full Database ($199, one-time) includes all 50 states in a single download — 1,100,000+ contacts. If you need 4+ states, the full database is better value.",
+    answer: "A state pack ($99) gives you a CSV for a single state. The Full Database ($399, one-time) includes all 50 states in a single download — 1,100,000+ contacts. If you need five or more states, the full database is better value.",
   },
   {
     question: "How quickly is the CSV delivered after purchase?",
@@ -63,7 +63,7 @@ const statesFAQs = [
   },
   {
     question: "Do you offer a realtor database for every US state?",
-    answer: "Yes. Every one of the 50 US states has its own realtor email list and agent database available for instant download at $49. Need several states? The Full Database bundles all 50 states and 1,100,000+ real estate agents into an Excel-safe ZIP of numbered CSV parts for $199.",
+    answer: "Yes. Every one of the 50 US states has its own realtor email list and agent database available for instant download at $99. Need several states? The Full Database bundles all 50 states and 1,100,000+ real estate agents into an Excel-safe ZIP of numbered CSV parts for $399.",
   },
 ]
 
@@ -142,7 +142,7 @@ export default async function StatesPage() {
               {[
                 { value: US_STATES.length.toString(), label: "States" },
                 { value: totalContacts.toLocaleString(), label: "Contacts" },
-                { value: "$49", label: "Per State" },
+                { value: "$99", label: "Per State" },
               ].map((stat) => (
                 <div key={stat.label} className="border-r border-border px-2 py-4 text-center last:border-r-0">
                   <p className="font-mono text-[18px] font-semibold leading-tight text-ink sm:text-[22px] lg:text-[18px]">
@@ -161,7 +161,7 @@ export default async function StatesPage() {
           {[
             "Same CSV fields in every pack",
             "Instant delivery",
-            "Full database: $199",
+            "Full database: $399",
           ].map((item, i) => (
             <div key={item} className="flex min-h-10 items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-[13px] text-body">
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-accent-light font-mono text-[11px] font-semibold text-accent">
@@ -203,12 +203,12 @@ export default async function StatesPage() {
             <h2 className="text-[22px] font-semibold text-ink mb-6">A Complete List of Real Estate Agents by State</h2>
             <p className="text-[15px] text-body leading-[1.8] mb-4">
               Every state above links to its own realtor email list — a downloadable database of licensed real estate agents in that state, each with a verified name, email address, and phone number. Whether you need a single state&apos;s realtor database or a real estate agent list spanning several states, every pack ships in the same clean CSV format for {" "}
-              <span className="font-mono text-ink">$49</span>.
+              <span className="font-mono text-ink">$99</span>.
             </p>
             <p className="text-[15px] text-body leading-[1.8]">
-              Instead of scraping 50 different state licensing directories to build a real estate agent list by state, download ready-made packs and import them straight into your CRM. Buying four or more states?{" "}
+              Instead of scraping 50 different state licensing directories to build a real estate agent list by state, download ready-made packs and import them straight into your CRM. Buying five or more states?{" "}
               <Link href="/pricing" className="text-accent font-medium hover:underline">
-                The Full Database covers all 50 states and 1,100,000+ agents for $199
+                The Full Database covers all 50 states and 1,100,000+ agents for $399
               </Link>
               .
             </p>
@@ -241,7 +241,7 @@ export default async function StatesPage() {
             <p className="text-[14px] text-tertiary">
               Files are delivered as clean UTF-8 CSVs — ready to import into HubSpot, Salesforce, GoHighLevel, Mailchimp, or any email platform.{" "}
               <Link href="/pricing" className="text-accent font-medium hover:underline">
-                Need all 50 states? Get the Full Database for $199 →
+                Need all 50 states? Get the Full Database for $399 →
               </Link>
             </p>
           </div>

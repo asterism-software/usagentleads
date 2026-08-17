@@ -2,16 +2,16 @@ export const STRIPE_PLANS = {
   state: {
     name: "State Pack",
     productId: "prod_UzEVR2GPxiByS3",
-    priceId: "price_1TzG2WItJWsYAnxnoeufOAnM",
-    amount: 4_900,
+    priceId: "price_1U5NQ1ItJWsYAnxnyFSsLmBG",
+    amount: 9_900,
     currency: "usd",
     mode: "payment",
   },
   full_database: {
     name: "Full Database",
     productId: "prod_UzEVFqSZvkyUKx",
-    priceId: "price_1TzG2fItJWsYAnxnC2ZYm6AP",
-    amount: 19_900,
+    priceId: "price_1U5NQ8ItJWsYAnxnbrvaXD0d",
+    amount: 39_900,
     currency: "usd",
     mode: "payment",
   },
@@ -32,6 +32,10 @@ export const STRIPE_PLANS = {
     mode: "subscription",
   },
 } as const
+
+// Keep the subscription implementation available for existing customers and a
+// future relaunch, but do not advertise or sell these plans for now.
+export const SUBSCRIPTION_PLANS_VISIBLE = false
 
 export type PurchaseType = keyof typeof STRIPE_PLANS
 export type SubscriptionPurchaseType = Extract<

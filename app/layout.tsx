@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     default: `Real Estate Agent Email List — 1.1M+ US Realtor Contacts`,
     template: "%s | USAgentLeads",
   },
-  description: `Buy a verified real estate agent email list for any US state. 1.1M+ realtor emails and phone numbers across all 50 states — instant CSV download from $49.`,
+  description: `Buy a verified real estate agent email list for any US state. 1.1M+ realtor emails and phone numbers across all 50 states — instant CSV download from $99.`,
   icons: {
     icon: [
       { url: "/favicon.ico?v=20260808", sizes: "any", type: "image/x-icon" },
@@ -40,14 +40,14 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "USAgentLeads",
     title: `Real Estate Agent Email List — 1.1M+ US Realtor Contacts`,
-    description: `Buy a verified real estate agent email list for any US state. 1.1M+ realtor emails and phone numbers across all 50 states — instant CSV download from $49.`,
+    description: `Buy a verified real estate agent email list for any US state. 1.1M+ realtor emails and phone numbers across all 50 states — instant CSV download from $99.`,
     url: "https://www.usagentleads.com",
   },
   twitter: {
     card: "summary_large_image",
     title: "Real Estate Agent Email List — 1.1M+ US Realtor Contacts",
     description:
-      "Buy a verified real estate agent email list for any US state. 1.1M+ realtor emails and phone numbers across all 50 states — instant CSV download from $49.",
+      "Buy a verified real estate agent email list for any US state. 1.1M+ realtor emails and phone numbers across all 50 states — instant CSV download from $99.",
     images: ["https://www.usagentleads.com/opengraph-image.png"],
   },
   robots: { index: true, follow: true },

@@ -103,7 +103,7 @@ export default async function PersonaPage({ params }: Props) {
               </p>
 
               <AnswerBox>
-                {persona.name} can buy a verified list of {TOTAL_AGENTS.toLocaleString()}+ licensed US real estate agents — name, email, phone, and state — from USAgentLeads for $49 per state or $199 one-time for all 50 states. The data is delivered instantly as a CSV that imports into any CRM or email tool, with no subscription and a 30-day money-back guarantee.
+                {persona.name} can buy a verified list of {TOTAL_AGENTS.toLocaleString()}+ licensed US real estate agents — name, email, phone, and state — from USAgentLeads for $99 per state or $399 one-time for all 50 states. The data is delivered instantly as a CSV that imports into any CRM or email tool, with no subscription and a 30-day money-back guarantee.
               </AnswerBox>
 
               {/* Mobile CTA */}
@@ -255,7 +255,7 @@ function CTACard({ cta }: { cta: string }) {
         <div>
           <div className="flex items-baseline gap-1.5 mb-1">
             <span className="font-mono text-[18px] font-medium text-muted line-through decoration-muted/60 decoration-2">$99</span>
-            <span className="font-mono text-[36px] font-semibold text-ink leading-none">$49</span>
+            <span className="font-mono text-[36px] font-semibold text-ink leading-none">$99</span>
             <span className="text-tertiary text-[15px]">per state</span>
           </div>
           <p className="text-[13px] text-tertiary">Pick the states you need</p>
@@ -263,7 +263,7 @@ function CTACard({ cta }: { cta: string }) {
         <div className="border-t border-border pt-4">
           <div className="flex items-baseline gap-1.5 mb-1">
             <span className="font-mono text-[18px] font-medium text-muted line-through decoration-muted/60 decoration-2">$399</span>
-            <span className="font-mono text-[36px] font-semibold text-ink leading-none">$199</span>
+            <span className="font-mono text-[36px] font-semibold text-ink leading-none">$399</span>
             <span className="text-tertiary text-[15px]">all 50 states</span>
           </div>
           <p className="text-[13px] text-tertiary">

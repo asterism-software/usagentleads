@@ -41,7 +41,7 @@ const faqs = [
   },
   {
     question: "Is the real estate agent directory free to use?",
-    answer: "Yes. Searching and browsing the directory is completely free. Contact details (email and phone) are masked in the free directory; the full, unmasked list for any state is available as a CSV download for $49.",
+    answer: "Yes. Searching and browsing the directory is completely free. Contact details (email and phone) are masked in the free directory; the full, unmasked list for any state is available as a CSV download for $99.",
   },
   {
     question: "How many real estate agents are in the directory?",
@@ -49,7 +49,7 @@ const faqs = [
   },
   {
     question: "Can I download the agent contact list?",
-    answer: "Yes. Choose a state to download the complete, unmasked list of that state's real estate agents as a CRM-ready CSV — full name, email, phone, and state for every agent — for $49, or get all 50 states in the Full Database.",
+    answer: "Yes. Choose a state to download the complete, unmasked list of that state's real estate agents as a CRM-ready CSV — full name, email, phone, and state for every agent — for $99, or get all 50 states in the Full Database.",
   },
 ]
 
@@ -129,7 +129,7 @@ export default async function DirectoryIndexPage() {
             {[
               { icon: Database, label: "Public licensing records & directories" },
               { icon: Lock, label: "Contact details masked in free view" },
-              { icon: ShieldCheck, label: "Full CSV from $49 · 30-day guarantee" },
+              { icon: ShieldCheck, label: "Full CSV from $99 · 30-day guarantee" },
             ].map((item) => (
               <div key={item.label} className="flex min-h-10 items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-[13px] text-body">
                 <item.icon size={14} className="text-accent shrink-0" />

@@ -88,7 +88,7 @@ export const IMPORT_GUIDES: readonly ImportGuide[] = [
       {
         question: "Can I upload one state at a time?",
         answer:
-          "Yes — either buy individual $49 state packs, or filter the full CSV by the state column in a spreadsheet and upload each slice to its own campaign.",
+          "Yes — either buy individual $99 state packs, or filter the full CSV by the state column in a spreadsheet and upload each slice to its own campaign.",
       },
     ],
   },

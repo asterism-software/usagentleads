@@ -227,7 +227,7 @@ export const GLOSSARY_TERMS: readonly GlossaryTerm[] = [
 - Apollo, Outreach, Salesloft (sales engagement)
 - Mailchimp, ActiveCampaign (for warmer sequences)
 
-**How USAgentLeads fits in:** Our database provides the contact data you need to run cold email campaigns to agents. Buy a state pack for $49 or the full database for $199, import the CSV into your email tool, and start sending.`,
+**How USAgentLeads fits in:** Our database provides the contact data you need to run cold email campaigns to agents. Buy a state pack for $99 or the full database for $399, import the CSV into your email tool, and start sending.`,
     relatedTerms: ["crm-real-estate", "can-spam"],
     keywords: ["cold email real estate agents", "cold email to realtors", "email outreach real estate", "how to cold email agents", "real estate cold email"],
     relatedBlogSlugs: ["real-estate-cold-email-templates", "cold-outreach-realtors-compliance"],
@@ -330,7 +330,7 @@ export const GLOSSARY_TERMS: readonly GlossaryTerm[] = [
 
 | Factor | Buying | Building |
 |--------|--------|----------|
-| Cost | $49-199 (USAgentLeads) | $1,000+ in labor/tools |
+| Cost | $99-399 (USAgentLeads) | $1,000+ in labor/tools |
 | Time | Instant | Days to weeks |
 | Coverage | All 50 states | Limited to what you scrape |
 | Accuracy | Verified against licensing data | Depends on sources |

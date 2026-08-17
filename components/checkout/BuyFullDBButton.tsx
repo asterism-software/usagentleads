@@ -11,10 +11,10 @@ export function BuyFullDBButton({ className }: { className?: string }) {
 
   const handleBuy = async () => {
     setLoading(true)
-    track("buy_button_clicked", { product: "full_database", price: 199 })
+    track("buy_button_clicked", { product: "full_database", price: 399 })
     track("checkout_initiated", {
       purchase_type: "full_database",
-      price_cents: 19900,
+      price_cents: 39900,
     })
     try {
       const res = await fetch("/api/checkout", {
@@ -27,7 +27,7 @@ export function BuyFullDBButton({ className }: { className?: string }) {
       })
       const data = await res.json()
       if (data.url) {
-        track("checkout_started", { product: "full_database", price: 199 })
+        track("checkout_started", { product: "full_database", price: 399 })
         window.location.href = data.url
         return
       }

@@ -106,7 +106,7 @@ export const PERSONAS: readonly Persona[] = [
       {
         question: "How does pricing compare to ZoomInfo or Apollo?",
         answer:
-          "A single state costs $49. The full 50-state database is $199 — one-time, not a subscription. That's typically 80-90% less than what you'd pay for the same contacts on ZoomInfo, Apollo, or similar platforms.",
+          "A single state costs $99. The full 50-state database is $399 — one-time, not a subscription. That's typically far less than what you'd pay for the same contacts on ZoomInfo, Apollo, or similar platforms.",
       },
     ],
     relatedBlogSlugs: [
@@ -147,7 +147,7 @@ export const PERSONAS: readonly Persona[] = [
       {
         question: "Can I target agents in just my local market?",
         answer:
-          "Yes. Buy individual state packs for $49 each, so you only pay for the markets you serve. If you operate in multiple states, the full database at $199 is usually the better deal.",
+          "Yes. Buy individual state packs for $99 each, so you only pay for the markets you serve. If you operate in five or more states, the full database at $399 is the better deal.",
       },
       {
         question: "Is this data compliant with real estate marketing regulations?",
@@ -203,7 +203,7 @@ export const PERSONAS: readonly Persona[] = [
       {
         question: "How often is the data updated?",
         answer:
-          "The database is refreshed regularly against state licensing records. Typical bounce rates run under 5%. For the freshest data, you can re-purchase periodically — at $199 for all 50 states, the cost is negligible compared to subscription-based alternatives.",
+          "The database is refreshed regularly against state licensing records. Typical bounce rates run under 5%. For the freshest data, you can re-purchase periodically — at $399 for all 50 states, the cost remains low compared to subscription-based alternatives.",
       },
       {
         question: "Can I white-label or resell this data?",
@@ -310,7 +310,7 @@ export const PERSONAS: readonly Persona[] = [
       {
         question: "How does this compare to scraping the data myself?",
         answer:
-          "Building and maintaining scrapers for 50 state licensing sites costs thousands in engineering time, plus ongoing maintenance as sites change. Our database gives you the same result for $199, verified and formatted, with regular updates.",
+          "Building and maintaining scrapers for 50 state licensing sites costs thousands in engineering time, plus ongoing maintenance as sites change. Our database gives you the same result for $399, verified and formatted, with regular updates.",
       },
     ],
     relatedBlogSlugs: [
@@ -336,7 +336,7 @@ export const PERSONAS: readonly Persona[] = [
       "Email agents in your service area introducing your pre-listing services",
       "Offer agents a fast-turnaround guarantee for inspection-repair items",
       "Send seasonal maintenance content agents can forward to their clients",
-      "Build a vendor-referral list one state (or one $49 pack) at a time",
+      "Build a vendor-referral list one state (or one $99 pack) at a time",
     ],
     cta: "Reach the agents who refer work",
     keywords: [
@@ -351,7 +351,7 @@ export const PERSONAS: readonly Persona[] = [
       {
         question: "Can I buy contacts for just my local market?",
         answer:
-          "Yes — state packs are $49 each, so a single-market service business only pays for its own state. Multi-state operations usually do better with the full database at $199.",
+          "Yes — state packs are $99 each, so a single-market service business only pays for its own state. Operations covering five or more states do better with the full database at $399.",
       },
       {
         question: "What's the best first email to send agents?",
@@ -407,7 +407,7 @@ export const PERSONAS: readonly Persona[] = [
       {
         question: "Can I target only the states where I'm licensed?",
         answer:
-          "Yes. Buy individual state packs at $49 each for the states where you hold licenses. Records include the agent's state, so multi-state agencies can also segment the $199 full database by the state column.",
+          "Yes. Buy individual state packs at $99 each for the states where you hold licenses. Records include the agent's state, so multi-state agencies can also segment the $399 full database by the state column.",
       },
       {
         question: "Is emailing agents compliant?",
@@ -453,7 +453,7 @@ export const PERSONAS: readonly Persona[] = [
       {
         question: "I only serve one metro area — is a state list too broad?",
         answer:
-          "The data is segmented by state, and at $49 per state it's the cheapest targeted B2B list you'll find. Many photographers email the full state and let the subject line do the geographic filtering ('Listing photography in the Austin metro — 24-hour turnaround').",
+          "The data is segmented by state, and at $99 per state it remains an affordable targeted B2B list. Many photographers email the full state and let the subject line do the geographic filtering ('Listing photography in the Austin metro — 24-hour turnaround').",
       },
       {
         question: "What should a photography pitch email include?",
@@ -509,7 +509,7 @@ export const PERSONAS: readonly Persona[] = [
       {
         question: "Can I buy just the states we operate in?",
         answer:
-          "Yes. State packs are $49 each, so a regional mover buys only its operating states. National carriers and franchises usually take the full 50-state database at $199.",
+          "Yes. State packs are $99 each, so a regional mover buys only its operating states. National carriers and franchises usually take the full 50-state database at $399.",
       },
       {
         question: "When should I run agent outreach campaigns?",

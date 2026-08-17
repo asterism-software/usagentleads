@@ -1780,7 +1780,7 @@ export function getStateFAQs(
     },
     {
       question: `Where can I find a realtor email list for ${state.name}?`,
-      answer: `USAgentLeads provides a complete ${state.name} realtor email list with ${agentCount.toLocaleString()}+ verified contacts. Download the full email database instantly as a CSV file for $49 one-time.`,
+      answer: `USAgentLeads provides a complete ${state.name} realtor email list with ${agentCount.toLocaleString()}+ verified contacts. Download the full email database instantly as a CSV file for $99 one-time.`,
     },
     {
       question: `How do I find emails and phone numbers of real estate agents in ${state.name}?`,

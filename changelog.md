@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-14
+- [x] increase pricing: state pack $49 -> $99, whole database $199 -> $399
+- [x] remove subscription temporarily
+- [x] implemented the privacy-safe social proof
+
 ## 2026-08-13
 - [x] [deliver the Full Database as dynamically sized, Excel-safe CSV parts](docs/changelog/2026-08-13-excel-safe-full-database-downloads.md)
 - [x] resend the affected Full Database customer a fresh 48-hour link to the balanced two-part ZIP

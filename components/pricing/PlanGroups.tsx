@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Check, X, ArrowRight, ShieldCheck, Download, RefreshCw } from "lucide-react"
 import { BuyFullDBButton } from "@/components/checkout/BuyFullDBButton"
 import { SubscribeButton } from "@/components/checkout/SubscribeButton"
+import { SUBSCRIPTION_PLANS_VISIBLE } from "@/lib/billing/plans"
 import { formatAgentCount } from "@/lib/utils/states"
 
 type GroupId = "onetime" | "subscription"
@@ -50,8 +51,7 @@ function getPlans(totalCount: number, totalEmails: number, totalPhones: number):
       name: "State Pack",
       group: "onetime",
       subtitle: "One state",
-      price: "$49",
-      originalPrice: "$99",
+      price: "$99",
       period: "/ state",
       features: [
         { text: "Single state CSV download", included: true },
@@ -66,8 +66,7 @@ function getPlans(totalCount: number, totalEmails: number, totalPhones: number):
       name: "Full Database",
       group: "onetime",
       subtitle: "All 50 states",
-      price: "$199",
-      originalPrice: "$399",
+      price: "$399",
       period: "one-time",
       badge: "BEST VALUE",
       stats: fullDbStats,
@@ -239,7 +238,7 @@ export function PlanGroups({
   return (
     <div className="max-w-5xl mx-auto">
       <div className="space-y-12">
-        {GROUPS.map((group) => {
+        {GROUPS.filter((group) => SUBSCRIPTION_PLANS_VISIBLE || group.id !== "subscription").map((group) => {
           const groupPlans = plans.filter((p) => p.group === group.id)
           const Icon = group.icon
           return (
