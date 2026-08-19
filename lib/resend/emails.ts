@@ -1,4 +1,11 @@
 import { Resend } from "resend"
+import {
+  EMAIL_SENDERS,
+  SUPPORT_INBOX,
+  SUPPORT_REPLY_TO,
+  formatEmailAddress,
+  type EmailSenderKey,
+} from "@/lib/resend/email-config"
 import { escapeHtml } from "@/lib/utils/security"
 import { unsubscribeUrl } from "@/lib/utils/unsubscribe"
 import { SITE_URL } from "@/lib/utils/site"
@@ -20,8 +27,19 @@ const resend = {
   },
 }
 
-const SUPPORT_EMAIL = "support@usagentleads.com"
-const FROM_EMAIL = `USAgentLeads <${SUPPORT_EMAIL}>`
+function customerEnvelope(sender: EmailSenderKey) {
+  return {
+    from: formatEmailAddress(EMAIL_SENDERS[sender]),
+    replyTo: formatEmailAddress(SUPPORT_REPLY_TO),
+  }
+}
+
+function marketingHeaders(email: string) {
+  return {
+    "List-Unsubscribe": `<${unsubscribeUrl(email)}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  }
+}
 
 // ── Shared email layout ──────────────────────────────────────────────
 
@@ -54,7 +72,7 @@ function emailLayout(body: string): string {
       USAgentLeads
     </p>
     <p style="margin: 0; color: #94a3b8; font-size: 12px;">
-      Questions? Reply to this email or contact us at ${SUPPORT_EMAIL}
+      Questions? Reply to this email or contact us at ${SUPPORT_REPLY_TO.email}
     </p>
   </div>
 </body>
@@ -115,7 +133,7 @@ export async function sendMagicLink({
     </p>`
 
   await resend.emails.send({
-    from: FROM_EMAIL,
+    ...customerEnvelope("accounts"),
     to,
     subject: "Sign in to USAgentLeads",
     html: emailLayout(body),
@@ -156,7 +174,7 @@ export async function sendConfirmSignup({
     </p>`
 
   await resend.emails.send({
-    from: FROM_EMAIL,
+    ...customerEnvelope("accounts"),
     to,
     subject: "Confirm your USAgentLeads account",
     html: emailLayout(body),
@@ -218,7 +236,12 @@ export async function sendDownloadEmail({
     </p>`
 
   await resend.emails.send(
-    { from: FROM_EMAIL, to, subject, html: emailLayout(body) },
+    {
+      ...customerEnvelope("downloads"),
+      to,
+      subject,
+      html: emailLayout(body),
+    },
     idempotencyKey ? { idempotencyKey } : undefined
   )
 }
@@ -263,7 +286,7 @@ export async function sendSubscriptionWelcome({
 
   await resend.emails.send(
     {
-      from: FROM_EMAIL,
+      ...customerEnvelope("billing"),
       to,
       subject: `Welcome to USAgentLeads ${planName}`,
       html: emailLayout(body),
@@ -310,7 +333,7 @@ export async function sendSubscriptionCancelled({
 
   await resend.emails.send(
     {
-      from: FROM_EMAIL,
+      ...customerEnvelope("billing"),
       to,
       subject: "Your USAgentLeads Subscription Has Been Cancelled",
       html: emailLayout(body),
@@ -350,7 +373,7 @@ export async function sendSubscriptionRenewed({
 
   await resend.emails.send(
     {
-      from: FROM_EMAIL,
+      ...customerEnvelope("billing"),
       to,
       subject: "Your USAgentLeads Subscription Has Been Renewed",
       html: emailLayout(body),
@@ -395,9 +418,9 @@ export async function sendContactEmail({
   const safeReplyTo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : undefined
 
   await resend.emails.send({
-    from: FROM_EMAIL,
-    to: SUPPORT_EMAIL,
-    ...(safeReplyTo ? { replyTo: safeReplyTo } : {}),
+    from: formatEmailAddress(EMAIL_SENDERS.support),
+    to: formatEmailAddress(SUPPORT_INBOX),
+    replyTo: safeReplyTo || formatEmailAddress(SUPPORT_REPLY_TO),
     subject: `Contact Form: ${safeSubject} — ${safeName}`,
     html: emailLayout(body),
   })
@@ -455,7 +478,7 @@ export async function sendFreeSampleEmail({
     </p>`
 
   await resend.emails.send({
-    from: FROM_EMAIL,
+    ...customerEnvelope("samples"),
     to,
     subject: "Your Free Sample — 500 Real Estate Agent Contacts",
     html: emailLayout(body),
@@ -504,10 +527,11 @@ export async function sendNurtureImport({ to }: { to: string }) {
     ${unsubFooter(to)}`
 
   await resend.emails.send({
-    from: FROM_EMAIL,
+    ...customerEnvelope("updates"),
     to,
     subject: "How to import your real estate agent list into your CRM",
     html: emailLayout(body),
+    headers: marketingHeaders(to),
   })
 }
 
@@ -537,10 +561,11 @@ export async function sendNurtureQuality({ to }: { to: string }) {
     ${unsubFooter(to)}`
 
   await resend.emails.send({
-    from: FROM_EMAIL,
+    ...customerEnvelope("updates"),
     to,
     subject: "Not sure the data's any good? Here's how to check",
     html: emailLayout(body),
+    headers: marketingHeaders(to),
   })
 }
 
@@ -595,10 +620,11 @@ export async function sendNurtureFinal({ to, coupon }: { to: string; coupon?: Nu
     ${unsubFooter(to)}`
 
   await resend.emails.send({
-    from: FROM_EMAIL,
+    ...customerEnvelope("updates"),
     to,
     subject,
     html: emailLayout(body),
+    headers: marketingHeaders(to),
   })
 }
 
@@ -634,7 +660,7 @@ export async function sendPaymentFailed({
 
   await resend.emails.send(
     {
-      from: FROM_EMAIL,
+      ...customerEnvelope("billing"),
       to,
       subject: "Action Required: Payment Failed for USAgentLeads",
       html: emailLayout(body),

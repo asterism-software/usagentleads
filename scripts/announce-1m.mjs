@@ -26,12 +26,15 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
+import {
+  EMAIL_SENDERS,
+  SUPPORT_REPLY_TO,
+  formatEmailAddress,
+} from "../lib/resend/email-config.ts"
 import { loadEnv } from "./ingest/lib.mjs"
 
-const TEST_RECIPIENT = "nabeelsharafat@gmail.com"
+const TEST_RECIPIENT = "ricciflow.io@gmail.com"
 const SITE_URL = "https://www.usagentleads.com"
-const SUPPORT_EMAIL = "support@usagentleads.com"
-const FROM = `Nabeel from USAgentLeads <${SUPPORT_EMAIL}>`
 const SUBJECT = "We just crossed 1,000,000 real estate agent contacts"
 
 // Already-sent log makes --send safe to re-run after a partial failure.
@@ -135,9 +138,9 @@ async function buildAudience() {
 
 async function sendOne(resend, to) {
   const { error } = await resend.emails.send({
-    from: FROM,
+    from: formatEmailAddress(EMAIL_SENDERS.updates),
     to,
-    replyTo: SUPPORT_EMAIL,
+    replyTo: formatEmailAddress(SUPPORT_REPLY_TO),
     subject: SUBJECT,
     text: textBody(to),
     html: htmlBody(to),

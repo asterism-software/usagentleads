@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-19
+- [x] Sender refactor
+- [x] update Resend API key
+
 ## 2026-08-14
 - [x] increase pricing: state pack $49 -> $99, whole database $199 -> $399
 - [x] remove subscription temporarily
