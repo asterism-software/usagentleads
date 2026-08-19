@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   send: vi.fn(),
+  getAgentCount: vi.fn(),
+  formatAgentCountLabel: vi.fn(),
 }))
 
 vi.mock("resend", () => ({
@@ -10,8 +12,8 @@ vi.mock("resend", () => ({
   },
 }))
 vi.mock("@/lib/utils/agent-count", () => ({
-  getAgentCount: vi.fn(),
-  formatAgentCountLabel: vi.fn(),
+  getAgentCount: mocks.getAgentCount,
+  formatAgentCountLabel: mocks.formatAgentCountLabel,
 }))
 
 import {
@@ -29,6 +31,8 @@ describe("sendDownloadEmail", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.send.mockResolvedValue({ data: { id: "email-id" }, error: null })
+    mocks.getAgentCount.mockResolvedValue(1_100_000)
+    mocks.formatAgentCountLabel.mockReturnValue("1.1M+")
   })
 
   it("explains the Excel-safe multipart ZIP for Full Database purchases", async () => {
@@ -46,10 +50,10 @@ describe("sendDownloadEmail", () => {
     )
     expect(message.replyTo).toBe(SUPPORT_REPLY_TO)
     expect(message.subject).toContain("Full USA")
-    expect(message.html).toContain("Download Your Files")
+    expect(message.html).toContain("Download database files")
     expect(message.html).toContain("ZIP archive with numbered CSV parts")
-    expect(message.html).toContain("open each part separately")
-    expect(message.html).toContain("ZIP archive with CSV parts")
+    expect(message.html).toContain("open or import each part separately")
+    expect(message.text).toContain("numbered CSV parts")
     expect(options).toEqual({ idempotencyKey: "download:session" })
   })
 
@@ -62,9 +66,9 @@ describe("sendDownloadEmail", () => {
     })
 
     const [message] = mocks.send.mock.calls[0]
-    expect(message.html).toContain("Download Your CSV")
-    expect(message.html).toContain("File format: CSV")
-    expect(message.html).not.toContain("worksheet to 1,048,576 rows")
+    expect(message.html).toContain("Download CSV")
+    expect(message.html).toContain("CSV file")
+    expect(message.html).not.toContain("Excel-ready archive")
   })
 })
 
@@ -72,7 +76,10 @@ describe("email sender identities", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.UNSUBSCRIBE_SECRET = "email-test-secret"
+    process.env.EMAIL_POSTAL_ADDRESS = "123 Test Street, Test City, TS 00000"
     mocks.send.mockResolvedValue({ data: { id: "email-id" }, error: null })
+    mocks.getAgentCount.mockResolvedValue(1_100_000)
+    mocks.formatAgentCountLabel.mockReturnValue("1.1M+")
   })
 
   it("uses the accounts identity for authentication emails", async () => {
@@ -110,6 +117,7 @@ describe("email sender identities", () => {
     )
     expect(message.replyTo).toBe(SUPPORT_REPLY_TO)
     expect(message.headers).toBeUndefined()
+    expect(message.text).toContain("500 real estate agent records")
   })
 
   it("uses the updates identity and one-click opt-out for nurture email", async () => {
@@ -126,6 +134,8 @@ describe("email sender identities", () => {
       ),
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
     })
+    expect(message.html).toContain("Advertisement")
+    expect(message.html).toContain("123 Test Street")
   })
 
   it("routes internal contact notifications to support and replies to the customer", async () => {

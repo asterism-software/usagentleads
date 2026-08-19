@@ -375,6 +375,7 @@ template; never commit the corresponding secret values.
 | `STRIPE_SECRET_KEY` | Checkout, Portal, subscription, and promotion-code API calls | Billing routes fail |
 | `STRIPE_WEBHOOK_SECRET` | Verify `/api/webhooks/stripe` signatures | Paid orders and subscriptions never sync |
 | `RESEND_API_KEY` | All transactional + promotional email | Buyers get no download link |
+| `EMAIL_POSTAL_ADDRESS` | Valid postal address shown in promotional email footers | Nurture and campaign sends fail closed |
 | `NEXT_PUBLIC_APP_URL` | Absolute URLs in emails | Broken download links |
 | `CRON_SECRET` | Bearer auth on `/api/cron/*` | All crons 401 (fails closed) |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Rate limiting | Public endpoints unprotected |
@@ -409,7 +410,11 @@ workflow-driven jobs stop silently. Rotating it means updating both places at on
 4. **Resend** — verify `mail.usagentleads.com` as the sending domain (SPF/DKIM),
    publish a DMARC policy that covers it, then copy the API key. Sender identities
    are centralized in [email-config.ts](lib/resend/email-config.ts); all customer
-   replies route to the monitored `support@usagentleads.com` inbox.
+   replies route to the monitored `support@usagentleads.com` inbox. Email markup,
+   plain-text alternatives, and content live in
+   [email-templates.ts](lib/resend/email-templates.ts). Configure
+   `EMAIL_POSTAL_ADDRESS` with the business's valid postal address before enabling
+   any nurture or campaign send.
 5. **Upstash Redis** and **PostHog** — create both, copy credentials.
 6. **Vercel** — import the GitHub repo, set every variable above, deploy.
 7. **Domain** — add apex *and* `www`. The app 308-redirects apex → `www`

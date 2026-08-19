@@ -2,10 +2,9 @@
 // One-off campaign: announce crossing 1,000,000 contacts to every captured
 // sample lead and past purchaser.
 //
-// Deliverability notes (the goal is Gmail's Primary tab, not Promotions):
-//  - plain note styling — no banner, no buttons, no images, minimal
-//    links. Heavy branded HTML is the strongest Promotions-tab signal.
-//  - both a text/plain part and matching minimal HTML.
+// Deliverability notes:
+//  - uses the same restrained, email-safe template system as product email.
+//  - includes both text/plain and matching HTML parts.
 //  - recognizable brand sender, reply-able support address.
 //  - List-Unsubscribe + one-click POST headers (Gmail bulk-sender rules).
 //  - make sure open/click tracking is OFF for the domain in the Resend
@@ -31,11 +30,11 @@ import {
   SUPPORT_REPLY_TO,
   formatEmailAddress,
 } from "../lib/resend/email-config.ts"
+import { milestoneAnnouncementTemplate } from "../lib/resend/email-templates.ts"
 import { loadEnv } from "./ingest/lib.mjs"
 
 const TEST_RECIPIENT = "ricciflow.io@gmail.com"
 const SITE_URL = "https://www.usagentleads.com"
-const SUBJECT = "We just crossed 1,000,000 real estate agent contacts"
 
 // Already-sent log makes --send safe to re-run after a partial failure.
 const SENT_LOG = path.join(
@@ -60,45 +59,6 @@ function unsubscribeUrl(email) {
     .digest("hex")
     .slice(0, 32)
   return `${SITE_URL}/api/unsubscribe?e=${encodeURIComponent(email.trim().toLowerCase())}&t=${token}`
-}
-
-// ── Email content ────────────────────────────────────────────────────
-
-function textBody(email) {
-  return `Hi there,
-
-USAgentLeads here. Quick note — the database just passed a big milestone: over 1,000,000 verified real estate agent contacts, covering all 50 states plus Washington, DC.
-
-The newest additions came from complete state licensing data for Michigan and Virginia, along with refreshed records across the rest of the country. Every record has the same four clean fields: full name, email, phone, and state.
-
-If you've been meaning to try the data, now is a good time — a single state is $99 and the full 1M+ database is $399, both instant CSV downloads backed by a 30-day money-back guarantee:
-
-${SITE_URL}/pricing
-
-And if you've already purchased from us: thank you — you helped get it to a million. If there's a state, field, or format you wish we covered, just hit reply. I read every response.
-
-— The USAgentLeads Team
-
---
-You're receiving this because you downloaded a free sample or made a purchase from USAgentLeads.
-Unsubscribe: ${unsubscribeUrl(email)}
-`
-}
-
-function htmlBody(email) {
-  const p = (s) => `<p style="margin:0 0 16px 0;">${s}</p>`
-  return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:15px;line-height:1.6;color:#1a1a1a;max-width:600px;margin:0 auto;padding:24px 16px;">
-${p("Hi there,")}
-${p("USAgentLeads here. Quick note &mdash; the database just passed a big milestone: <strong>over 1,000,000 verified real estate agent contacts</strong>, covering all 50 states plus Washington, DC.")}
-${p("The newest additions came from complete state licensing data for Michigan and Virginia, along with refreshed records across the rest of the country. Every record has the same four clean fields: full name, email, phone, and state.")}
-${p(`If you've been meaning to try the data, now is a good time &mdash; a single state is $99 and the full 1M+ database is $399, both instant CSV downloads backed by a 30-day money-back guarantee: <a href="${SITE_URL}/pricing" style="color:#1D4ED8;">usagentleads.com/pricing</a>`)}
-${p("And if you've already purchased from us: thank you &mdash; you helped get it to a million. If there's a state, field, or format you wish we covered, just hit reply. I read every response.")}
-${p("&mdash; The USAgentLeads Team")}
-<p style="margin:28px 0 0 0;padding-top:16px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;">
-You're receiving this because you downloaded a free sample or made a purchase from USAgentLeads.
-<a href="${unsubscribeUrl(email)}" style="color:#94a3b8;">Unsubscribe</a>
-</p>
-</div>`
 }
 
 // ── Audience ─────────────────────────────────────────────────────────
@@ -136,15 +96,27 @@ async function buildAudience() {
 // ── Send ─────────────────────────────────────────────────────────────
 
 async function sendOne(resend, to) {
+  const postalAddress = process.env.EMAIL_POSTAL_ADDRESS?.trim()
+  if (!postalAddress) {
+    throw new Error("EMAIL_POSTAL_ADDRESS must be configured before sending promotional email")
+  }
+  const unsubscribe = unsubscribeUrl(to)
+  const template = milestoneAnnouncementTemplate({
+    marketing: {
+      unsubscribeUrl: unsubscribe,
+      postalAddress,
+      reason: "You requested a free sample or completed a purchase from USAgentLeads.",
+    },
+  })
   const { error } = await resend.emails.send({
     from: formatEmailAddress(EMAIL_SENDERS.updates),
     to,
     replyTo: formatEmailAddress(SUPPORT_REPLY_TO),
-    subject: SUBJECT,
-    text: textBody(to),
-    html: htmlBody(to),
+    subject: template.subject,
+    text: template.text,
+    html: template.html,
     headers: {
-      "List-Unsubscribe": `<${unsubscribeUrl(to)}>`,
+      "List-Unsubscribe": `<${unsubscribe}>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
     },
   })
