@@ -3,10 +3,10 @@
 // sample lead and past purchaser.
 //
 // Deliverability notes (the goal is Gmail's Primary tab, not Promotions):
-//  - plain personal-note styling — no banner, no buttons, no images, minimal
+//  - plain note styling — no banner, no buttons, no images, minimal
 //    links. Heavy branded HTML is the strongest Promotions-tab signal.
 //  - both a text/plain part and matching minimal HTML.
-//  - personal from-name, reply-able address.
+//  - recognizable brand sender, reply-able support address.
 //  - List-Unsubscribe + one-click POST headers (Gmail bulk-sender rules).
 //  - make sure open/click tracking is OFF for the domain in the Resend
 //    dashboard — rewritten tracking links push mail to Promotions.
@@ -67,7 +67,7 @@ function unsubscribeUrl(email) {
 function textBody(email) {
   return `Hi there,
 
-Nabeel here, from USAgentLeads. Quick note — the database just passed a big milestone: over 1,000,000 verified real estate agent contacts, covering all 50 states plus Washington, DC.
+USAgentLeads here. Quick note — the database just passed a big milestone: over 1,000,000 verified real estate agent contacts, covering all 50 states plus Washington, DC.
 
 The newest additions came from complete state licensing data for Michigan and Virginia, along with refreshed records across the rest of the country. Every record has the same four clean fields: full name, email, phone, and state.
 
@@ -77,8 +77,7 @@ ${SITE_URL}/pricing
 
 And if you've already purchased from us: thank you — you helped get it to a million. If there's a state, field, or format you wish we covered, just hit reply. I read every response.
 
-— Nabeel
-Founder, USAgentLeads
+— The USAgentLeads Team
 
 --
 You're receiving this because you downloaded a free sample or made a purchase from USAgentLeads.
@@ -90,11 +89,11 @@ function htmlBody(email) {
   const p = (s) => `<p style="margin:0 0 16px 0;">${s}</p>`
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:15px;line-height:1.6;color:#1a1a1a;max-width:600px;margin:0 auto;padding:24px 16px;">
 ${p("Hi there,")}
-${p("Nabeel here, from USAgentLeads. Quick note &mdash; the database just passed a big milestone: <strong>over 1,000,000 verified real estate agent contacts</strong>, covering all 50 states plus Washington, DC.")}
+${p("USAgentLeads here. Quick note &mdash; the database just passed a big milestone: <strong>over 1,000,000 verified real estate agent contacts</strong>, covering all 50 states plus Washington, DC.")}
 ${p("The newest additions came from complete state licensing data for Michigan and Virginia, along with refreshed records across the rest of the country. Every record has the same four clean fields: full name, email, phone, and state.")}
 ${p(`If you've been meaning to try the data, now is a good time &mdash; a single state is $99 and the full 1M+ database is $399, both instant CSV downloads backed by a 30-day money-back guarantee: <a href="${SITE_URL}/pricing" style="color:#1D4ED8;">usagentleads.com/pricing</a>`)}
 ${p("And if you've already purchased from us: thank you &mdash; you helped get it to a million. If there's a state, field, or format you wish we covered, just hit reply. I read every response.")}
-${p("&mdash; Nabeel<br>Founder, USAgentLeads")}
+${p("&mdash; The USAgentLeads Team")}
 <p style="margin:28px 0 0 0;padding-top:16px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;">
 You're receiving this because you downloaded a free sample or made a purchase from USAgentLeads.
 <a href="${unsubscribeUrl(email)}" style="color:#94a3b8;">Unsubscribe</a>

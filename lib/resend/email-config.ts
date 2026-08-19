@@ -30,7 +30,7 @@ export const EMAIL_SENDERS = {
   },
   updates: {
     email: "updates@mail.usagentleads.com",
-    name: "Nabeel from USAgentLeads",
+    name: "USAgentLeads Updates",
   },
 } as const satisfies Record<string, EmailAddress>
 

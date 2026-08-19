@@ -117,7 +117,7 @@ describe("email sender identities", () => {
 
     const [message] = mocks.send.mock.calls[0]
     expect(message.from).toBe(
-      "Nabeel from USAgentLeads <updates@mail.usagentleads.com>"
+      "USAgentLeads Updates <updates@mail.usagentleads.com>"
     )
     expect(message.replyTo).toBe(SUPPORT_REPLY_TO)
     expect(message.headers).toEqual({
