@@ -91,9 +91,9 @@ describe("unified email templates", () => {
     })
 
     expect(template.subject).toBe("Your California data is ready")
-    expect(template.html).toContain("up to 10 downloads")
+    expect(template.html).toContain("up to 5 downloads")
     expect(template.html).toContain("Opening the page does not use a download")
-    expect(template.text).toContain("allows up to 10 downloads")
+    expect(template.text).toContain("allows up to 5 downloads")
     expect(template.html).toContain("https://www.usagentleads.com/download?token=test")
   })
 })

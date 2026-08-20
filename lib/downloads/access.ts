@@ -6,7 +6,7 @@ import {
   LEGACY_FULL_DATABASE_GZIP_PATH,
 } from "@/lib/csv/excel-safe-archive"
 
-export const DEFAULT_DOWNLOAD_LIMIT = 10
+export const DEFAULT_DOWNLOAD_LIMIT = 5
 export const STATE_SIGNED_URL_SECONDS = 15 * 60
 export const FULL_DATABASE_SIGNED_URL_SECONDS = 60 * 60
 

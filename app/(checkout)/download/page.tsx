@@ -5,7 +5,6 @@ import {
   AlertCircle,
   CheckCircle,
   Clock3,
-  Download,
   FileSpreadsheet,
   RefreshCw,
   ShieldCheck,
@@ -48,9 +47,6 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
       : state
         ? `${state.name} real estate agent list`
         : "Real estate agent data"
-  const remaining = purchase
-    ? Math.max(0, purchase.download_limit - purchase.download_count)
-    : 0
   const expiresAt = purchase?.expires_at
     ? new Intl.DateTimeFormat("en-US", {
         month: "short",
@@ -103,11 +99,7 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
                       <dd className="mt-1 text-[14px] font-medium text-ink">{productName}</dd>
                     </div>
                   </div>
-                  <div className="grid gap-3 px-4 py-4 text-[13px] text-body sm:grid-cols-2">
-                    <div className="flex items-center gap-2">
-                      <Download className="h-4 w-4 text-accent" />
-                      {remaining} of {purchase.download_limit} downloads remaining
-                    </div>
+                  <div className="px-4 py-4 text-[13px] text-body">
                     <div className="flex items-center gap-2">
                       <Clock3 className="h-4 w-4 text-accent" />
                       {expiresAt ? `Available until ${expiresAt}` : "No scheduled expiration"}

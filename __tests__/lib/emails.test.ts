@@ -51,7 +51,7 @@ describe("sendDownloadEmail", () => {
     expect(message.replyTo).toBe(SUPPORT_REPLY_TO)
     expect(message.subject).toContain("Full USA")
     expect(message.html).toContain("Open secure download page")
-    expect(message.html).toContain("up to 10 downloads")
+    expect(message.html).toContain("up to 5 downloads")
     expect(message.html).toContain("ZIP archive with numbered CSV parts")
     expect(message.html).toContain("open or import each part separately")
     expect(message.text).toContain("numbered CSV parts")
@@ -68,7 +68,7 @@ describe("sendDownloadEmail", () => {
 
     const [message] = mocks.send.mock.calls[0]
     expect(message.html).toContain("Open secure download page")
-    expect(message.html).toContain("up to 10 downloads")
+    expect(message.html).toContain("up to 5 downloads")
     expect(message.html).toContain("CSV file")
     expect(message.html).not.toContain("Excel-ready archive")
   })

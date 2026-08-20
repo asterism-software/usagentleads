@@ -31,7 +31,7 @@ function purchase(overrides: Record<string, unknown> = {}) {
     status: "completed",
     expires_at: "2099-01-01T00:00:00.000Z",
     download_count: 1,
-    download_limit: 10,
+    download_limit: 5,
     ...overrides,
   }
 }
@@ -70,7 +70,7 @@ describe("download access", () => {
         {
           purchase_id: "purchase-id",
           authorized_download_count: 2,
-          authorized_download_limit: 10,
+          authorized_download_limit: 5,
         },
       ],
       error: null,
@@ -102,7 +102,7 @@ describe("download access", () => {
         error: null,
       })
       .mockResolvedValueOnce({
-        data: purchase({ download_count: 10 }),
+        data: purchase({ download_count: 5 }),
         error: null,
       })
 

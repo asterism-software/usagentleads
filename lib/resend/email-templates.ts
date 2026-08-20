@@ -293,14 +293,14 @@ export function downloadReadyTemplate({
         { label: "Product", value: productName },
         { label: "Format", value: format },
         { label: "Fields", value: "Name · Email · Phone · State" },
-        { label: "Access", value: "Expires in 48 hours · up to 10 downloads" },
+        { label: "Access", value: "Expires in 48 hours · up to 5 downloads" },
       ]) +
       archiveNote +
       callout(
         "Scanner-safe access",
         "The button opens a secure download page. Opening the page does not use a download; the file is authorized only after you press Download."
       ),
-    bodyText: `Your purchase is confirmed.\n\nProduct: ${productName}\nFormat: ${format}\nFields: Name, Email, Phone, State\nAccess: expires in 48 hours and allows up to 10 downloads. The secure page does not use a download until you press Download.${isFullDatabase ? "\n\nThe ZIP contains numbered CSV parts so each file opens safely in Excel." : ""}`,
+    bodyText: `Your purchase is confirmed.\n\nProduct: ${productName}\nFormat: ${format}\nFields: Name, Email, Phone, State\nAccess: expires in 48 hours and allows up to 5 downloads. The secure page does not use a download until you press Download.${isFullDatabase ? "\n\nThe ZIP contains numbered CSV parts so each file opens safely in Excel." : ""}`,
     cta: { label: "Open secure download page", url: downloadUrl },
   })
 }
