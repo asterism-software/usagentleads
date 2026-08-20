@@ -24,7 +24,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https: https://www.googletagmanager.com https://www.google-analytics.com https://www.facebook.com",
-      "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net https://www.facebook.com",
+      "connect-src 'self' https://usagentleads.com https://www.usagentleads.com https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net https://www.facebook.com",
       "frame-src https://www.facebook.com",
       // Hardening: block plugins, lock down <base>, disallow framing & off-site
       // form posts. Scripts still need 'unsafe-inline' (inline gtag/fbq/JSON-LD),

@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { getDownloadAccess } from "@/lib/downloads/access"
 import { getStateByCode } from "@/lib/utils/states"
+import DownloadButton from "@/components/checkout/DownloadButton"
 
 export const dynamic = "force-dynamic"
 
@@ -114,13 +115,10 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
                   </div>
                 </dl>
 
-                <form action="/api/download" method="post" className="mt-7">
-                  <input type="hidden" name="token" value={token} />
-                  <button type="submit" className="btn-primary w-full justify-center py-3.5 text-[15px]">
-                    <Download size={17} />
-                    Download {purchase.purchase_type === "full_database" ? "database files" : "CSV file"}
-                  </button>
-                </form>
+                <DownloadButton
+                  token={token}
+                  label={`Download ${purchase.purchase_type === "full_database" ? "database files" : "CSV file"}`}
+                />
 
                 <p className="mt-4 flex items-center justify-center gap-2 text-center text-[12px] text-tertiary">
                   <ShieldCheck className="h-4 w-4" />

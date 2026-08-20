@@ -11,6 +11,33 @@ function downloadPageUrl(request: Request, token: string, status?: string): URL 
   return url
 }
 
+function expectsJson(request: Request): boolean {
+  return request.headers.get("accept")?.includes("application/json") ?? false
+}
+
+function jsonHeaders(request: Request): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Cache-Control": "private, no-store",
+  }
+  const origin = request.headers.get("origin")
+  if (origin) {
+    // This route reaches Vercel at www after Cloudflare preserves an apex POST.
+    // isSameOriginRequest has already restricted this to a first-party origin.
+    headers["Access-Control-Allow-Origin"] = origin
+    headers.Vary = "Origin"
+  }
+  return headers
+}
+
+const authorizationErrors: Record<string, string> = {
+  invalid: "This download link is invalid. Reopen the complete link from your email.",
+  pending: "Your purchase is still being prepared. Please try again shortly.",
+  expired: "This download link has expired. Contact support for a refreshed link.",
+  limit_reached: "This link has reached its download allowance. Contact support for help.",
+  storage_error: "The file service is temporarily unavailable. Your allowance was not used; please try again.",
+  claim_conflict: "Another download request was processed at the same time. Please try again.",
+}
+
 // Backward compatibility for links already delivered by email. GET is now
 // scanner-safe: it only opens the download page and never consumes access.
 export async function GET(request: Request) {
@@ -42,13 +69,22 @@ export async function POST(request: Request) {
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
   const { success } = await rateLimit(`download:${ip}`, 15)
   if (!success) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment and try again." },
+      { status: 429, headers: jsonHeaders(request) }
+    )
   }
 
   const formData = await request.formData()
   const tokenValue = formData.get("token")
   const token = typeof tokenValue === "string" ? tokenValue : ""
   if (!isValidUUID(token)) {
+    if (expectsJson(request)) {
+      return NextResponse.json(
+        { error: authorizationErrors.invalid, reason: "invalid" },
+        { status: 400, headers: jsonHeaders(request) }
+      )
+    }
     return NextResponse.redirect(new URL("/download?status=invalid", request.url), 303)
   }
 
@@ -61,9 +97,26 @@ export async function POST(request: Request) {
   })
 
   if (!authorization.ok) {
+    if (expectsJson(request)) {
+      const status = authorization.reason === "storage_error" ? 503 : 409
+      return NextResponse.json(
+        {
+          error: authorizationErrors[authorization.reason],
+          reason: authorization.reason,
+        },
+        { status, headers: jsonHeaders(request) }
+      )
+    }
     return NextResponse.redirect(
       downloadPageUrl(request, token, authorization.reason),
       303
+    )
+  }
+
+  if (expectsJson(request)) {
+    return NextResponse.json(
+      { downloadUrl: authorization.signedUrl },
+      { headers: jsonHeaders(request) }
     )
   }
 

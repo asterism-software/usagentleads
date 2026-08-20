@@ -76,11 +76,19 @@ describe("/api/download", () => {
         origin: "https://usagentleads.com",
         referer: `https://usagentleads.com/download?token=${TOKEN}`,
         "sec-fetch-site": "same-origin",
+        accept: "application/json",
       })
     )
 
-    expect(response.status).toBe(303)
-    expect(response.headers.get("location")).toBe("https://storage.example/CA.csv")
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({
+      downloadUrl: "https://storage.example/CA.csv",
+    })
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store")
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
+      "https://usagentleads.com"
+    )
+    expect(response.headers.get("Vary")).toBe("Origin")
     expect(mocks.authorizeDownload).toHaveBeenCalledOnce()
   })
 
@@ -96,6 +104,22 @@ describe("/api/download", () => {
     expect(response.headers.get("location")).toBe(
       `https://www.usagentleads.com/download?token=${TOKEN}&status=storage_error`
     )
+  })
+
+  it("returns a recoverable JSON error to the interactive button", async () => {
+    mocks.authorizeDownload.mockResolvedValueOnce({
+      ok: false,
+      reason: "storage_error",
+    })
+
+    const response = await POST(postRequest(TOKEN, { accept: "application/json" }))
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({
+      error:
+        "The file service is temporarily unavailable. Your allowance was not used; please try again.",
+      reason: "storage_error",
+    })
   })
 
   it("rejects browser cross-site POST requests", async () => {
