@@ -70,6 +70,20 @@ describe("/api/download", () => {
     })
   })
 
+  it("accepts the apex-domain form POST when the proxy reports www", async () => {
+    const response = await POST(
+      postRequest(TOKEN, {
+        origin: "https://usagentleads.com",
+        referer: `https://usagentleads.com/download?token=${TOKEN}`,
+        "sec-fetch-site": "same-origin",
+      })
+    )
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get("location")).toBe("https://storage.example/CA.csv")
+    expect(mocks.authorizeDownload).toHaveBeenCalledOnce()
+  })
+
   it("returns customers to the page with a recoverable failure state", async () => {
     mocks.authorizeDownload.mockResolvedValueOnce({
       ok: false,

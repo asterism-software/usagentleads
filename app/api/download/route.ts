@@ -25,6 +25,16 @@ export async function GET(request: Request) {
 // link previewers normally issue GET/HEAD requests and cannot consume access.
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) {
+    console.warn(JSON.stringify({
+      level: "warning",
+      message: "Download request origin rejected",
+      requestOrigin: new URL(request.url).origin,
+      origin: request.headers.get("origin"),
+      fetchSite: request.headers.get("sec-fetch-site"),
+      forwardedHost: request.headers.get("x-forwarded-host"),
+      host: request.headers.get("host"),
+      requestId: request.headers.get("x-vercel-id"),
+    }))
     return NextResponse.json({ error: "Invalid request origin" }, { status: 403 })
   }
 

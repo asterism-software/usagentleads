@@ -24,6 +24,40 @@ describe("isSameOriginRequest", () => {
     const request = new Request("https://example.com/api/settings", { headers: { "sec-fetch-site": "cross-site" } })
     expect(isSameOriginRequest(request)).toBe(false)
   })
+
+  it("accepts a browser-declared same-origin request behind a canonicalizing proxy", () => {
+    const request = new Request("https://www.usagentleads.com/api/download", {
+      headers: {
+        origin: "https://usagentleads.com",
+        "sec-fetch-site": "same-origin",
+      },
+    })
+    expect(isSameOriginRequest(request)).toBe(true)
+  })
+
+  it("accepts the public apex and www origins as first-party aliases", () => {
+    const apexRequest = new Request("https://internal-proxy.example/api/download", {
+      headers: { origin: "https://usagentleads.com" },
+    })
+    const wwwRequest = new Request("https://internal-proxy.example/api/download", {
+      headers: { origin: "https://www.usagentleads.com" },
+    })
+    expect(isSameOriginRequest(apexRequest)).toBe(true)
+    expect(isSameOriginRequest(wwwRequest)).toBe(true)
+  })
+
+  it("rejects unrelated and lookalike origins", () => {
+    for (const origin of [
+      "https://evil.usagentleads.com",
+      "https://usagentleads.com.attacker.example",
+      "https://attacker.example",
+    ]) {
+      const request = new Request("https://www.usagentleads.com/api/download", {
+        headers: { origin },
+      })
+      expect(isSameOriginRequest(request)).toBe(false)
+    }
+  })
 })
 
 describe("sanitizeSearchInput", () => {

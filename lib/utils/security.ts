@@ -1,5 +1,6 @@
 import crypto from "crypto"
 import { VALID_STATE_CODES } from "./states"
+import { SITE_URL } from "./site"
 
 /**
  * Constant-time string comparison that never throws.
@@ -58,6 +59,10 @@ export function isValidUUID(str: string): boolean {
 export function isSameOriginRequest(request: Request): boolean {
   const fetchSite = request.headers.get("sec-fetch-site")
   if (fetchSite === "cross-site") return false
+  // Fetch Metadata is set by the browser and cannot be overridden by page
+  // JavaScript. Prefer it when present because reverse proxies can expose a
+  // different canonical host in request.url (for example apex vs www).
+  if (fetchSite === "same-origin") return true
 
   let targetOrigin: string
   try {
@@ -73,7 +78,24 @@ export function isSameOriginRequest(request: Request): boolean {
   if (!source) return fetchSite !== "cross-site"
 
   try {
-    return new URL(source).origin === targetOrigin
+    const sourceOrigin = new URL(source).origin
+    if (sourceOrigin === targetOrigin) return true
+
+    // Cloudflare/Vercel may canonicalize usagentleads.com and
+    // www.usagentleads.com differently between the browser and Request URL.
+    // Both are first-party origins; unrelated subdomains remain rejected.
+    const canonicalUrl = new URL(
+      process.env.NEXT_PUBLIC_APP_URL || SITE_URL
+    )
+    const canonicalOrigins = new Set([canonicalUrl.origin])
+    if (canonicalUrl.hostname.startsWith("www.")) {
+      canonicalUrl.hostname = canonicalUrl.hostname.slice(4)
+    } else {
+      canonicalUrl.hostname = `www.${canonicalUrl.hostname}`
+    }
+    canonicalOrigins.add(canonicalUrl.origin)
+
+    return canonicalOrigins.has(sourceOrigin)
   } catch {
     return false
   }
