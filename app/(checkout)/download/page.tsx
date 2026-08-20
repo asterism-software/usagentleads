@@ -52,8 +52,11 @@ export default async function DownloadPage({ searchParams }: DownloadPageProps) 
     : 0
   const expiresAt = purchase?.expires_at
     ? new Intl.DateTimeFormat("en-US", {
-        dateStyle: "medium",
-        timeStyle: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
         timeZoneName: "short",
       }).format(new Date(purchase.expires_at))
     : null
