@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServiceClient } from "@/lib/supabase/server"
+import { getDownloadAccess } from "@/lib/downloads/access"
 import { isValidUUID } from "@/lib/utils/security"
 import { rateLimit } from "@/lib/utils/rateLimit"
 
-const db = () => createServiceClient().schema("usagentleads")
-
-// GET — look up a purchase by page_token (only the buyer has this token)
+// GET — look up a purchase by page_token (only the buyer has this token).
+// This read never authorizes or consumes a download.
 export async function GET(request: NextRequest) {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
@@ -19,25 +18,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid token" }, { status: 400 })
   }
 
-  const { data: purchase } = await db()
-    .from("purchases")
-    .select("download_token, purchase_type, state_code, status, token_used, expires_at")
-    .eq("page_token", pageToken)
-    .single()
-
-  if (!purchase) {
+  const access = await getDownloadAccess(pageToken)
+  if (!access.purchase) {
     return NextResponse.json({ error: "Purchase not found" }, { status: 404 })
   }
 
-  const expired = purchase.expires_at && new Date(purchase.expires_at) < new Date()
-
   return NextResponse.json({
-    status: purchase.status,
-    purchaseType: purchase.purchase_type,
-    stateCode: purchase.state_code,
-    downloadAvailable: purchase.status === "completed" && !purchase.token_used && !expired,
-    downloadUrl: purchase.status === "completed" && !purchase.token_used && !expired
-      ? `/api/download?token=${purchase.download_token}`
-      : null,
+    status: access.purchase.status,
+    purchaseType: access.purchase.purchase_type,
+    stateCode: access.purchase.state_code,
+    downloadAvailable: access.status === "available",
+    downloadUrl:
+      access.status === "available"
+        ? `/download?token=${encodeURIComponent(pageToken)}`
+        : null,
+    downloadsRemaining: Math.max(
+      0,
+      access.purchase.download_limit - access.purchase.download_count
+    ),
+    downloadLimit: access.purchase.download_limit,
+    expiresAt: access.purchase.expires_at,
   })
 }

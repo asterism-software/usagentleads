@@ -211,7 +211,7 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
     })
     .eq("id", purchaseId)
     .eq("billing_provider", "stripe")
-    .select("download_token, fulfillment_email_sent_at")
+    .select("page_token, download_token, fulfillment_email_sent_at")
     .single()
 
   if (error || !purchase) {
@@ -251,7 +251,8 @@ async function fulfillCheckout(sessionId: string): Promise<void> {
   if (!purchase.fulfillment_email_sent_at) {
     const productName = purchaseType === "state" ? state?.name || stateCode || "State" : "Full USA"
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || SITE_URL).replace(/\/$/, "")
-    const downloadUrl = `${appUrl}/api/download?token=${purchase.download_token}`
+    const accessToken = purchase.page_token || purchase.download_token
+    const downloadUrl = `${appUrl}/download?token=${accessToken}`
 
     await sendDownloadEmail({
       to: customerEmail,

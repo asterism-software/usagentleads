@@ -97,7 +97,11 @@ describe("POST /api/webhooks/stripe", () => {
     purchaseUpdates = []
     mockPurchaseUpdate = vi.fn((values: Record<string, unknown>) => {
       const fulfilledPurchase = values.status === "completed"
-        ? { download_token: "download-token", fulfillment_email_sent_at: null }
+        ? {
+            page_token: "page-token",
+            download_token: "download-token",
+            fulfillment_email_sent_at: null,
+          }
         : null
       const query = queryResult(fulfilledPurchase)
       purchaseUpdates.push({ values, query })
@@ -361,7 +365,7 @@ describe("POST /api/webhooks/stripe", () => {
     )
     expect(mockSendDownloadEmail).toHaveBeenCalledWith({
       to: "buyer@example.com",
-      downloadUrl: expect.stringContaining("/api/download?token=download-token"),
+      downloadUrl: expect.stringContaining("/download?token=page-token"),
       productName: "California",
       purchaseType: "state",
       idempotencyKey: "download:cs_state",
@@ -425,7 +429,7 @@ describe("POST /api/webhooks/stripe", () => {
     )
     expect(mockSendDownloadEmail).toHaveBeenCalledWith({
       to: "buyer@example.com",
-      downloadUrl: expect.stringContaining("/api/download?token=download-token"),
+      downloadUrl: expect.stringContaining("/download?token=page-token"),
       productName: "Full USA",
       purchaseType: "full_database",
       idempotencyKey: "download:cs_full_database_discounted",

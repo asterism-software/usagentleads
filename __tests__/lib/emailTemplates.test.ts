@@ -26,7 +26,7 @@ const marketing: MarketingEmailOptions = {
 const templates: Array<[string, EmailTemplate]> = [
   ["magic link", magicLinkTemplate({ confirmationUrl: "https://www.usagentleads.com/auth/confirm?token=test" })],
   ["signup confirmation", confirmSignupTemplate({ confirmationUrl: "https://www.usagentleads.com/auth/confirm?token=test" })],
-  ["download ready", downloadReadyTemplate({ downloadUrl: "https://www.usagentleads.com/api/download?token=test", productName: "Full USA", purchaseType: "full_database" })],
+  ["download ready", downloadReadyTemplate({ downloadUrl: "https://www.usagentleads.com/download?token=test", productName: "Full USA", purchaseType: "full_database" })],
   ["subscription welcome", subscriptionWelcomeTemplate({ planName: "Pro API", countLabel: "1.1M+" })],
   ["subscription cancelled", subscriptionCancelledTemplate({ accessUntil: "2026-09-30T00:00:00.000Z" })],
   ["subscription renewed", subscriptionRenewedTemplate({ nextRenewal: "2026-09-30T00:00:00.000Z" })],
@@ -81,5 +81,19 @@ describe("unified email templates", () => {
     expect(template.html).not.toContain("<b>not trusted")
     expect(template.html).toContain("&lt;script&gt;")
     expect(template.html).toContain("&lt;b&gt;not trusted markup&lt;/b&gt;")
+  })
+
+  it("explains scanner-safe, retryable download access", () => {
+    const template = downloadReadyTemplate({
+      downloadUrl: "https://www.usagentleads.com/download?token=test",
+      productName: "California",
+      purchaseType: "state",
+    })
+
+    expect(template.subject).toBe("Your California data is ready")
+    expect(template.html).toContain("up to 10 downloads")
+    expect(template.html).toContain("Opening the page does not use a download")
+    expect(template.text).toContain("allows up to 10 downloads")
+    expect(template.html).toContain("https://www.usagentleads.com/download?token=test")
   })
 })

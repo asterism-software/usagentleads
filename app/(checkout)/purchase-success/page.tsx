@@ -31,6 +31,9 @@ interface PurchaseInfo {
   stateCode: string | null
   downloadAvailable: boolean
   downloadUrl: string | null
+  downloadsRemaining: number
+  downloadLimit: number
+  expiresAt: string | null
 }
 
 function PurchaseSuccessContent() {
@@ -117,7 +120,7 @@ function PurchaseSuccessContent() {
               Download Your {purchase.purchaseType === "full_database" ? "Full Database" : "State Data"}
             </a>
             <p className="mt-3 text-[13px] text-tertiary">
-              Single-use link. Expires in 48 hours.
+              Secure access page · Up to {purchase.downloadLimit} downloads · Expires in 48 hours.
             </p>
           </div>
         ) : null}
@@ -134,7 +137,7 @@ function PurchaseSuccessContent() {
         </div>
 
         <p className="mt-4 text-[13px] text-tertiary">
-          The download link expires in 48 hours, so be sure to download your file soon.
+          Opening the secure page does not use a download. Access expires in 48 hours.
         </p>
 
         <p className="mt-4 text-[13px] text-tertiary">

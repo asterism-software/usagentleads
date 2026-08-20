@@ -38,7 +38,7 @@ describe("sendDownloadEmail", () => {
   it("explains the Excel-safe multipart ZIP for Full Database purchases", async () => {
     await sendDownloadEmail({
       to: "buyer@example.com",
-      downloadUrl: "https://www.usagentleads.com/api/download?token=token",
+      downloadUrl: "https://www.usagentleads.com/download?token=token",
       productName: "Full USA",
       purchaseType: "full_database",
       idempotencyKey: "download:session",
@@ -50,7 +50,8 @@ describe("sendDownloadEmail", () => {
     )
     expect(message.replyTo).toBe(SUPPORT_REPLY_TO)
     expect(message.subject).toContain("Full USA")
-    expect(message.html).toContain("Download database files")
+    expect(message.html).toContain("Open secure download page")
+    expect(message.html).toContain("up to 10 downloads")
     expect(message.html).toContain("ZIP archive with numbered CSV parts")
     expect(message.html).toContain("open or import each part separately")
     expect(message.text).toContain("numbered CSV parts")
@@ -60,13 +61,14 @@ describe("sendDownloadEmail", () => {
   it("keeps State Pack delivery as a single CSV", async () => {
     await sendDownloadEmail({
       to: "buyer@example.com",
-      downloadUrl: "https://www.usagentleads.com/api/download?token=token",
+      downloadUrl: "https://www.usagentleads.com/download?token=token",
       productName: "Texas",
       purchaseType: "state",
     })
 
     const [message] = mocks.send.mock.calls[0]
-    expect(message.html).toContain("Download CSV")
+    expect(message.html).toContain("Open secure download page")
+    expect(message.html).toContain("up to 10 downloads")
     expect(message.html).toContain("CSV file")
     expect(message.html).not.toContain("Excel-ready archive")
   })
