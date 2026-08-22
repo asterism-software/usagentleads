@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-22
+
+- [x] [migrate the static leads database from Hetzner to the existing Pro Supabase project](docs/changelog/2026-08-22-supabase-leads-migration-and-actions-removal.md)
+- [x] validate all 1,168,815 rows, lock the migrated table to read-only service access, and tune exact-count performance
+- [x] cut production over to Supabase with a retained Hetzner rollback deployment
+- [x] remove all GitHub Actions while preserving existing customer CSV downloads in private Supabase Storage
+
 ## 2026-08-20
 
 - [x] [make customer downloads retryable, scanner-safe, and reliable across the apex/`www` proxy path](docs/changelog/2026-08-20-reliable-scanner-safe-downloads.md)

@@ -17,8 +17,8 @@ There are really only four moving parts. Everything in the repo hangs off one of
   │  public data sources  │   brokerage directories → upsert into the leads table
   └───────────┬───────────┘
               ▼
-  ┌── STORE ──────────────┐   usagentleads.leads (~1.16M rows) on a self-hosted
-  │  leads DB (Hetzner)   │   Postgres behind PostgREST. NOT on Supabase.
+  ┌── STORE ──────────────┐   usagentleads.leads (~1.17M rows) in the same Pro
+  │  Supabase Postgres    │   Supabase project used for Auth and billing.
   └───────────┬───────────┘
               ▼
   ┌── DERIVE ─────────────┐   crons turn raw rows into the things the site sells:
@@ -30,28 +30,29 @@ There are really only four moving parts. Everything in the repo hangs off one of
   └───────────────────────┘
 ```
 
-### The two-database split (the one thing to internalize)
+### Database boundary
 
-The app talks to **two** Postgres databases, and picking the wrong one is the
-easiest mistake to make here.
+The app uses one Pro Supabase project. Auth, billing, Storage, state counts, and
+the static ~500 MB `usagentleads.leads` table all live there. Server code keeps two
+client helpers only to make intent obvious:
 
-| | Supabase (`apisafe` project) | Self-hosted VPS (Hetzner/Coolify) |
-|---|---|---|
-| **Holds** | `auth.*`, `usagentleads.{purchases, subscriptions, download_logs, api_keys, api_usage_logs, state_count, sample_leads}`, Storage bucket `agent-csvs` | `usagentleads.leads` — the ~500 MB product itself |
-| **Reached via** | `createClient()` / `createServiceClient()` in [lib/supabase/server.ts](lib/supabase/server.ts) | `createLeadsClient()` in [lib/supabase/leads.ts](lib/supabase/leads.ts) |
-| **Why** | Auth + Storage + small relational data, free tier | The leads table alone blew the 500 MB free-tier cap |
+| Client | Objects |
+|---|---|
+| `createClient()` / `createServiceClient()` in [lib/supabase/server.ts](lib/supabase/server.ts) | Auth-linked application tables, state counts, billing, and Storage |
+| `createLeadsClient()` in [lib/supabase/leads.ts](lib/supabase/leads.ts) | The static, service-role-readable `usagentleads.leads` table |
 
-The VPS runs **PostgREST** in front of Postgres, so `supabase-js` works unchanged —
-only the endpoint differs (`LEADS_REST_URL` / `LEADS_REST_KEY`). Setup, ops, and
-rollback are documented in [infra/leads-db/README.md](infra/leads-db/README.md).
+The former Hetzner PostgREST database is retained temporarily as a read-only
+rollback source. Migration and rollback details are in
+[docs/hetzner-to-supabase-leads-migration-plan.md](docs/hetzner-to-supabase-leads-migration-plan.md).
 
 Two more rules that follow from this:
 
 - **Always use the `usagentleads` schema, never `public`.** The Supabase project is
   shared with another app that owns `public.*` — `public.leads` there is a
   different, empty table.
-- **`leads` is read-only from the app.** The only writes are ingest scripts and the
-  hygiene inside `refresh_states()`, both of which run outside Vercel.
+- **`leads` is read-only.** Supabase grants the service role only `SELECT`; the
+  replacement `refresh_states()` RPC aggregates without mutating rows. Ingest and
+  enrichment remain disabled.
 
 ---
 
@@ -87,7 +88,7 @@ Derived data does not update itself. Skipping a step leaves customer-facing file
 stale at the previous ingest:
 
 ```bash
-# a. Recount: runs hygiene on the VPS, upserts per-state totals into Supabase
+# a. Recount: read-only aggregation in Supabase, then upsert state_count
 GET /api/cron/update-state-counts
 
 # b. Re-export CSVs — the bare call only LISTS state codes, it generates nothing
@@ -99,8 +100,9 @@ GET /api/cron/generate-csvs?combine=true   # → gzips them into the full-DB CSV
 node scripts/sync-state-counts.mjs
 ```
 
-`.github/workflows/generate-csvs.yml` is the reference implementation of (b) and
-runs weekly; trigger it manually after a mid-week ingest.
+There is no scheduled GitHub workflow for these operations. Run the authenticated
+endpoints deliberately after an approved data refresh; the static production
+snapshot does not require periodic regeneration.
 
 Step (c) exists because [lib/utils/states.ts](lib/utils/states.ts) hardcodes each
 state's `agentCount`. `TOTAL_AGENTS` is summed from those constants and backs every
@@ -112,9 +114,10 @@ when the DB is unreachable — so a stale file means the site advertises stale c
 | Job | Runs on | Schedule | Does |
 |---|---|---|---|
 | `/api/cron/nurture-drip` | Vercel Cron ([vercel.json](vercel.json)) | daily 15:00 UTC | Advances free-sample leads through the 3-email drip |
-| `/api/cron/update-state-counts` | GitHub Actions | Mon 02:00 UTC | `refresh_states()` on the VPS → `state_count` on Supabase |
-| `/api/cron/generate-csvs` | GitHub Actions | Mon 03:00 UTC | list → 51× per-state → combine |
-| `/api/cron/indexnow` | GitHub Actions | daily 07:00 UTC | Submits every URL to IndexNow |
+
+`update-state-counts`, `generate-csvs`, and `indexnow` remain authenticated
+operator endpoints but are not scheduled. The first two should run only after an
+approved leads-data refresh.
 
 All cron routes are Bearer-authenticated with `CRON_SECRET` via
 [lib/utils/cronAuth.ts](lib/utils/cronAuth.ts). **Local `CRON_SECRET` ≠ production** —
@@ -270,7 +273,7 @@ app/                  Next.js App Router — pages, API routes, cron routes
   api/                checkout · webhooks · download · directory · agents · v1 · cron
 components/           React components (home, states, directory, dashboard, blog, ui)
 lib/
-  supabase/           server.ts (Supabase) · leads.ts (self-hosted) — pick carefully
+  supabase/           server.ts (application data) · leads.ts (static leads) — same project, separate intent
   queries/            agents.ts (authed, unmasked) · directory.ts (public, masked)
   data/               typed content for the programmatic SEO page sets
   utils/              states.ts (generated counts) · security · rateLimit · seo · mask
@@ -280,14 +283,15 @@ content/blog/         MDX posts
 scripts/ingest/       source adapters + the ingestion runbook
 scripts/              sync-state-counts.mjs · announce-1m.mjs
 supabase/migrations/  ordered schema migrations (see note below)
-infra/leads-db/       self-hosted Postgres + PostgREST: schema, compose, runbook
+infra/leads-db/       retired Hetzner Postgres + PostgREST history and rollback runbook
 __tests__/            Vitest — API routes and security-critical libs
 ```
 
-> **Migration note**: `0001_initial.sql` was authored against the `public` schema
-> before the move; production lives in `usagentleads`, and `leads` moved off
-> Supabase entirely (its schema is now [infra/leads-db/db/01-schema.sql](infra/leads-db/db/01-schema.sql)).
-> Migrations 0002+ reflect reality.
+> **Migration note**: `0001_initial.sql` was authored against the `public` schema.
+> Production lives in `usagentleads`; the 2026-08-22 migrations restore `leads`
+> to the current Pro Supabase project. The self-hosted schema under
+> [infra/leads-db/](infra/leads-db/) is retained as source history and rollback
+> documentation.
 
 ---
 
@@ -299,15 +303,14 @@ cp .env.local.example .env.local   # fill in every value
 npm run dev                        # http://localhost:3000
 ```
 
-You need credentials for four services: **Supabase** (URL + anon + service role),
-the **leads PostgREST** endpoint (`LEADS_REST_URL` / `LEADS_REST_KEY`), **Stripe**
+You need credentials for three services: **Supabase** (URL + anon + service role), **Stripe**
 (`STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`), and **Resend**. The four Stripe
 Price IDs live in `PlanGroups.tsx`, not in the environment. Upstash Redis is
 optional locally but required for rate limiting in production. See
 [.env.example](.env.example) for the annotated list.
 
-Without the leads credentials the marketing pages still render (counts fall back to
-the static constants), but the directory, dashboard, and API return empty.
+Without the Supabase service credential the marketing pages still render (counts
+fall back to static constants), but the directory, dashboard, and API return empty.
 
 | Command | Description |
 |---|---|
@@ -320,7 +323,7 @@ the static constants), but the directory, dashboard, and API return empty.
 | `npm run ingest:*` | Lead ingestion — see §2 |
 
 **Stack**: Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 + shadcn/ui ·
-Supabase · self-hosted Postgres + PostgREST · Stripe · Resend · Upstash ·
+Supabase Postgres/Auth/Storage · Stripe · Resend · Upstash ·
 PostHog · Vercel.
 
 ---
@@ -332,9 +335,9 @@ Five pieces deploy independently. Only the first changes on a normal day:
 | Piece | Where | Deployed by |
 |---|---|---|
 | Next.js app | Vercel (`usagentleads`) | git push to `main` |
-| Auth, orders, Storage | Supabase project `apisafe` | `npm run db:push` |
-| `leads` DB | Hetzner VPS via Coolify | manual — [infra/leads-db/README.md](infra/leads-db/README.md) |
-| Weekly/daily crons | GitHub Actions + Vercel Cron | committed with the repo |
+| Auth, orders, Storage, `leads` DB | Supabase project `vgbzldrsuxhzjxibyatw` | `npm run db:push`; leads migration runbook below |
+| Retired leads DB | Hetzner VPS via Coolify | rollback-only during stabilization — [infra/leads-db/README.md](infra/leads-db/README.md) |
+| Scheduled cron | Vercel Cron | committed in [vercel.json](vercel.json) |
 | Payments / email | Stripe + Resend dashboards | manual config |
 
 ### Routine deploy
@@ -371,7 +374,7 @@ template; never commit the corresponding secret values.
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` | Client + SSR auth | App dead |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server writes, Storage signing | Orders, downloads dead |
-| `LEADS_REST_URL` / `LEADS_REST_KEY` | Self-hosted leads DB | Directory/dashboard/API empty |
+| `LEADS_REST_URL` / `LEADS_REST_KEY` | Temporary Hetzner migration/rollback source; not read by the deployed app | Migration tools unavailable |
 | `STRIPE_SECRET_KEY` | Checkout, Portal, subscription, and promotion-code API calls | Billing routes fail |
 | `STRIPE_WEBHOOK_SECRET` | Verify `/api/webhooks/stripe` signatures | Paid orders and subscriptions never sync |
 | `RESEND_API_KEY` | All transactional + promotional email | Buyers get no download link |
@@ -384,18 +387,18 @@ template; never commit the corresponding secret values.
 
 `CRON_SECRET` deserves attention: Vercel injects it as the `Authorization: Bearer`
 header on its own cron invocations automatically, and
-[cronAuth.ts](lib/utils/cronAuth.ts) **fails closed** if it's unset. The same value
-must also be stored as a GitHub Actions repo secret named `CRON_SECRET`, or the three
-workflow-driven jobs stop silently. Rotating it means updating both places at once.
+[cronAuth.ts](lib/utils/cronAuth.ts) **fails closed** if it is unset. Operators
+calling an unscheduled cron endpoint must use the production value securely.
 
 ### First-time / from-scratch deploy
 
 1. **Supabase** — create the project, then `npm run db:push` (migrations 0002+ are the
    accurate ones; see the note in §7). Enable Google OAuth under Authentication →
    Providers. Create a **private** Storage bucket named `agent-csvs`.
-2. **Leads DB** — stand up Postgres + PostgREST on the VPS and mint the app JWT, per
-   [infra/leads-db/README.md](infra/leads-db/README.md). Confirm an authenticated
-   `curl` returns a row and an unauthenticated one is denied before moving on.
+2. **Leads DB** — apply the three 2026-08-22 leads migrations and load a verified
+   snapshot using [the migration runbook](docs/hetzner-to-supabase-leads-migration-plan.md).
+   Confirm RLS denies client access, the service role is read-only after loading,
+   and `refresh_states()` is executable only by `service_role`.
 3. **Stripe** — confirm the four products and Prices in the table in §3 exist in
    the same Stripe account and mode as `STRIPE_SECRET_KEY`. Configure the Customer
    Portal, keep the State Pack's $10 coupon product-scoped, and point a webhook at
@@ -420,9 +423,10 @@ workflow-driven jobs stop silently. Rotating it means updating both places at on
 7. **Domain** — add apex *and* `www`. The app 308-redirects apex → `www`
    ([next.config.ts](next.config.ts)), so both must resolve or half your traffic
    dead-ends.
-8. **GitHub Actions** — add the `CRON_SECRET` repo secret. The three workflows in
-   [.github/workflows/](.github/workflows/) are already committed and schedule
-   themselves; each also supports `workflow_dispatch` for a manual run.
+8. **Operations** — no GitHub Actions are installed. Keep state-count, CSV, and
+   IndexNow operations unscheduled unless a separately reviewed scheduler is
+   introduced. Run derived-data endpoints manually only when their source data
+   changes.
 9. **IndexNow** — the key file in [public/](public/) is served at
    `https://<domain>/<key>.txt` and its filename *is* the key. If you rotate
    `INDEXNOW_KEY`, rename that file to match or every submission is rejected.
@@ -450,5 +454,6 @@ fulfillment; a signature mismatch returns `400 Invalid signature` at the endpoin
 Vercel → Deployments → **Instant Rollback** reverts the app in seconds, and is safe
 because deploys are stateless. What it does *not* undo: applied Supabase migrations,
 ingested `leads` rows, or already-sent emails. Reverse those deliberately — schema
-changes with a follow-up migration, data changes from the VPS backup described in
-[infra/leads-db/README.md](infra/leads-db/README.md).
+changes with a follow-up migration. During the 7–14 day stabilization window, the
+retained read-only Hetzner deployment is the leads rollback source described in
+[the migration runbook](docs/hetzner-to-supabase-leads-migration-plan.md).

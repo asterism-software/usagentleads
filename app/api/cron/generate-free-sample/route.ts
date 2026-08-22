@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createServiceClient() // Supabase: Storage upload
-    const leadsDb = createLeadsClient()    // self-hosted: the leads table
+    const leadsDb = createLeadsClient()    // Supabase: static leads table
 
     // Fetch 500 leads with a mix of states
     const { data: leads, error: leadsError } = await leadsDb

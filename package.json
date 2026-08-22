@@ -19,7 +19,10 @@
     "ingest:har": "node scripts/ingest/har.mjs",
     "ingest:csv": "node scripts/ingest/import-csv.mjs",
     "ingest:atproperties": "node scripts/ingest/atproperties.mjs",
-    "ingest:enrich": "node scripts/ingest/enrich.mjs"
+    "ingest:enrich": "node scripts/ingest/enrich.mjs",
+    "migrate:leads:preflight": "node --env-file=.env.local scripts/migrate/copy-leads-rest.mjs",
+    "migrate:leads:execute": "node --env-file=.env.local scripts/migrate/copy-leads-rest.mjs --execute",
+    "migrate:leads:verify": "node --env-file=.env.local scripts/migrate/copy-leads-rest.mjs --verify-only"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

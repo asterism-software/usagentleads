@@ -9,10 +9,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const leads = createLeadsClient()      // self-hosted: leads + refresh_states()
+    const leads = createLeadsClient()      // Supabase: leads + read-only refresh_states()
     const supabase = createServiceClient() // Supabase: state_count
 
-    // Run leads hygiene + per-state aggregation on the VPS; get the counts back.
+    // Aggregate the static Supabase snapshot without mutating lead rows.
     const { data: rows, error: rpcError } = await leads
       .schema("usagentleads")
       .rpc("refresh_states")

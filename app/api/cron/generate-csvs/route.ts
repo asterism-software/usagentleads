@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createServiceClient() // Supabase: Storage + state_count
-    const leads = createLeadsClient()      // self-hosted: the leads table
+    const leads = createLeadsClient()      // Supabase: static leads table
 
     // ?combine=true → package state CSVs into dynamically sized Excel-safe parts
     if (combine === "true") {

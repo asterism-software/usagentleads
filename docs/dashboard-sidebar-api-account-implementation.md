@@ -38,7 +38,7 @@ These decisions remove ambiguity from the implementation:
 6. Profile data remains provider-backed and read-only in this scope. Email changes, custom avatar uploads, passwords, and account deletion require separate verified security flows and are not implied by a Profile tab.
 7. Settings was removed from the sidebar by product direction. The previously implemented route and preference backend remain available for compatibility, but Settings is not part of the delivered navigation.
 8. Support is delivered by authenticated email submission through Resend. A ticketing database or third-party help desk is not required for this scope.
-9. The existing `usagentleads` Supabase schema remains the source of truth for account and billing data. No table is added to `public`, and the self-hosted leads database remains read-only from the application.
+9. The existing `usagentleads` Supabase schema remains the source of truth for account, billing, and the static leads snapshot. No table is added to `public`, and lead rows remain read-only from the application.
 
 ## 3. Requirements traceability
 

@@ -7,13 +7,13 @@ one-time CSV downloads, a searchable subscriber dashboard, and a REST API.
 
 - **Web app:** Next.js on Vercel
 - **Repository:** <https://github.com/asterism-software/usagentleads>
-- **Auth, application data, and CSV storage:** Supabase project `apisafe`, schema
-  `usagentleads`, private Storage bucket `agent-csvs`
-- **Leads dataset:** `usagentleads.leads` in the `leads-postgres` service on the
-  Hetzner VPS, exposed to the app through PostgREST
+- **Auth, application data, leads dataset, and CSV storage:** Supabase project
+  `vgbzldrsuxhzjxibyatw` (`US Agent Leads`), schema `usagentleads`, private
+  Storage bucket `agent-csvs`
 
-Only the large `leads` table lives on Hetzner. Purchases, subscriptions, download
-logs, API keys, usage logs, state counts, and sample leads live in Supabase.
+The former Hetzner Postgres/PostgREST service is read-only and retained only for
+rollback during the migration stabilization window. The application no longer
+uses `LEADS_REST_URL` or `LEADS_REST_KEY` for production reads.
 
 ## Stripe billing
 
@@ -96,8 +96,10 @@ Full Database or either subscription.
 
 ## Data refresh and scheduled jobs
 
-Ingestion adapters in `scripts/ingest/` clean and upsert data into the Hetzner
-`leads` table. After an ingest, regenerate the derived data in this order:
+The leads dataset is currently a static, read-only Supabase snapshot. Ingestion
+adapters in `scripts/ingest/` are retained for history but must not run without a
+new write-path and derived-data plan. If ingestion is deliberately restored,
+regenerate the derived data in this order:
 
 1. Call `/api/cron/update-state-counts`.
 2. Call `/api/cron/generate-csvs` once for the state worklist, once per state with
@@ -107,16 +109,10 @@ Ingestion adapters in `scripts/ingest/` clean and upsert data into the Hetzner
    distributed as evenly as possible across the calculated number of parts.
 3. Run `node scripts/sync-state-counts.mjs` and commit the regenerated constants.
 
-The GitHub Actions workflows run on these schedules:
-
-| Workflow | Schedule | Purpose |
-|---|---|---|
-| `update-state-counts.yml` | Monday 02:00 UTC | Refresh Supabase `state_count` from the leads database |
-| `generate-csvs.yml` | Monday 03:00 UTC | Rebuild state CSVs and the Excel-safe multipart database ZIP |
-| `indexnow.yml` | Daily 07:00 UTC | Submit site URLs to IndexNow |
-
-All three support `workflow_dispatch` for an operator-triggered run after a
-mid-week ingest.
+No GitHub Actions are installed. `update-state-counts`, `generate-csvs`, and
+`indexnow` are authenticated operator endpoints with no automatic schedule. Do
+not invoke the first two unless a data refresh has been approved. Existing CSV
+objects remain available from the private Supabase Storage bucket.
 
 ## Other managed services
 

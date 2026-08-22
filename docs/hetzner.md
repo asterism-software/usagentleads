@@ -5,6 +5,12 @@ Liu: **Foreclosure Data Hub** (to Ricci Flow) and **US Agent Leads** (to Asteris
 Software). Anything unrelated to these two is out of scope. Credential values are
 delivered separately through the secure channel, not in this file.
 
+> **US Agent Leads migration status (2026-08-22):** the production app and its
+> 1,168,815-row static leads snapshot now use Supabase project
+> `vgbzldrsuxhzjxibyatw`. The UAL Postgres and PostgREST services described below
+> are no longer in the production request path. Keep them read-only for the 7–14
+> day rollback window; removal requires a separate backup/decommission approval.
+
 ## Server
 
 - **Host:** `ubuntu-8gb-hel1-1` (Hetzner, Helsinki), Ubuntu 24.04 LTS
@@ -25,8 +31,8 @@ See the table further down.
    FDH frontend                     FDH backend                    PostgREST
    Next.js :3000                    Hono :3001                     :3000 (int)
           \____________ Supabase ___________/                          |
-                                                              leads Postgres :5432
-                                                              (postgres:16 container)
+                                                              retired UAL leads Postgres
+                                                              (rollback-only)
 ```
 
 ## Applications
@@ -53,8 +59,9 @@ See the table further down.
 
 - **Domain:** `www.usagentleads.com`
 - **Role:** marketing, Supabase Auth, directory/dashboard/API access, CSV delivery,
-  and Stripe billing. The web app itself does not run on this VPS; only its leads
-  database and PostgREST service do.
+  and Stripe billing. The web app and active leads database do not run on this
+  VPS; the former Postgres/PostgREST read path is retained temporarily for
+  rollback only.
 - **Checkout:** `POST /api/checkout` creates a fresh Stripe-hosted Checkout Session
   from one of the four allowlisted Price IDs committed in
   `lib/billing/plans.ts`: State Pack $99
@@ -76,29 +83,27 @@ See the table further down.
 - **Secrets:** `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` belong in the UAL
   Vercel project. The four Price IDs stay in `PlanGroups.tsx`.
 
-### US Agent Leads — leads database (PostgreSQL)
+### US Agent Leads — retired leads database (PostgreSQL)
 - **Container:** `jv0tsd8pl7267c5vhwwpjzin`, `postgres:16-alpine`, **:5432**
-- **Database `leads`, table `usagentleads.leads`: ~1,168,815 rows.** This is the
-  core US Agent Leads agent-contact dataset.
+- **Database `leads`, table `usagentleads.leads`: 1,168,815 rows at cutover.**
+  This is the read-only rollback copy of the core dataset. Production reads the
+  verified Supabase copy.
 - **Columns:** `id`, `email`, `name`, `phone`, `state`, plus cold-email tracking
   (`email1_sent_at` … `email6_sent_at`, `email_status`, `email_error`,
   `email_message_id`, `replied`), `created_at`, `updated_at`.
-- Per the US Agent Leads sale, this dataset is intended to run on
-  Asterism-controlled infrastructure. It currently lives in this container on the
-  box; migrate it out if the two businesses are to be separated onto different
-  servers.
+- Do not ingest, run the mutating legacy `refresh_states()`, or otherwise write
+  to this copy during the rollback window.
 
-### US Agent Leads — PostgREST
+### US Agent Leads — retired PostgREST endpoint
 - **Container:** `postgrest-ickon4toi8r3ls08j7fjh2dp`, `postgrest:v12.2.3`
-- **Role:** exposes the `leads` database above as a REST API (the access + cold-email
-  layer over the agent data).
+- **Role:** formerly exposed the `leads` database above as the production REST API;
+  it is now a rollback and migration-verification endpoint only.
 - **Reachable at** a public `postgrest-*.sslip.io` hostname through Traefik, so treat
   its JWT/anon config as sensitive.
 - **Cold-email sending is currently OFF.** The send-tracking columns exist but no
   outreach is running.
-- Config note: some of this automation reuses `SUPABASE_*`-style env variable names
-  but they point at this local leads Postgres via PostgREST, not at Supabase. Do not
-  assume those names mean Supabase.
+- The production app no longer reads `LEADS_REST_URL` or `LEADS_REST_KEY`. Retain
+  them temporarily so the prior Vercel deployment can be restored if needed.
 
 ### Coolify platform (infrastructure)
 Supporting containers, not a product: `coolify` (control panel, :8000),
@@ -162,5 +167,7 @@ box.
   and Coolify/SSH access.
 - **DNS:** point `foreclosuredatahub.com` and `api.foreclosuredatahub.com` at this
   server's IP at Hostinger, and update OAuth redirect URIs if hostnames change.
-- **PostgREST exposure:** the leads API is reachable on a public `*.sslip.io`
-  hostname. Restrict or rotate its access if it should not be internet-facing.
+- **PostgREST exposure:** the retired leads API remains reachable on a public
+  `*.sslip.io` hostname only for the rollback window. After stabilization and a
+  verified backup, revoke its credential and remove the route before stopping the
+  containers.

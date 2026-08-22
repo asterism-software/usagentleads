@@ -1,5 +1,12 @@
 # Self-hosted `leads` database (Hetzner)
 
+> **Retired from production on 2026-08-22.** The complete static snapshot now
+> lives in Supabase project `vgbzldrsuxhzjxibyatw`, and the deployed app reads it
+> with the existing Supabase service credential. Keep this Hetzner service
+> read-only for 7–14 days as a rollback source, then decommission it only after a
+> separately approved backup and deletion plan. The instructions below document
+> the former deployment; do not use them to configure a new production read path.
+
 > **As actually deployed (2026-07-14):** provisioned inside **Coolify** on the
 > Hetzner box (project `usagentleads`), not via the standalone compose below.
 > - **Postgres**: Coolify-managed `postgres:16-alpine` (resource `leads-postgres`,
@@ -13,7 +20,7 @@
 > - Roles/schema/`refresh_states()` from `db/01-schema.sql` were applied via
 >   `docker exec … psql`; data was streamed with `pg_dump | psql` (PG17→PG16, the
 >   `SET transaction_timeout` line stripped); indexes from `post-load/indexes.sql`.
-> - App reads via `LEADS_REST_URL` / `LEADS_REST_KEY` (Vercel env).
+> - The app formerly read via `LEADS_REST_URL` / `LEADS_REST_KEY` (Vercel env).
 >
 > The `docker-compose.yml` + `Caddyfile` in this folder are the **standalone
 > alternative** (own proxy on 80/443) — kept for reference / portability. The SQL

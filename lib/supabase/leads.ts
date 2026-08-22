@@ -1,31 +1,23 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
 /**
- * Client for the self-hosted `usagentleads.leads` table.
+ * Server-only client for the static `usagentleads.leads` table.
  *
- * The leads table (~500 MB) was moved off Supabase to stay under the free-tier
- * storage cap; it now lives on our own Postgres, fronted by PostgREST, so the
- * supabase-js query builder keeps working unchanged — only the endpoint differs.
- * NOTE: supabase-js sends every request under a `/rest/v1/*` path, so the endpoint
- * at LEADS_REST_URL must strip that prefix before forwarding to PostgREST (done at
- * the proxy: Traefik StripPrefix / Caddy handle_path). Otherwise every query 404s.
- * Every other table (auth-linked subscriptions, purchases, api_keys, state_count,
- * …) still lives on Supabase and must keep using the clients in ./server.
- *
- * Auth: LEADS_REST_KEY is a long-lived PostgREST JWT whose `role` claim maps to
- * the privileged `leads_service` Postgres role. Server-side only — never expose
- * it to the browser.
+ * Leads now live in the same Supabase project as auth, billing, state counts, and
+ * Storage. Keeping this dedicated client preserves the existing query boundary
+ * while reusing the project's server-only service credential. The table itself
+ * grants that role SELECT only.
  */
 let client: SupabaseClient | null = null
 
 export function createLeadsClient(): SupabaseClient {
   if (client) return client
 
-  const url = process.env.LEADS_REST_URL
-  const key = process.env.LEADS_REST_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) {
     throw new Error(
-      "LEADS_REST_URL / LEADS_REST_KEY are not set — the leads database is unconfigured"
+      "NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set — the leads database is unconfigured"
     )
   }
 
